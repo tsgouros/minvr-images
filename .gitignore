@@ -1,6 +1,9 @@
 # Backup files
 *~
 
+# Stuff in build
+build/
+
 # Compiled Object files
 *.slo
 *.lo

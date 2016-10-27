@@ -3,7 +3,10 @@
 mvImageApp::mvImageApp(int argc, char** argv) :
   _vrMain(NULL), _quit(false) {
 
-  _vrMain->initialize(argc, argv);
+  _vrMain = new MinVR::VRMain();
+
+  std::string configFile = argv[1];
+  _vrMain->initialize(argc, argv, configFile);
   _vrMain->addEventHandler(this);
   _vrMain->addRenderHandler(this);
 
@@ -233,10 +236,14 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
   }
 }
 
-int main() {
+int main(int argc, char **argv) {
 
   mvImage::mvImage m = mvImage::mvImage(17);
   std::cout << "Hello World!" << m.getImage() << std::endl;
 
+  mvImageApp app(argc, argv);
+  app.run();
+
+  exit(0);  
 }
 

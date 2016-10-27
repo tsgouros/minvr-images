@@ -52,7 +52,7 @@ class mvImage {
 
  public:
  mvImage(int n) : imageData(n) {};
-  //  virtual ~mvImage();
+  virtual ~mvImage() {};
 
   int getImage() { return imageData; };
 };

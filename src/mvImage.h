@@ -1,6 +1,7 @@
 // my first program in C++
 #include <iostream>
 #include <string>
+#include <math.h>
 
 #include "MVR.h"
 
@@ -23,21 +24,22 @@
 // An object to encapsulate a lot of working information about the
 // running program: viewer position, collection of mvImage objects to
 // display, and so on.
-class mvImageApp {
+class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler  {
  protected:
-  VRMain *_vrMain;
+  MinVR::VRMain *_vrMain;
   bool _quit;
   double _horizAngle, _vertAngle, _radius, _incAngle;
 
  public:
   mvImageApp(int argc, char** argv);
-  virtual ~mvImage();
+  virtual ~mvImageApp();
 
-  virtual void onVREvent(const std::string &eventName, VRDataIndex *eventData);
+  virtual void onVREvent(const std::string &eventName,
+                         VRDataIndex *eventData);
   virtual void onVRRenderContext(VRDataIndex *renderState, 
-				 VRDisplayNode *callingNode);
-  virtual void onVRRenderScene(VRDataIndex *renderState, 
-			       VRDisplayNode *callingNode);
+                                 MinVR::VRDisplayNode *callingNode);
+  void onVRRenderScene(VRDataIndex *renderState, 
+                               MinVR::VRDisplayNode *callingNode);
 
   void run() { while (!_quit) { _vrMain->mainloop(); } };
 };

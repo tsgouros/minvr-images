@@ -18,7 +18,7 @@ mvImageApp::~mvImageApp() {
   delete _vrMain;
 }
 
-mvImageApp::onVREvent(const std::string &eventName, VRDataIndex *eventData) {
+void mvImageApp::onVREvent(const std::string &eventName, VRDataIndex *eventData) {
 
   //std::cout << "Event: " << eventName << std::endl;                    
   if (eventName == "/KbdEsc_Down") {
@@ -45,17 +45,16 @@ mvImageApp::onVREvent(const std::string &eventName, VRDataIndex *eventData) {
 }
 
 void mvImageApp::onVRRenderContext(VRDataIndex *renderState, 
-				   VRDisplayNode *callingNode) {
+				   MinVR::VRDisplayNode *callingNode) {
   if (!renderState->exists("IsConsole", "/")) {
   }
 }
 
 // Callback for rendering, inherited from VRRenderHandler                      
-virtual void onVRRenderScene(VRDataIndex *renderState, VRDisplayNode *callingN\
-			     ode) {
+void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
+                                 MinVR::VRDisplayNode *callingNode) {
   if (renderState->exists("IsConsole", "/")) {
-    VRConsoleNode *console = dynamic_cast<VRConsoleNode*>(callingN\
-							  ode);
+    MinVR::VRConsoleNode *console = dynamic_cast<MinVR::VRConsoleNode*>(callingNode);
     console->println("Console output...");
   }
   else {
@@ -63,11 +62,9 @@ virtual void onVRRenderScene(VRDataIndex *renderState, VRDisplayNode *callingN\
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glClearDepth(1.0f);
-    count++;
     glClearColor(0.0, 0.0, 0.0, 1.f);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL\
-	    _BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     //glClear(GL_DEPTH_BUFFER_BIT);                                
 
     if (renderState->exists("ProjectionMatrix", "/")) {
@@ -77,8 +74,7 @@ virtual void onVRRenderScene(VRDataIndex *renderState, VRDisplayNode *callingN\
 
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      VRMatrix4 P = renderState->getValue("ProjectionMatrix", "/\
-");
+      VRMatrix4 P = renderState->getValue("ProjectionMatrix", "/");
       glLoadMatrixd(P.m);
 
       glMatrixMode(GL_MODELVIEW);
@@ -93,8 +89,8 @@ virtual void onVRRenderScene(VRDataIndex *renderState, VRDisplayNode *callingN\
       // into the Model matrix and leave the Projection and View
       // matrices for head tracking.
       VRMatrix4 M = VRMatrix4::translation(VRVector3(0.0, 0.0, -_radius)) *
-	VRMatrix4::rotationX(_vertAngle) *
-	VRMatrix4::rotationY(_horizAngle);
+        VRMatrix4::rotationX(_vertAngle) *
+        VRMatrix4::rotationY(_horizAngle);
 
       VRMatrix4 V = renderState->getValue("ViewMatrix", "/");
       glLoadMatrixd((V*M).m);

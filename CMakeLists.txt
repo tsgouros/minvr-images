@@ -31,6 +31,10 @@ set(CMAKE_RELWITHDEBINFO_POSTFIX "rd")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMinVR_DEBUG")
 
+set(MINVR_DIR /users/tsgouros/projects/MinVR2/build/install)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${MINVR_DIR}/include")
+message(${CMAKE_CXX_FLAGS})
+
 # Build output directories.
 make_directory(${CMAKE_BINARY_DIR}/bin)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

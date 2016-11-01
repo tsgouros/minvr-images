@@ -6,6 +6,10 @@ include_directories(${OPENGL_INCLUDE_DIR})
 set(mvImage_source_files
   mvImage.h
   mvImage.cpp
+  mvImageApp.h
+  mvImageApp.cpp
+  utils/matrix.h
+  utils/matrix.cpp  
 )
 
 link_directories(${MINVR_DIR}/lib)

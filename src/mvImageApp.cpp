@@ -12,6 +12,8 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   
   _images.addImage(std::string("first"), img1);
 
+  // glGenVertexArraysAPPLE(1, &_vertexArrayID);
+  // glBindVertexArray(_vertexArrayID);
   
   std::string configFile = argv[1];
   _vrMain->initialize(argc, argv, configFile);
@@ -67,8 +69,7 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
   if (renderState->exists("IsConsole", "/")) {
     MinVR::VRConsoleNode *console = dynamic_cast<MinVR::VRConsoleNode*>(callingNode);
     console->println("Console output...");
-  }
-  else {
+  } else {
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -117,6 +118,10 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
 
+      // gluPerspective(30f,[self bounds].size.width/(GLfloat)[self bounds].size.width,1.0f,1000.0f);
+
+      // glMultMatrix( GLKMatrix4MakePerspective(30f,[self bounds].size.width/(GLfloat)[self bounds].size.height,1.0f,1000.0f ).m ); // << .m is the GLfloat* you are accessing
+      
       double cameraPos[3];
       cameraPos[0] = _radius * cos(_horizAngle) * cos(_vertAngle);
       cameraPos[1] = -_radius * sin(_vertAngle);
@@ -133,124 +138,29 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
                  cameraAim[0], cameraAim[1], cameraAim[2]);
     }
 
-    // Draw objects here.
-    _images.draw();
-    
+    // Draw some axes because why not.
     glBegin(GL_LINES);
-    glColor3f(1.0, 1.0, 0.0);
+    glColor3f(1.0, 0.0, 0.0);
     glVertex3f(8.0, 0.0, 0.0);
     glVertex3f(0.0, 0.0, 0.0);
 
-    glColor3f(0.0, 1.0, 1.0);
+    glColor3f(0.0, 1.0, 0.0);
     glVertex3f(0.0, 8.0, 0.0);
     glVertex3f(0.0, 0.0, 0.0);
 
-    glColor3f(1.0, 0.0, 1.0);
+    glColor3f(0.0, 0.0, 1.0);
     glVertex3f(0.0, 0.0, 8.0);
     glVertex3f(0.0, 0.0, 0.0);
-
     glEnd();
 
-    glBegin(GL_QUADS); // Begin drawing the color cube with 6 quads
-    // Top face (y = 1.0f) 
-    // Define vertices in counter-clockwise (CCW) order with normal pointing out
-    glColor3f(0.0f, 0.5f, 0.0f);     // Green                                    
-    glVertex3f( 1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f,  1.0f);
-    glVertex3f( 1.0f, 1.0f,  1.0f);
-
-    // Bottom face (y = -1.0f)                                                   
-    glColor3f(0.5f, 0.25f, 0.0f);     // Orange                                  
-    glVertex3f( 1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-
-    // Front face  (z = 1.0f)                                                    
-    glColor3f(0.5f, 0.0f, 0.0f);     // Red                                      
-    glVertex3f( 1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f( 1.0f, -1.0f, 1.0f);
-
-    // Back face (z = -1.0f)                                                     
-    glColor3f(0.5f, 0.5f, 0.0f);     // Yellow                                   
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);
-
-    // Left face (x = -1.0f)                                                     
-    glColor3f(0.0f, 0.0f, 0.5f);     // Blue                                     
-    glVertex3f(-1.0f,  1.0f,  1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-
-    // Right face (x = 1.0f)                                                     
-    glColor3f(0.5f, 0.0f, 0.5f);     // Magenta                                  
-    glVertex3f(1.0f,  1.0f, -1.0f);
-    glVertex3f(1.0f,  1.0f,  1.0f);
-    glVertex3f(1.0f, -1.0f,  1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glEnd();  // End of drawing color-cube                                       
-
-    glTranslatef(1.5f, 7.0f, 0.0f);  // Move right and into the screen           
-
-    glBegin(GL_QUADS);  // Begin drawing the color cube with 6 quads
-
-    // Top face (y = 1.0f)                     
-    // Define vertices in counter-clockwise (CCW) order with normal pointing out
-    glColor3f(0.0f, 0.5f, 0.0f);     // Green                                    
-    glVertex3f( 1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f,  1.0f);
-    glVertex3f( 1.0f, 1.0f,  1.0f);
-
-    // Bottom face (y = -1.0f)                                                   
-    glColor3f(0.5f, 0.25f, 0.0f);     // Orange                                  
-    glVertex3f( 1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-
-    // Front face  (z = 1.0f)                                                    
-    glColor3f(0.5f, 0.0f, 0.0f);     // Red                                      
-    glVertex3f( 1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f( 1.0f, -1.0f, 1.0f);
-
-    // Back face (z = -1.0f)                                                     
-    glColor3f(0.5f, 0.5f, 0.0f);     // Yellow                                   
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);
-
-    // Left face (x = -1.0f)                                                     
-    glColor3f(0.0f, 0.0f, 0.5f);     // Blue                                     
-    glVertex3f(-1.0f,  1.0f,  1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-
-    // Right face (x = 1.0f)                                                     
-    glColor3f(0.5f, 0.0f, 0.5f);     // Magenta                                  
-    glVertex3f(1.0f,  1.0f, -1.0f);
-    glVertex3f(1.0f,  1.0f,  1.0f);
-    glVertex3f(1.0f, -1.0f,  1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glEnd();  // End of drawing color-cube                                       
-
+    // Draw objects here.
+    _images.draw();
   }
 }
 
 int main(int argc, char **argv) {
 
   mvImage::mvImage m = mvImage::mvImage("trash.png");
-  std::cout << "Hello World!" << m.getFileName() << std::endl;
 
   mvImageApp app(argc, argv);
   app.run();

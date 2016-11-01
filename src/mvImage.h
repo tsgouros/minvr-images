@@ -65,7 +65,7 @@ class mvImageShape {
   // The draw() function here has imageData as an input and draws each
   // polygon of the shape after first checking with the imageData
   // object for the appropriate mipmap.
-  virtual void draw(const mvImageData* img) {};
+  virtual void draw(const mvImageData* img);
   
 };
 
@@ -101,7 +101,7 @@ class mvImage {
   mvImageData* getImage() { return imageData; };
   std::string getFileName() { return imageData->getFileName(); };
 
-  virtual void draw() {};
+  virtual void draw();
   
 };
 

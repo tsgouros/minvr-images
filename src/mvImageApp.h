@@ -31,6 +31,8 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
 
   // These are the objects that will be drawn.
   mvImage::mvImages _images;
+
+  //GLuint _vertexArrayID;
   
  public:
   mvImageApp(int argc, char** argv);

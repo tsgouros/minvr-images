@@ -7,7 +7,6 @@
 #include <map>
 
 #include "MVR.h"
-#include "utils/matrix.h"
 
 #if defined(WIN32)
 #define NOMINMAX
@@ -61,7 +60,6 @@ class mvImageShape {
  public:
   mvPoint getCenter() { return _center; };
 
-
   // The draw() function here has imageData as an input and draws each
   // polygon of the shape after first checking with the imageData
   // object for the appropriate mipmap.
@@ -87,7 +85,7 @@ class mvImage {
   mvLayerType _type;
 
   double gamma, gmin, gmax;
-  Matrix transform;
+  VRMatrix4 transform;
   mvImageData* imageData;
   mvImageShape* imageShape;
   

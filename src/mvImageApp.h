@@ -11,6 +11,8 @@
 #include <gl/GLU.h>
 #elif defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
 #include <OpenGL/glu.h>
 #else
 #define GL_GLEXT_PROTOTYPES
@@ -27,12 +29,17 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
  protected:
   MinVR::VRMain *_vrMain;
   bool _quit;
-  double _horizAngle, _vertAngle, _radius, _incAngle;
+  float _horizAngle, _vertAngle, _radius, _incAngle;
 
   // These are the objects that will be drawn.
   mvImage::mvImages _images;
 
   //GLuint _vertexArrayID;
+
+  static void setPerspective(float fov, float aspect, float near, float far);
+  static void lookAt(float eyeX, float eyeY, float eyeZ,
+                     float centerX, float centerY, float centerZ,
+                     float upX, float upY, float upZ);
   
  public:
   mvImageApp(int argc, char** argv);
@@ -46,5 +53,6 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
                                MinVR::VRDisplayNode *callingNode);
 
   void run() { while (!_quit) { _vrMain->mainloop(); } };
+
 };
 

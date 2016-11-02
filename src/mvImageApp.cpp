@@ -31,6 +31,76 @@ mvImageApp::~mvImageApp() {
   delete _vrMain;
 }
 
+void
+mvImageApp::setPerspective(float fov, float aspect, float near, float far) {
+	float f;
+	float mat[16];
+
+	f = 1.0f / tanf(fov / 2.0f);
+
+	mat[0] = f / aspect;
+	mat[1] = 0.0f;
+	mat[2] = 0.0f;
+	mat[3] = 0.0f;
+
+	mat[4] = 0.0f;
+	mat[5] = f;
+	mat[6] = 0.0f;
+	mat[7] = 0.0f;
+
+	mat[8] = 0.0f;
+	mat[9] = 0.0f;
+	mat[10] = (far + near) / (near  - far);
+	mat[11] = -1.0f;
+
+	mat[12] = 0.0f;
+	mat[13] = 0.0f;
+	mat[14] = (2.0f * far * near) / (near - far);
+	mat[15] = 0.0f;
+
+	glMultMatrixf(mat);
+}
+
+void
+mvImageApp::lookAt(float eyeX, float eyeY, float eyeZ,
+                   float centerX, float centerY, float centerZ,
+                   float upX, float upY, float upZ) {
+
+  VRVector3 forward, side, up;
+  float m[4][4];
+
+  
+  forward = VRVector3(centerX - eyeX, centerY - eyeY, centerZ - eyeZ);
+  forward = forward.normalize();
+
+  up = VRVector3(upX, upY, upZ);
+  side = forward.cross(up);
+
+  side = side.normalize();
+  
+  up = side.cross(forward);
+
+  m[0][0] = side[0];
+  m[1][0] = side[1];
+  m[2][0] = side[2];
+  m[3][0] = 0.0;
+  
+  m[0][1] = up[0];
+  m[1][1] = up[1];
+  m[2][1] = up[2];
+  m[3][1] = 0.0;
+  
+  m[0][2] = -forward[0];
+  m[1][2] = -forward[1];
+  m[2][2] = -forward[2];
+  m[3][2] = 0.0;
+
+  m[0][3] = m[1][3] = m[2][3] = 0.0; m[3][3] = 1.0;
+  
+  glMultMatrixf(&m[0][0]);
+  glTranslated(-eyeX, -eyeY, -eyeZ);
+}
+
 void mvImageApp::onVREvent(const std::string &eventName, VRDataIndex *eventData) {
 
   //std::cout << "Event: " << eventName << std::endl;                    
@@ -75,6 +145,9 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
     glDepthFunc(GL_LEQUAL);
     glClearDepth(1.0f);
     glClearColor(0.0, 0.0, 0.0, 1.f);
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     //glClear(GL_DEPTH_BUFFER_BIT);                                
@@ -92,48 +165,41 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
 
-      // In the original adaptee.cpp program, keyboard and mouse
-      // commands were used to adjust the camera.  Now that we are
-      // creating a VR program, we want the camera (Projection and
-      // View matrices) to be controlled by head tracking.  So, we
-      // switch to having the keyboard and mouse control the Model
-      // matrix.  Guideline: In VR, put all of the "scene navigation"
-      // into the Model matrix and leave the Projection and View
-      // matrices for head tracking.
+      // In a VR program, we want the camera (Projection and View
+      // matrices) to be controlled by head tracking.  So, we switch
+      // to having the keyboard and mouse control the Model matrix.
+      // Guideline: In VR, put all of the "scene navigation" into the
+      // Model matrix and leave the Projection and View matrices for
+      // head tracking.
       VRMatrix4 M = VRMatrix4::translation(VRVector3(0.0, 0.0, -_radius)) *
         VRMatrix4::rotationX(_vertAngle) *
         VRMatrix4::rotationY(_horizAngle);
 
       VRMatrix4 V = renderState->getValue("ViewMatrix", "/");
-      glLoadMatrixd((V*M).m);
+      glLoadMatrixd((V * M).m);
     } else {
       // If the DisplayGraph does not contain a node that sets the
       // ProjectionMatrix and ViewMatrix, then we must be in a
       // non-headtracked simple desktop mode.  We can just set the
-      // projection and modelview matrices the same way as in
-      // adaptee.cpp.
+      // projection and modelview matrices.
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      gluPerspective(1.6*45.f, 1.f, 0.1f, 100.0f);
+      setPerspective(M_PI / 4.0f, 1.f, 0.1f, 100.0f);
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
 
-      // gluPerspective(30f,[self bounds].size.width/(GLfloat)[self bounds].size.width,1.0f,1000.0f);
-
-      // glMultMatrix( GLKMatrix4MakePerspective(30f,[self bounds].size.width/(GLfloat)[self bounds].size.height,1.0f,1000.0f ).m ); // << .m is the GLfloat* you are accessing
-      
-      double cameraPos[3];
+      float cameraPos[3];
       cameraPos[0] = _radius * cos(_horizAngle) * cos(_vertAngle);
       cameraPos[1] = -_radius * sin(_vertAngle);
       cameraPos[2] = _radius * sin(_horizAngle) * cos(_vertAngle);
 
-      double cameraAim[3];
+      float cameraAim[3];
       cameraAim[0] = cos(_horizAngle) * sin(_vertAngle);
       cameraAim[1] = cos(_vertAngle);
       cameraAim[2] = sin(_horizAngle) * sin(_vertAngle);
 
-      double targetPos[3] = {0.0f, 0.0f, 0.0f};
-      gluLookAt (cameraPos[0], cameraPos[1], cameraPos[2],
+      float targetPos[3] = {0.0f, 0.0f, 0.0f};
+      lookAt (cameraPos[0], cameraPos[1], cameraPos[2],
                  targetPos[0], targetPos[1], targetPos[2],
                  cameraAim[0], cameraAim[1], cameraAim[2]);
     }

@@ -61,43 +61,36 @@ mvImageApp::setPerspective(float fov, float aspect, float near, float far) {
 	glMultMatrixf(mat);
 }
 
-void
-mvImageApp::lookAt(float eyeX, float eyeY, float eyeZ,
-                   float centerX, float centerY, float centerZ,
-                   float upX, float upY, float upZ) {
+void mvImageApp::lookAt(float eyeX, float eyeY, float eyeZ,
+                        float centerX, float centerY, float centerZ,
+                        float upX, float upY, float upZ) {
 
   VRVector3 forward, side, up;
   float m[4][4];
 
-  
-  forward = VRVector3(centerX - eyeX, centerY - eyeY, centerZ - eyeZ);
-  forward = forward.normalize();
-
-  up = VRVector3(upX, upY, upZ);
-  side = forward.cross(up);
-
-  side = side.normalize();
-  
+  // Normalize and straighten out the input directions.
+  forward = VRVector3(centerX - eyeX, centerY - eyeY, centerZ - eyeZ).normalize();
+  side = forward.cross( VRVector3(upX, upY, upZ) ).normalize();
   up = side.cross(forward);
 
-  m[0][0] = side[0];
-  m[1][0] = side[1];
-  m[2][0] = side[2];
-  m[3][0] = 0.0;
+  // Insert them into a view matrix.
+  VRMatrix4 M;
+  M[0][0] = side[0];
+  M[1][0] = side[1];
+  M[2][0] = side[2];
   
-  m[0][1] = up[0];
-  m[1][1] = up[1];
-  m[2][1] = up[2];
-  m[3][1] = 0.0;
+  M[0][1] = up[0];
+  M[1][1] = up[1];
+  M[2][1] = up[2];
   
-  m[0][2] = -forward[0];
-  m[1][2] = -forward[1];
-  m[2][2] = -forward[2];
-  m[3][2] = 0.0;
+  M[0][2] = -forward[0];
+  M[1][2] = -forward[1];
+  M[2][2] = -forward[2];
 
-  m[0][3] = m[1][3] = m[2][3] = 0.0; m[3][3] = 1.0;
-  
-  glMultMatrixf(&m[0][0]);
+  // Add the view matrix to the mix.
+  glMultMatrixd( M.m );
+
+  // And translate away from the center.
   glTranslated(-eyeX, -eyeY, -eyeZ);
 }
 
@@ -200,8 +193,8 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
 
       float targetPos[3] = {0.0f, 0.0f, 0.0f};
       lookAt (cameraPos[0], cameraPos[1], cameraPos[2],
-                 targetPos[0], targetPos[1], targetPos[2],
-                 cameraAim[0], cameraAim[1], cameraAim[2]);
+              targetPos[0], targetPos[1], targetPos[2],
+              cameraAim[0], cameraAim[1], cameraAim[2]);
     }
 
     // Draw some axes because why not.

@@ -1,6 +1,5 @@
 #include "mvImage.h"
 
-namespace mvImage {
 // mvImageData here
 
 // mvImageShape here
@@ -91,6 +90,7 @@ std::string mvImages::addImage(const std::string name, mvImage* image) {
 }
 
 int mvImages::delImage(const std::string name) {
+  delete images[name];
   return images.erase(name);
 }
 
@@ -98,4 +98,3 @@ mvImage* mvImages::getImage(const std::string name) {
   return images[name];
 }
 
-} // namespace mvImage

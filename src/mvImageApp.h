@@ -10,7 +10,6 @@
 #include <GL/gl.h>
 #include <gl/GLU.h>
 #elif defined(__APPLE__)
-#include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #include <OpenGL/glu.h>
@@ -32,24 +31,32 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   float _horizAngle, _vertAngle, _radius, _incAngle;
 
   // These are the objects that will be drawn.
-  mvImage::mvImages _images;
+  mvImages _images;
 
+  GLuint gProgram;
+  
   //GLuint _vertexArrayID;
 
   static void setPerspective(float fov, float aspect, float near, float far);
   static void lookAt(float eyeX, float eyeY, float eyeZ,
                      float centerX, float centerY, float centerZ,
                      float upX, float upY, float upZ);
+  void graphicsInit(MinVR::VRDataIndex* index);
   
+  std::string shaderRead(const std::string pathName);
+  GLuint shaderCompile(const GLenum type, const std::string pathName);
+  void shaderAttach(const GLuint program,
+                    const GLenum type, const std::string pathName);
+
  public:
   mvImageApp(int argc, char** argv);
   virtual ~mvImageApp();
 
   virtual void onVREvent(const std::string &eventName,
-                         VRDataIndex *eventData);
-  virtual void onVRRenderContext(VRDataIndex *renderState, 
+                         MinVR::VRDataIndex *eventData);
+  virtual void onVRRenderContext(MinVR::VRDataIndex *renderState, 
                                  MinVR::VRDisplayNode *callingNode);
-  void onVRRenderScene(VRDataIndex *renderState, 
+  void onVRRenderScene(MinVR::VRDataIndex *renderState, 
                                MinVR::VRDisplayNode *callingNode);
 
   void run() { while (!_quit) { _vrMain->mainloop(); } };

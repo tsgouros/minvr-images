@@ -24,12 +24,15 @@
 
 #define TWOPI 6.283185
 
-namespace mvImage {
-
-struct mvPoint {
+class mvPoint {
+ public:
   double x;
   double y;
   double z;
+
+  void set(MinVR::VRDoubleArray p) { x = p[0]; y = p[1]; z = p[2]; };
+  void set(MinVR::VRIntArray p) {
+    x = (double)p[0]; y = (double)p[1]; z = (double)p[2]; };
 };
 
 enum mvDrawBuffer { UNSET, BOTH, LEFT, RIGHT };
@@ -56,10 +59,19 @@ class mvImageData {
 class mvImageShape {
  protected:
   mvPoint _center;
+  MinVR::VRDoubleArray _dims;
+  std::string _shape;
 
  public:
   mvPoint getCenter() { return _center; };
+  void setCenter(mvPoint center) { _center = center; };
 
+  virtual void setDims(MinVR::VRDoubleArray dims) {_dims = dims; };
+  void setShape(std::string shape) { _shape = shape; };
+
+  std::string getShape() { return _shape; };
+  MinVR::VRDoubleArray getDims() { return _dims; };
+  
   // The draw() function here has imageData as an input and draws each
   // polygon of the shape after first checking with the imageData
   // object for the appropriate mipmap.
@@ -85,7 +97,7 @@ class mvImage {
   mvLayerType _type;
 
   double gamma, gmin, gmax;
-  VRMatrix4 transform;
+  MinVR::VRMatrix4 transform;
   mvImageData* imageData;
   mvImageShape* imageShape;
   
@@ -98,7 +110,11 @@ class mvImage {
 
   mvImageData* getImage() { return imageData; };
   std::string getFileName() { return imageData->getFileName(); };
-
+  void setImage(mvImageData* imgData) { imageData = imgData; };
+  
+  mvImageShape* getShape() { return imageShape; };
+  void setImage(mvImageShape* shapeData) { imageShape = shapeData; };
+  
   virtual void draw();
   
 };
@@ -119,5 +135,4 @@ class mvImages {
   mvImage* getImage(const std::string name);
 };
 
-} // namespace mvImage
 #endif

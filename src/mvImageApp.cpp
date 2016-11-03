@@ -1,22 +1,139 @@
 #include "mvImage.h"
 #include "mvImageApp.h"
 
+
+void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
+	GLint result;
+
+  std::string vertexShader =
+    index->dereferenceEnvVars(index->getValue("/mvImage/shaders/vertex"));
+  std::string fragmentShader =
+    index->dereferenceEnvVars(index->getValue("/mvImage/shaders/fragment"));
+  
+	/* create program object and attach shaders */
+	gProgram = glCreateProgram();
+	shaderAttach(gProgram, GL_VERTEX_SHADER, vertexShader);
+	shaderAttach(gProgram, GL_FRAGMENT_SHADER, fragmentShader);
+
+	/* link the program and make sure that there were no errors */
+	glLinkProgram(gProgram);
+	glGetProgramiv(gProgram, GL_LINK_STATUS, &result);
+	if(result == GL_FALSE) {
+		GLint length;
+		char *log;
+
+		/* get the program info log */
+		glGetProgramiv(gProgram, GL_INFO_LOG_LENGTH, &length);
+		log = (char*)malloc(length);
+		glGetProgramInfoLog(gProgram, length, &result, log);
+
+		/* print an error message and the info log */
+		fprintf(stderr, "sceneInit(): Program linking failed: %s\n", log);
+		free(log);
+
+		/* delete the program */
+		glDeleteProgram(gProgram);
+		gProgram = 0;
+	}
+}
+
+std::string mvImageApp::shaderRead(std::string pathName) {
+
+  std::string shaderString;
+  
+#ifdef DEBUG
+  std::cout << "Reading from file = " << pathName << std::endl;
+#endif
+  ifstream file(pathName.c_str());
+
+  if(file.is_open()) {
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.rdbuf()->str();
+    
+  } else {
+
+    throw std::runtime_error("Error opening file " + pathName);
+
+  }
+  return std::string("");
+}
+
+
+// Returns a shader object containing a shader compiled from the given
+// GLSL shader file.
+GLuint mvImageApp::shaderCompile(const GLenum type, const std::string pathName) {
+  std::string shaderSource;
+	GLuint shader;
+	GLint length, result;
+
+	/* get shader source */
+	shaderSource = shaderRead(pathName);
+	if (shaderSource.size() == 0) return 0;
+
+	/* create shader object, set the source, and compile */
+	shader = glCreateShader(type);
+  length = shaderSource.size();
+  // The cast in the following line is there because of a bug in the gl.h
+  // header file (missing comma) on Mac OSX 10.10
+  glShaderSource(shader, 1, (const char **)shaderSource.c_str(), &length);
+	glCompileShader(shader);
+
+	/* make sure the compilation was successful */
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+	if(result == GL_FALSE) {
+		char *log;
+
+		/* get the shader info log */
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+		log = (char*)malloc(length);
+		glGetShaderInfoLog(shader, length, &result, log);
+
+		/* print an error message and the info log */
+    std::cerr << "ERR: Unable to compile " << pathName << ": " << log << std::endl;
+		free(log);
+    //    throw std::runtime_error("Unable to compile " + pathName + ": " +
+    //                             std::string(log));
+    
+		glDeleteShader(shader);
+		return 0;
+	}
+
+	return shader;
+}
+
+// Compiles and attaches a shader of the given type to the given
+// program object.
+void mvImageApp::shaderAttach(const GLuint program,
+                              const GLenum type,
+                              const std::string pathName) {
+	// compile the shader
+	GLuint shader = shaderCompile(type, pathName);
+	if(shader != 0) {
+		// attach the shader to the program 
+		glAttachShader(program, shader);
+
+		// delete the shader - it won't actually be destroyed until the
+		// program that it's attached to has been destroyed.
+		glDeleteShader(shader);
+	}
+}
+
+
 mvImageApp::mvImageApp(int argc, char** argv) :
   _vrMain(NULL), _quit(false) {
 
   _vrMain = new MinVR::VRMain();
 
-  _images = mvImage::mvImages();
-
-  mvImage::mvImage* img1 = new mvImage::mvImage("trash.png");
-  
-  _images.addImage(std::string("first"), img1);
-
-  // glGenVertexArraysAPPLE(1, &_vertexArrayID);
-  // glBindVertexArray(_vertexArrayID);
-  
-  std::string configFile = argv[1];
-  _vrMain->initialize(argc, argv, configFile);
+  // The first argument is an initialization file for the images.  Remove that
+  // from the argument list and pass the rest to MinVR.
+  if (argc < 3) {
+    throw std::runtime_error("Need two config files, for mvImage and MinVR.");
+  }
+  std::string MVIConfigFile = std::string(argv[1]);
+  std::string MinVRConfigFile = std::string(argv[2]);
+      
+  _vrMain->initialize(argc, argv, MinVRConfigFile);
   _vrMain->addEventHandler(this);
   _vrMain->addRenderHandler(this);
 
@@ -24,6 +141,43 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   _vertAngle = 0.0;
   _radius = 15.0;
   _incAngle = -0.1f;
+
+  _vrMain->getConfig()->processXMLFile(MVIConfigFile);
+  // std::cout << _vrMain->getConfig()->printStructure() << std::endl;
+  
+  // Do the graphics initialization.
+  graphicsInit(_vrMain->getConfig());
+
+  // Parse the image data out of the image config information.
+  MinVR::VRContainer imgs = _vrMain->getConfig()->getValue("/mvImage/images");
+  for (MinVR::VRContainer::iterator it = imgs.begin(); it != imgs.end(); it++) {
+
+    std::string file =
+      _vrMain->getConfig()->getValue((*it) + "/imageFile", "/mvImage/images");
+
+    // Initialize the image.
+    mvImage* img = new mvImage(file);
+
+    // Modify the image shape.
+    std::string shape =
+      _vrMain->getConfig()->getValue((*it) + "/shape", "/mvImage/images");
+    img->getShape()->setShape(shape);
+
+    // Modify the image center.
+    MinVR::VRDoubleArray center =
+      _vrMain->getConfig()->getValue((*it) + "/center", "/mvImage/images");
+    img->getShape()->getCenter().set(center);
+
+    // Modify the image dimensions.  This will eventually vary with the
+    // specific shape.  For now, we are just doing rectangles.
+    MinVR::VRDoubleArray dims =
+      _vrMain->getConfig()->getValue((*it) + "/dimension", "/mvImage/images");
+    img->getShape()->setDims(dims);    
+    
+    _images.addImage(*it, img);
+    
+    std::cout << *it << std::endl;
+  }  
 }
 
 mvImageApp::~mvImageApp() {
@@ -65,16 +219,16 @@ void mvImageApp::lookAt(float eyeX, float eyeY, float eyeZ,
                         float centerX, float centerY, float centerZ,
                         float upX, float upY, float upZ) {
 
-  VRVector3 forward, side, up;
+  MinVR::VRVector3 forward, side, up;
   float m[4][4];
 
   // Normalize and straighten out the input directions.
-  forward = VRVector3(centerX - eyeX, centerY - eyeY, centerZ - eyeZ).normalize();
-  side = forward.cross( VRVector3(upX, upY, upZ) ).normalize();
+  forward = MinVR::VRVector3(centerX - eyeX, centerY - eyeY, centerZ - eyeZ).normalize();
+  side = forward.cross( MinVR::VRVector3(upX, upY, upZ) ).normalize();
   up = side.cross(forward);
 
   // Insert them into a view matrix.
-  VRMatrix4 M;
+  MinVR::VRMatrix4 M;
   M[0][0] = side[0];
   M[1][0] = side[1];
   M[2][0] = side[2];
@@ -94,7 +248,7 @@ void mvImageApp::lookAt(float eyeX, float eyeY, float eyeZ,
   glTranslated(-eyeX, -eyeY, -eyeZ);
 }
 
-void mvImageApp::onVREvent(const std::string &eventName, VRDataIndex *eventData) {
+void mvImageApp::onVREvent(const std::string &eventName, MinVR::VRDataIndex *eventData) {
 
   //std::cout << "Event: " << eventName << std::endl;                    
   if (eventName == "/KbdEsc_Down") {
@@ -120,14 +274,14 @@ void mvImageApp::onVREvent(const std::string &eventName, VRDataIndex *eventData)
   if (_vertAngle < 0.0) _vertAngle += TWOPI;
 }
 
-void mvImageApp::onVRRenderContext(VRDataIndex *renderState, 
+void mvImageApp::onVRRenderContext(MinVR::VRDataIndex *renderState, 
 				   MinVR::VRDisplayNode *callingNode) {
   if (!renderState->exists("IsConsole", "/")) {
   }
 }
 
 // Callback for rendering, inherited from VRRenderHandler                      
-void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
+void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
                                  MinVR::VRDisplayNode *callingNode) {
   if (renderState->exists("IsConsole", "/")) {
     MinVR::VRConsoleNode *console = dynamic_cast<MinVR::VRConsoleNode*>(callingNode);
@@ -152,7 +306,7 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
 
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      VRMatrix4 P = renderState->getValue("ProjectionMatrix", "/");
+      MinVR::VRMatrix4 P = renderState->getValue("ProjectionMatrix", "/");
       glLoadMatrixd(P.m);
 
       glMatrixMode(GL_MODELVIEW);
@@ -164,11 +318,11 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
       // Guideline: In VR, put all of the "scene navigation" into the
       // Model matrix and leave the Projection and View matrices for
       // head tracking.
-      VRMatrix4 M = VRMatrix4::translation(VRVector3(0.0, 0.0, -_radius)) *
-        VRMatrix4::rotationX(_vertAngle) *
-        VRMatrix4::rotationY(_horizAngle);
+      MinVR::VRMatrix4 M = MinVR::VRMatrix4::translation(MinVR::VRVector3(0.0, 0.0, -_radius)) *
+        MinVR::VRMatrix4::rotationX(_vertAngle) *
+        MinVR::VRMatrix4::rotationY(_horizAngle);
 
-      VRMatrix4 V = renderState->getValue("ViewMatrix", "/");
+      MinVR::VRMatrix4 V = renderState->getValue("ViewMatrix", "/");
       glLoadMatrixd((V * M).m);
     } else {
       // If the DisplayGraph does not contain a node that sets the
@@ -218,8 +372,6 @@ void mvImageApp::onVRRenderScene(VRDataIndex *renderState,
 }
 
 int main(int argc, char **argv) {
-
-  mvImage::mvImage m = mvImage::mvImage("trash.png");
 
   mvImageApp app(argc, argv);
   app.run();

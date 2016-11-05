@@ -35,6 +35,19 @@ class mvPoint {
     x = (double)p[0]; y = (double)p[1]; z = (double)p[2]; };
 };
 
+class mvQuat {
+ public:
+  double x;
+  double y;
+  double z;
+  double w;
+
+  void set(MinVR::VRDoubleArray p) { x = p[0]; y = p[1]; z = p[2]; w = p[3]; };
+  void set(MinVR::VRIntArray p) {
+    x = (double)p[0]; y = (double)p[1]; z = (double)p[2]; w = (double)p[3]; };
+};
+
+
 enum mvDrawBuffer { UNSET, BOTH, LEFT, RIGHT };
 enum mvLayerType {LAYER, IMAGE, SHAPE, GROUP };
 
@@ -44,12 +57,17 @@ class mvImageData {
  protected:
   std::string _fileName;
 
+  GLuint _textureID;
+
  public:
- mvImageData(const std::string fileName) : _fileName(fileName) {};
+  mvImageData(std::string fileName);
   virtual ~mvImageData() {};
   
-  std::string getFileName() { return _fileName; };
+  std::string getFileName() const { return _fileName; };
 
+  void useTexture() {
+    glBindTexture(GL_TEXTURE_2D, _textureID);
+  };
 };
 
 // An object to hold the shape data for the object on which the
@@ -58,19 +76,19 @@ class mvImageData {
 // with different shapes later.
 class mvImageShape {
  protected:
-  mvPoint _center;
-  MinVR::VRDoubleArray _dims;
+  MinVR::VRMatrix4 _transform;
   std::string _shape;
 
  public:
-  mvPoint getCenter() { return _center; };
-  void setCenter(mvPoint center) { _center = center; };
+  mvImageShape() {};
+ mvImageShape(MinVR::VRMatrix4 transform) : _transform(transform) {};
+  virtual ~mvImageShape() {};
+  
+  MinVR::VRMatrix4 getTransform() { return _transform; };
+  void setTransform(MinVR::VRMatrix4 transform) { _transform = transform; };
 
-  virtual void setDims(MinVR::VRDoubleArray dims) {_dims = dims; };
   void setShape(std::string shape) { _shape = shape; };
-
   std::string getShape() { return _shape; };
-  MinVR::VRDoubleArray getDims() { return _dims; };
   
   // The draw() function here has imageData as an input and draws each
   // polygon of the shape after first checking with the imageData
@@ -79,6 +97,23 @@ class mvImageShape {
   
 };
 
+class mvImageShapeRectangle : public mvImageShape {
+ protected:
+  double _height, _width;
+  mvPoint _normal;
+  GLfloat _vertices[32];
+  
+ public:
+ mvImageShapeRectangle(MinVR::VRMatrix4 transform, double height, double width) :
+  mvImageShape(transform), _height(height), _width(width) {
+    
+    setShape("rectangle");
+    setTransform(transform);
+  };
+
+  void setTransform(MinVR::VRMatrix4 transform);
+  void draw(const mvImageData* img);
+};
 
 // A class to hold an image object.  This is a 3D object located in
 // space somewhere, textured with an input image read from a file.
@@ -88,7 +123,6 @@ class mvImage {
   double _alpha;
   double _scale;
   bool _visible;
-  mvPoint _center;
   double meterspp;
 
   std::string _name;
@@ -97,8 +131,9 @@ class mvImage {
   mvLayerType _type;
 
   double gamma, gmin, gmax;
-  MinVR::VRMatrix4 transform;
+  // The imageData object contains the image.
   mvImageData* imageData;
+  // imageShape contains the shape and the location in space.
   mvImageShape* imageShape;
   
  public:
@@ -108,12 +143,13 @@ class mvImage {
  };
   virtual ~mvImage() {};
 
+  std::string getFileName() const { return imageData->getFileName(); };
+
   mvImageData* getImage() { return imageData; };
-  std::string getFileName() { return imageData->getFileName(); };
   void setImage(mvImageData* imgData) { imageData = imgData; };
   
   mvImageShape* getShape() { return imageShape; };
-  void setImage(mvImageShape* shapeData) { imageShape = shapeData; };
+  void setShape(mvImageShape* shapeData) { imageShape = shapeData; };
   
   virtual void draw();
   

@@ -28,7 +28,7 @@ void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
 		glGetProgramInfoLog(gProgram, length, &result, log);
 
 		/* print an error message and the info log */
-		fprintf(stderr, "sceneInit(): Program linking failed: %s\n", log);
+    std::cerr << "Program linking failed: " << std::string(log) << std::endl;
 		free(log);
 
 		/* delete the program */
@@ -143,7 +143,7 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   _incAngle = -0.1f;
 
   _vrMain->getConfig()->processXMLFile(MVIConfigFile);
-  // std::cout << _vrMain->getConfig()->printStructure() << std::endl;
+  std::cout << _vrMain->getConfig()->printStructure() << std::endl;
   
   // Do the graphics initialization.
   graphicsInit(_vrMain->getConfig());
@@ -158,25 +158,28 @@ mvImageApp::mvImageApp(int argc, char** argv) :
     // Initialize the image.
     mvImage* img = new mvImage(file);
 
-    // Modify the image shape.
+    // Read the image shape and create a corresponding image object.
     std::string shape =
       _vrMain->getConfig()->getValue((*it) + "/shape", "/mvImage/images");
-    img->getShape()->setShape(shape);
 
-    // Modify the image center.
-    MinVR::VRDoubleArray center =
-      _vrMain->getConfig()->getValue((*it) + "/center", "/mvImage/images");
-    img->getShape()->getCenter().set(center);
+    // Read the image shape's dimensions. (For now we're just doing
+    // rectangles.)
+    double height =
+      _vrMain->getConfig()->getValue((*it) + "/height", "/mvImage/images");
+    double width =
+      _vrMain->getConfig()->getValue((*it) + "/width", "/mvImage/images");
+    
+    // Find the shape's position and orientation.
+    MinVR::VRMatrix4 transform =
+      _vrMain->getConfig()->getValue((*it) + "/transform", "/mvImage/images");
 
-    // Modify the image dimensions.  This will eventually vary with the
-    // specific shape.  For now, we are just doing rectangles.
-    MinVR::VRDoubleArray dims =
-      _vrMain->getConfig()->getValue((*it) + "/dimension", "/mvImage/images");
-    img->getShape()->setDims(dims);    
+    mvImageShapeRectangle* rect =
+      new mvImageShapeRectangle(transform, height, width);
+    img->setShape(rect);
     
     _images.addImage(*it, img);
     
-    std::cout << *it << std::endl;
+    // std::cout << "adding: " << *it << std::endl;
   }  
 }
 
@@ -292,7 +295,8 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
     glDepthFunc(GL_LEQUAL);
     glClearDepth(1.0f);
     glClearColor(0.0, 0.0, 0.0, 1.f);
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_2D);
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
 

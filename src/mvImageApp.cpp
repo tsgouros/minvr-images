@@ -10,31 +10,68 @@ void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
   std::string fragmentShader =
     index->dereferenceEnvVars(index->getValue("/mvImage/shaders/fragment"));
   
-	/* create program object and attach shaders */
+	// create program object and attach shaders 
 	gProgram = glCreateProgram();
 	shaderAttach(gProgram, GL_VERTEX_SHADER, vertexShader);
 	shaderAttach(gProgram, GL_FRAGMENT_SHADER, fragmentShader);
 
-	/* link the program and make sure that there were no errors */
+	// link the program and make sure that there were no errors 
 	glLinkProgram(gProgram);
 	glGetProgramiv(gProgram, GL_LINK_STATUS, &result);
 	if(result == GL_FALSE) {
 		GLint length;
 		char *log;
 
-		/* get the program info log */
+		// get the program info log 
 		glGetProgramiv(gProgram, GL_INFO_LOG_LENGTH, &length);
 		log = (char*)malloc(length);
 		glGetProgramInfoLog(gProgram, length, &result, log);
 
-		/* print an error message and the info log */
+		// print an error message and the info log 
     std::cerr << "Program linking failed: " << std::string(log) << std::endl;
 		free(log);
 
-		/* delete the program */
+		// delete the program 
 		glDeleteProgram(gProgram);
 		gProgram = 0;
 	}
+
+  // get uniform locations 
+	gProgramCameraPositionLocation = glGetUniformLocation(gProgram, "cameraPosition");
+	gProgramLightPositionLocation = glGetUniformLocation(gProgram, "lightPosition");
+	gProgramLightColorLocation = glGetUniformLocation(gProgram, "lightColor");
+
+	// set up red/green/blue lights 
+	gLightColor[0] = 1.0f; gLightColor[1] = 0.0f; gLightColor[2] = 0.0f;
+	gLightColor[3] = 0.0f; gLightColor[4] = 1.0f; gLightColor[5] = 0.0f;
+	gLightColor[6] = 0.0f; gLightColor[7] = 0.0f; gLightColor[8] = 1.0f;
+
+	// create cylinder 
+	_images.create();
+
+	// do the first cycle to initialize positions 
+	gLightRotation = 0.0f;
+  //	sceneCycle();
+
+	// setup camera 
+	gCameraPosition[0] = 0.0f;
+	gCameraPosition[1] = 0.0f;
+	gCameraPosition[2] = 4.0f;
+	glLoadIdentity();
+	glTranslatef(-gCameraPosition[0], -gCameraPosition[1], -gCameraPosition[2]);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LEQUAL);
+  glClearDepth(1.0f);
+  glClearColor(0.0, 0.0, 0.0, 1.f);
+  glDisable(GL_CULL_FACE);
+  glEnable(GL_TEXTURE_2D);
+  glFrontFace(GL_CCW);
+  glCullFace(GL_BACK);
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  //glClear(GL_DEPTH_BUFFER_BIT);                                
+  
 }
 
 std::string mvImageApp::shaderRead(std::string pathName) {
@@ -67,11 +104,11 @@ GLuint mvImageApp::shaderCompile(const GLenum type, const std::string pathName) 
 	GLuint shader;
 	GLint length, result;
 
-	/* get shader source */
+	// get shader source 
 	shaderSource = shaderRead(pathName);
 	if (shaderSource.size() == 0) return 0;
 
-	/* create shader object, set the source, and compile */
+	// create shader object, set the source, and compile 
 	shader = glCreateShader(type);
   length = shaderSource.size();
   // The cast in the following line is there because of a bug in the gl.h
@@ -79,17 +116,17 @@ GLuint mvImageApp::shaderCompile(const GLenum type, const std::string pathName) 
   glShaderSource(shader, 1, (const char **)shaderSource.c_str(), &length);
 	glCompileShader(shader);
 
-	/* make sure the compilation was successful */
+	// make sure the compilation was successful 
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
 	if(result == GL_FALSE) {
 		char *log;
 
-		/* get the shader info log */
+		// get the shader info log 
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
 		log = (char*)malloc(length);
 		glGetShaderInfoLog(shader, length, &result, log);
 
-		/* print an error message and the info log */
+		// print an error message and the info log 
     std::cerr << "ERR: Unable to compile " << pathName << ": " << log << std::endl;
 		free(log);
     //    throw std::runtime_error("Unable to compile " + pathName + ": " +
@@ -287,21 +324,11 @@ void mvImageApp::onVRRenderContext(MinVR::VRDataIndex *renderState,
 void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
                                  MinVR::VRDisplayNode *callingNode) {
   if (renderState->exists("IsConsole", "/")) {
-    MinVR::VRConsoleNode *console = dynamic_cast<MinVR::VRConsoleNode*>(callingNode);
+    MinVR::VRConsoleNode *console =
+      dynamic_cast<MinVR::VRConsoleNode*>(callingNode);
     console->println("Console output...");
   } else {
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glClearDepth(1.0f);
-    glClearColor(0.0, 0.0, 0.0, 1.f);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_TEXTURE_2D);
-    glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    //glClear(GL_DEPTH_BUFFER_BIT);                                
 
     if (renderState->exists("ProjectionMatrix", "/")) {
       // This is the typical case where the MinVR DisplayGraph contains      
@@ -322,7 +349,8 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
       // Guideline: In VR, put all of the "scene navigation" into the
       // Model matrix and leave the Projection and View matrices for
       // head tracking.
-      MinVR::VRMatrix4 M = MinVR::VRMatrix4::translation(MinVR::VRVector3(0.0, 0.0, -_radius)) *
+      MinVR::VRMatrix4 M =
+        MinVR::VRMatrix4::translation(MinVR::VRVector3(0.0, 0.0, -_radius)) *
         MinVR::VRMatrix4::rotationX(_vertAngle) *
         MinVR::VRMatrix4::rotationY(_horizAngle);
 
@@ -350,9 +378,9 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
       cameraAim[2] = sin(_horizAngle) * sin(_vertAngle);
 
       float targetPos[3] = {0.0f, 0.0f, 0.0f};
-      lookAt (cameraPos[0], cameraPos[1], cameraPos[2],
-              targetPos[0], targetPos[1], targetPos[2],
-              cameraAim[0], cameraAim[1], cameraAim[2]);
+      lookAt(cameraPos[0], cameraPos[1], cameraPos[2],
+             targetPos[0], targetPos[1], targetPos[2],
+             cameraAim[0], cameraAim[1], cameraAim[2]);
     }
 
     // Draw some axes because why not.

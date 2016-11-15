@@ -45,22 +45,28 @@ mvImageData::mvImageData(std::string fileName) : _fileName(fileName) {
    fclose(file);
 
    // Create one OpenGL texture
-   glGenTextures(1, &_textureID);
+   glGenTextures(1, &_gTextureID);
 
    // "Bind" the newly created texture : all future texture functions
    // will modify this texture
-   glBindTexture(GL_TEXTURE_2D, _textureID);
+   glBindTexture(GL_TEXTURE_2D, _gTextureID);
 
    // Give the image to OpenGL
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
                 GL_BGR, GL_UNSIGNED_BYTE, data);
 
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   //   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   //   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
  }
 
 
 // mvImageShape here
+
+void mvImageShape::create() {};
 
 void mvImageShape::draw(const mvImageData* img) {
 
@@ -149,7 +155,9 @@ void mvImageShapeRectangle::setTransform(MinVR::VRMatrix4 transform) {
     
   // Move rectangle to proper location, orientation.
   for (int i = 0; i < 4; i++ ) {
-    MinVR::VRVector3 tmp = MinVR::VRVector3(_vertices[0 + 8*i], _vertices[1 + 8*i], _vertices[2 + 8*i]);
+    MinVR::VRVector3 tmp = MinVR::VRVector3(_vertices[0 + 8*i],
+                                            _vertices[1 + 8*i],
+                                            _vertices[2 + 8*i]);
     MinVR::VRVector3 out = _transform * tmp;
     _vertices[0 + 8*i] = out.x;
     _vertices[1 + 8*i] = out.y;
@@ -157,18 +165,19 @@ void mvImageShapeRectangle::setTransform(MinVR::VRMatrix4 transform) {
   }
 }
 
+void mvImageShapeRectangle::create() {};
 
 void mvImageShapeRectangle::draw(const mvImageData* img) {
 
   glPushMatrix();
-
+  glMultMatrixd(_transform.m);
   glBegin(GL_QUADS); 
   // Define vertices in counter-clockwise (CCW) order with normal pointing out
   glColor3f(0.0f, 0.5f, 0.0f);     // Green
   for (int i = 0; i < 4; i++) {
+    glVertex3f(_vertices[0 + 8*i], _vertices[1 + 8*i], _vertices[2 + 8*i]);
     glColor3f(_vertices[3 + 8*i], _vertices[4 + 8*i], _vertices[5 + 8*i]);
     glTexCoord2f(_vertices[6 + 8*i], _vertices[7 + 8*i]);
-    glVertex3f(_vertices[0 + 8*i], _vertices[1 + 8*i], _vertices[2 + 8*i]);
   }
   glEnd();  // End of drawing color-cube                                       
   glPopMatrix();
@@ -191,6 +200,15 @@ void mvImages::draw() {
   for (imageMap::iterator it = images.begin();
        it != images.end(); it++) {
     it->second->draw();
+  }
+};
+
+// Loop through each of the image objects in the list and create them.
+// This involves initializing the vertex buffers and positions and so on.
+void mvImages::create() {
+  for (imageMap::iterator it = images.begin();
+       it != images.end(); it++) {
+    it->second->create();
   }
 };
 

@@ -57,7 +57,7 @@ class mvImageData {
  protected:
   std::string _fileName;
 
-  GLuint _textureID;
+  GLuint _gTextureID;
 
  public:
   mvImageData(std::string fileName);
@@ -66,7 +66,7 @@ class mvImageData {
   std::string getFileName() const { return _fileName; };
 
   void useTexture() {
-    glBindTexture(GL_TEXTURE_2D, _textureID);
+    glBindTexture(GL_TEXTURE_2D, _gTextureID);
   };
 };
 
@@ -78,7 +78,8 @@ class mvImageShape {
  protected:
   MinVR::VRMatrix4 _transform;
   std::string _shape;
-
+  GLuint _gBufferId;
+  
  public:
   mvImageShape() {};
  mvImageShape(MinVR::VRMatrix4 transform) : _transform(transform) {};
@@ -94,7 +95,11 @@ class mvImageShape {
   // polygon of the shape after first checking with the imageData
   // object for the appropriate mipmap.
   virtual void draw(const mvImageData* img);
-  
+
+  // Create is used to create the vertex buffers and set the pointers for
+  // the shape.  Initializing the vertex arrays can go in there, too, but that
+  // probably should have been done in the constructor.
+  virtual void create();
 };
 
 class mvImageShapeRectangle : public mvImageShape {
@@ -113,6 +118,7 @@ class mvImageShapeRectangle : public mvImageShape {
 
   void setTransform(MinVR::VRMatrix4 transform);
   void draw(const mvImageData* img);
+  void create();
 };
 
 // A class to hold an image object.  This is a 3D object located in
@@ -150,9 +156,10 @@ class mvImage {
   
   mvImageShape* getShape() { return imageShape; };
   void setShape(mvImageShape* shapeData) { imageShape = shapeData; };
+
+  void create() { imageShape->create(); };
   
   virtual void draw();
-  
 };
 
 // Holds a collection of mvImage objects.
@@ -164,6 +171,7 @@ class mvImages {
   imageMap images;
 
  public:
+  void create();
   void draw();
   std::string addImage(mvImage* image);
   std::string addImage(const std::string name, mvImage* image);

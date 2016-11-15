@@ -34,6 +34,15 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   mvImages _images;
 
   GLuint gProgram;
+  GLuint gProgramCameraPositionLocation;
+  GLuint gProgramLightPositionLocation;
+  GLuint gProgramLightColorLocation;
+
+  float gCameraPosition[3];
+#define NUM_LIGHTS 3
+  float gLightPosition[NUM_LIGHTS * 3];
+  float gLightColor[NUM_LIGHTS * 3];
+  float gLightRotation;
   
   //GLuint _vertexArrayID;
 
@@ -57,7 +66,7 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   virtual void onVRRenderContext(MinVR::VRDataIndex *renderState, 
                                  MinVR::VRDisplayNode *callingNode);
   void onVRRenderScene(MinVR::VRDataIndex *renderState, 
-                               MinVR::VRDisplayNode *callingNode);
+                       MinVR::VRDisplayNode *callingNode);
 
   void run() { while (!_quit) { _vrMain->mainloop(); } };
 

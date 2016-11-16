@@ -179,7 +179,7 @@ void mvImageShapeRectangle::draw(const mvImageData* img) {
     glColor3f(_vertices[3 + 8*i], _vertices[4 + 8*i], _vertices[5 + 8*i]);
     glTexCoord2f(_vertices[6 + 8*i], _vertices[7 + 8*i]);
   }
-  glEnd();  // End of drawing color-cube                                       
+  glEnd();  // End of drawing quad
   glPopMatrix();
   
 }
@@ -188,7 +188,6 @@ void mvImageShapeRectangle::draw(const mvImageData* img) {
 // mvImage here
 void mvImage::draw() {
 
-  getImage()->useTexture();
   imageShape->draw(imageData);  
  
 }

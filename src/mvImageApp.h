@@ -30,19 +30,21 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   bool _quit;
   float _horizAngle, _vertAngle, _radius, _incAngle;
 
+  unsigned long int _lastMilliSeconds;
+  
   // These are the objects that will be drawn.
   mvImages _images;
 
-  GLuint gProgram;
-  GLuint gProgramCameraPositionLocation;
-  GLuint gProgramLightPositionLocation;
-  GLuint gProgramLightColorLocation;
+  GLuint _gProgram;
+  GLuint _gProgramCameraPositionLocation;
+  GLuint _gProgramLightPositionLocation;
+  GLuint _gProgramLightColorLocation;
 
-  float gCameraPosition[3];
+  float _gCameraPosition[3];
 #define NUM_LIGHTS 3
-  float gLightPosition[NUM_LIGHTS * 3];
-  float gLightColor[NUM_LIGHTS * 3];
-  float gLightRotation;
+  float _gLightPosition[NUM_LIGHTS * 3];
+  float _gLightColor[NUM_LIGHTS * 3];
+  float _gLightRotation;
   
   //GLuint _vertexArrayID;
 
@@ -57,6 +59,11 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   void shaderAttach(const GLuint program,
                     const GLenum type, const std::string pathName);
 
+  float getElapsedSeconds(void);
+
+  void makeSolidSphere(GLdouble radius, GLint slices, GLint stacks);
+  void fghCircleTable(double **sint,double **cost,const int n);
+  
  public:
   mvImageApp(int argc, char** argv);
   virtual ~mvImageApp();

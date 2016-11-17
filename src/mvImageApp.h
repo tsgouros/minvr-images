@@ -23,18 +23,19 @@
 
 // An object to encapsulate a lot of working information about the
 // running program: viewer position, collection of mvImage objects to
-// display, and so on.
+// display, and so on.  The overall graphics context is handled here,
+// and the mvImage objects are used to handle the objects that appear
+// in the scene.
 class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler  {
  protected:
   MinVR::VRMain *_vrMain;
   bool _quit;
   float _horizAngle, _vertAngle, _radius, _incAngle;
 
-  unsigned long int _lastMilliSeconds;
-  
   // These are the objects that will be drawn.
   mvImages _images;
 
+  // The OpenGL details.
   GLuint _gProgram;
   GLuint _gProgramCameraPositionLocation;
   GLuint _gProgramLightPositionLocation;
@@ -46,12 +47,6 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   float _gLightColor[NUM_LIGHTS * 3];
   float _gLightRotation;
   
-  //GLuint _vertexArrayID;
-
-  static void setPerspective(float fov, float aspect, float near, float far);
-  static void lookAt(float eyeX, float eyeY, float eyeZ,
-                     float centerX, float centerY, float centerZ,
-                     float upX, float upY, float upZ);
   void graphicsInit(MinVR::VRDataIndex* index);
   
   std::string shaderRead(const std::string pathName);
@@ -59,10 +54,14 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   void shaderAttach(const GLuint program,
                     const GLenum type, const std::string pathName);
 
-  float getElapsedSeconds(void);
+  static void setPerspective(float fov, float aspect, float near, float far);
+  static void lookAt(float eyeX, float eyeY, float eyeZ,
+                     float centerX, float centerY, float centerZ,
+                     float upX, float upY, float upZ);
 
-  void makeSolidSphere(GLdouble radius, GLint slices, GLint stacks);
-  void fghCircleTable(double **sint,double **cost,const int n);
+  // Used for animation features.
+  unsigned long int _lastMilliSeconds;
+  float getElapsedSeconds(void);
   
  public:
   mvImageApp(int argc, char** argv);

@@ -1,0 +1,33 @@
+<mvImage>
+
+  <shaders>
+    <vertex>/Users/tomfool/tech/16/yurt/minvr-images/src/data/shader.vp</vertex>
+    <fragment>/Users/tomfool/tech/16/yurt/minvr-images/src/data/shader.fp</fragment>
+  </shaders>
+
+  <images>
+    <test1>
+      <imageFile>/Users/tomfool/tech/16/yurt/minvr-images/src/e.bmp</imageFile>
+      <shape>rectangle</shape>
+      <height>2.0</height>
+      <width>3.0</width>
+      <position>1.0,1.0,1.0</position>
+      <angle>45</angle>
+    </test1>
+    <test2>
+      <imageFile>/Users/tomfool/tech/16/yurt/minvr-images/src/e.bmp</imageFile>
+      <shape>box</shape>
+      <height>2.0</height>
+      <width>3.0</width>
+      <depth>1.5</depth>
+      <position>0.0,1.0,2.0</position>
+    </test2>
+    <test3>
+      <imageFile>/Users/tomfool/tech/16/yurt/minvr-images/src/e.bmp</imageFile>
+      <shape>sphere</shape>
+      <radius>0.5</radius>
+      <position>-1.0,0.0,-1.0</position>
+    </test3>
+  </images>
+  
+</mvImage>

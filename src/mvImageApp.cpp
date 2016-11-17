@@ -1,127 +1,7 @@
 #include "mvImage.h"
 #include "mvImageApp.h"
 
-void mvImageApp::fghCircleTable(double **sint,double **cost,const int n) {
-  int i;
 
-  /* Table size, the sign of n flips the circle direction */
-
-  const int size = abs(n);
-
-  /* Determine the angle between samples */
-
-  const double angle = 2*M_PI/(double)( ( n == 0 ) ? 1 : n );
-
-  /* Allocate memory for n samples, plus duplicate of first entry at the end */
-
-  *sint = (double *) calloc(sizeof(double), size+1);
-  *cost = (double *) calloc(sizeof(double), size+1);
-
-  /* Bail out if memory allocation fails, fgError never returns */
-
-  if (!(*sint) || !(*cost)) {
-    free(*sint);
-    free(*cost);
-    std::cout << "Failed to allocate memory in fghCircleTable" << std::endl;
-  }
-
-  /* Compute cos and sin around the circle */
-
-  (*sint)[0] = 0.0;
-  (*cost)[0] = 1.0;
-
-  for (i=1; i<size; i++) {
-    (*sint)[i] = sin(angle*i);
-    (*cost)[i] = cos(angle*i);
-  }
-
-  /* Last sample is duplicate of the first */
-
-  (*sint)[size] = (*sint)[0];
-  (*cost)[size] = (*cost)[0];
-}
-
-/*
- * Draws a solid sphere.  Stolen from freeglut because I didn't want
- * to import the whole thing.
- */
-void mvImageApp::makeSolidSphere(GLdouble radius, GLint slices, GLint stacks) {
-  int i,j;
-
-  /* Adjust z and radius as stacks are drawn. */
-
-  double z0,z1;
-  double r0,r1;
-
-  /* Pre-computed circle */
-
-  double *sint1,*cost1;
-  double *sint2,*cost2;
-
-  fghCircleTable(&sint1,&cost1,-slices);
-  fghCircleTable(&sint2,&cost2,stacks*2);
-
-  /* The top stack is covered with a triangle fan */
-
-  z0 = 1.0;
-  z1 = cost2[(stacks>0)?1:0];
-  r0 = 0.0;
-  r1 = sint2[(stacks>0)?1:0];
-
-  glBegin(GL_TRIANGLE_FAN);
-
-  glNormal3d(0,0,1);
-  glVertex3d(0,0,radius);
-
-  for (j=slices; j>=0; j--) {
-    glNormal3d(cost1[j]*r1,        sint1[j]*r1,        z1       );
-    glVertex3d(cost1[j]*r1*radius, sint1[j]*r1*radius, z1*radius);
-  }
-
-  glEnd();
-
-  /* Cover each stack with a quad strip, except the top and bottom stacks */
-
-  for( i=1; i<stacks-1; i++ ) {
-    z0 = z1; z1 = cost2[i+1];
-    r0 = r1; r1 = sint2[i+1];
-
-    glBegin(GL_QUAD_STRIP);
-
-    for(j=0; j<=slices; j++) {
-      glNormal3d(cost1[j]*r1,        sint1[j]*r1,        z1       );
-      glVertex3d(cost1[j]*r1*radius, sint1[j]*r1*radius, z1*radius);
-      glNormal3d(cost1[j]*r0,        sint1[j]*r0,        z0       );
-      glVertex3d(cost1[j]*r0*radius, sint1[j]*r0*radius, z0*radius);
-    }
-
-    glEnd();
-  }
-
-  /* The bottom stack is covered with a triangle fan */
-
-  z0 = z1;
-  r0 = r1;
-
-  glBegin(GL_TRIANGLE_FAN);
-
-  glNormal3d(0,0,-1);
-  glVertex3d(0,0,-radius);
-
-  for (j=0; j<=slices; j++) {
-    glNormal3d(cost1[j]*r0,        sint1[j]*r0,        z0       );
-    glVertex3d(cost1[j]*r0*radius, sint1[j]*r0*radius, z0*radius);
-  }
-
-  glEnd();
-
-  /* Release sin and cos tables */
-
-  free(sint1);
-  free(cost1);
-  free(sint2);
-  free(cost2);
-}
 
 
 void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
@@ -131,70 +11,33 @@ void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
     index->dereferenceEnvVars(index->getValue("/mvImage/shaders/vertex"));
   std::string fragmentShaderFile =
     index->dereferenceEnvVars(index->getValue("/mvImage/shaders/fragment"));
-  
-	// create program object and attach shaders 
-	_gProgram = glCreateProgram();
-	shaderAttach(_gProgram, GL_VERTEX_SHADER, vertexShaderFile);
-	shaderAttach(_gProgram, GL_FRAGMENT_SHADER, fragmentShaderFile);
 
-	// link the program and make sure that there were no errors 
-	glLinkProgram(_gProgram);
-	glGetProgramiv(_gProgram, GL_LINK_STATUS, &result);
-	if(result == GL_FALSE) {
-		GLint length;
-		char *log;
+  std::cout << "initialize graphics using shaders: " << vertexShaderFile << " and " << fragmentShaderFile << std::endl;
 
-		// get the program info log 
-		glGetProgramiv(_gProgram, GL_INFO_LOG_LENGTH, &length);
-		log = (char*)malloc(length);
-		glGetProgramInfoLog(_gProgram, length, &result, log);
+  std::cout << "create program object and attach shaders" << std::endl;
 
-		// print an error message and the info log 
-    std::cerr << "Program linking failed: " << std::string(log) << std::endl;
-		free(log);
+  std::cout << "link the program and make sure there were no errors" << std::endl;
 
-		// delete the program 
-		glDeleteProgram(_gProgram);
-		_gProgram = 0;
-	}
+  std::cout << "get uniform locations" << std::endl;
+	// _gProgramCameraPositionLocation = glGetUniformLocation(_gProgram, "cameraPosition");
+	// _gProgramLightPositionLocation = glGetUniformLocation(_gProgram, "lightPosition");
+	// _gProgramLightColorLocation = glGetUniformLocation(_gProgram, "lightColor");
 
-  // get uniform locations 
-	_gProgramCameraPositionLocation = glGetUniformLocation(_gProgram, "cameraPosition");
-	_gProgramLightPositionLocation = glGetUniformLocation(_gProgram, "lightPosition");
-	_gProgramLightColorLocation = glGetUniformLocation(_gProgram, "lightColor");
-
-	// set up red/green/blue lights 
+  std::cout << "set up red/green/blue lights" << std::endl;
 	_gLightColor[0] = 1.0f; _gLightColor[1] = 0.0f; _gLightColor[2] = 0.0f;
 	_gLightColor[3] = 0.0f; _gLightColor[4] = 1.0f; _gLightColor[5] = 0.0f;
 	_gLightColor[6] = 0.0f; _gLightColor[7] = 0.0f; _gLightColor[8] = 1.0f;
 
-	// do the first cycle to initialize positions 
+  std::cout << "do the first cycle to initialize positions" << std::endl;
 	_gLightRotation = 0.0f;
   //	sceneCycle();
 
-	// setup camera 
+  std::cout << "setup camera" << std::endl;
 	// _gCameraPosition[0] = 0.0f;
 	// _gCameraPosition[1] = 10.0f;
 	// _gCameraPosition[2] = 0.0f;
 	// glLoadIdentity();
 	// glTranslatef(-_gCameraPosition[0], -_gCameraPosition[1], -_gCameraPosition[2]);
-
-  glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 37.0);
-  glClearColor(0.0, 0.0, 0.0, 1.f);
-  glClearDepth(1.0f);
-  glDisable(GL_BLEND);
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LEQUAL);
-  glDisable(GL_CULL_FACE);
-  glEnable(GL_TEXTURE_2D);
-  glFrontFace(GL_CCW);
-  glCullFace(GL_BACK);
-
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  //glClear(GL_DEPTH_BUFFER_BIT);                                
-
-	// create shapes 
-	_images.create();
 
 }
 
@@ -313,35 +156,27 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   MinVR::VRContainer imgs = _vrMain->getConfig()->getValue("/mvImage/images");
   for (MinVR::VRContainer::iterator it = imgs.begin(); it != imgs.end(); it++) {
 
-    std::string file =
-      _vrMain->getConfig()->getValue((*it) + "/imageFile", "/mvImage/images");
 
-    // Initialize the image.
-    mvImage* img = new mvImage(file);
-
-    // Read the image shape and create a corresponding image object.
-    std::string shape =
-      _vrMain->getConfig()->getValue((*it) + "/shape", "/mvImage/images");
-
-    // Read the image shape's dimensions. (For now we're just doing
-    // rectangles.)
-    double height =
-      _vrMain->getConfig()->getValue((*it) + "/height", "/mvImage/images");
-    double width =
-      _vrMain->getConfig()->getValue((*it) + "/width", "/mvImage/images");
+    _images.addImage("/mvImage/images/" + *it, _vrMain->getConfig());
     
-    // Find the shape's position and orientation.
-    MinVR::VRMatrix4 transform =
-      _vrMain->getConfig()->getValue((*it) + "/transform", "/mvImage/images");
+  }
 
-    mvImageShapeRectangle* rect =
-      new mvImageShapeRectangle(transform, height, width);
-    img->setShape(rect);
+  // Add some miscellaneous objects here.
+  char name[10];
+  for(int i = 0; i < NUM_LIGHTS; ++i) {
     
-    _images.addImage(*it, img);
+    mvImageShapeSphere* s = new mvImageShapeSphere(0.4, 2, 2);
+    sprintf(name, "sphere%d", i);
+    _images.addImage(std::string(name), NULL, (mvImageShape*)s);
     
-    // std::cout << "adding: " << *it << std::endl;
-  }  
+  }
+
+  // Create all the shapes.  This will go through each shape and load
+  // its vertices into a vertex buffer and record where they are.
+  // Then the draw commands can just reference those buffers.
+  std::cout << "create shapes" << std::endl;
+	_images.create();
+  
 }
 
 mvImageApp::~mvImageApp() {
@@ -440,6 +275,9 @@ void mvImageApp::onVREvent(const std::string &eventName, MinVR::VRDataIndex *eve
 
 void mvImageApp::onVRRenderContext(MinVR::VRDataIndex *renderState, 
 				   MinVR::VRDisplayNode *callingNode) {
+
+  std::cout << "on render context" << std::endl;
+
   if (!renderState->exists("IsConsole", "/")) {
   }
 }
@@ -466,13 +304,16 @@ float mvImageApp::getElapsedSeconds(void) {
 // Callback for rendering, inherited from VRRenderHandler                      
 void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
                                  MinVR::VRDisplayNode *callingNode) {
+
+  std::cout << "on render scene" << std::endl;
+  
   if (renderState->exists("IsConsole", "/")) {
     MinVR::VRConsoleNode *console =
       dynamic_cast<MinVR::VRConsoleNode*>(callingNode);
     console->println("Console output...");
   } else {
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
     static unsigned int prevTicks = 0;
@@ -501,13 +342,15 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
       // an OffAxisProjectionNode or similar node, which sets the            
       // ProjectionMatrix and ViewMatrix based on head tracking data.        
 
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      MinVR::VRMatrix4 P = renderState->getValue("ProjectionMatrix", "/");
-      glLoadMatrixd(P.m);
+      std::cout << "projection matrix exists" << std::endl;
+      
+      // glMatrixMode(GL_PROJECTION);
+      // glLoadIdentity();
+      // MinVR::VRMatrix4 P = renderState->getValue("ProjectionMatrix", "/");
+      // glLoadMatrixd(P.m);
 
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
+      // glMatrixMode(GL_MODELVIEW);
+      // glLoadIdentity();
 
       // In a VR program, we want the camera (Projection and View
       // matrices) to be controlled by head tracking.  So, we switch
@@ -521,19 +364,21 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
         MinVR::VRMatrix4::rotationY(_horizAngle);
 
       MinVR::VRMatrix4 V = renderState->getValue("ViewMatrix", "/");
-      glLoadMatrixd((V * M).m);
+      //      glLoadMatrixd((V * M).m);
 
     } else {
 
+      std::cout << "no projection matrix" << std::endl;
+      
       // If the DisplayGraph does not contain a node that sets the
       // ProjectionMatrix and ViewMatrix, then we must be in a
       // non-headtracked simple desktop mode.  We can just set the
       // projection and modelview matrices.
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      setPerspective(M_PI / 4.0f, 1.f, 0.1f, 100.0f);
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
+      // glMatrixMode(GL_PROJECTION);
+      // glLoadIdentity();
+      // setPerspective(M_PI / 4.0f, 1.f, 0.1f, 100.0f);
+      // glMatrixMode(GL_MODELVIEW);
+      // glLoadIdentity();
 
       float cameraPos[3];
       cameraPos[0] = _radius * cos(_horizAngle) * cos(_vertAngle);
@@ -551,44 +396,46 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
              cameraAim[0], cameraAim[1], cameraAim[2]);
     }
 
-    glUseProgram(_gProgram);
-    glUniform3fv(_gProgramCameraPositionLocation, 1, _gCameraPosition);
-    glUniform3fv(_gProgramLightPositionLocation, NUM_LIGHTS, _gLightPosition);
-    glUniform3fv(_gProgramLightColorLocation, NUM_LIGHTS, _gLightColor);
+    // glUseProgram(_gProgram);
+    // glUniform3fv(_gProgramCameraPositionLocation, 1, _gCameraPosition);
+    // glUniform3fv(_gProgramLightPositionLocation, NUM_LIGHTS, _gLightPosition);
+    // glUniform3fv(_gProgramLightColorLocation, NUM_LIGHTS, _gLightColor);
 
+    // Render something for each light.
+    char name[10];
+    for(int i = 0; i < NUM_LIGHTS; ++i) {
+      // Render a shape with the light's color and position.
+      // glPushMatrix();
+      // glTranslatef(_gLightPosition[i * 3 + 0], _gLightPosition[i * 3 + 1], _gLightPosition[i * 3 + 2]);
+      // glColor3fv(_gLightColor + (i * 3));
+
+      sprintf(name, "sphere%d", i);
+      _images.getImage(std::string(name))->setPosition(_gLightPosition[i * 3 + 0],
+                                                       _gLightPosition[i * 3 + 1],
+                                                       _gLightPosition[i * 3 + 2]);
+ 
+    }
+   
     // Draw objects here.
     _images.draw();
     
-    // Draw some axes because why not.
-    glBegin(GL_LINES);
-    glColor3f(1.0, 0.0, 0.0);
-    glVertex3f(8.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
+    std::cout << "Draw some axes because why not." << std::endl;
+    // glBegin(GL_LINES);
+    // glColor3f(1.0, 0.0, 0.0);
+    // glVertex3f(8.0, 0.0, 0.0);
+    // glVertex3f(0.0, 0.0, 0.0);
 
-    glColor3f(0.0, 1.0, 0.0);
-    glVertex3f(0.0, 8.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
+    // glColor3f(0.0, 1.0, 0.0);
+    // glVertex3f(0.0, 8.0, 0.0);
+    // glVertex3f(0.0, 0.0, 0.0);
 
-    glColor3f(0.0, 0.0, 1.0);
-    glVertex3f(0.0, 0.0, 8.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glEnd();
-
-    // Render something for each light.
-    for(int i = 0; i < NUM_LIGHTS; ++i) {
-      // Render a shape with the light's color and position.
-      glPushMatrix();
-      glTranslatef(_gLightPosition[i * 3 + 0], _gLightPosition[i * 3 + 1], _gLightPosition[i * 3 + 2]);
-      glColor3fv(_gLightColor + (i * 3));
-
-      makeSolidSphere(0.4f, 5, 5);
-
-      glPopMatrix();
-    }
+    // glColor3f(0.0, 0.0, 1.0);
+    // glVertex3f(0.0, 0.0, 8.0);
+    // glVertex3f(0.0, 0.0, 0.0);
+    // glEnd();
 
 
-
-    
+    // glPopMatrix();
   }
 }
 

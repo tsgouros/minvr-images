@@ -13,6 +13,7 @@
       <width>3.0</width>
       <position>1.0,1.0,1.0</position>
       <angle>45</angle>
+      <scale>2.0, 1.0, 0.5</scale>
     </test1>
     <test2>
       <imageFile>/Users/tomfool/tech/16/yurt/minvr-images/src/e.bmp</imageFile>

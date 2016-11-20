@@ -171,6 +171,8 @@ mvImageApp::mvImageApp(int argc, char** argv) :
     
   }
 
+  std::cout << "IMAGES:*****" << std::endl << _images << "*******" << std::endl;
+  
   // Create all the shapes.  This will go through each shape and load
   // its vertices into a vertex buffer and record where they are.
   // Then the draw commands can just reference those buffers.

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <math.h>
 #include <map>
 
@@ -23,6 +24,16 @@
 #endif
 
 #define TWOPI 6.283185
+
+typedef enum {
+  IMG_RECTANGLE   = 0,
+  IMG_BOX         = 1,
+  IMG_SPHERE      = 2,
+
+  NSHAPETYPES
+} IMG_SHAPEID;
+
+typedef std::map<IMG_SHAPEID, std::string> mvShapeMap;
 
 class mvPoint {
  public:
@@ -58,6 +69,8 @@ class mvImageData {
 
   GLuint _gTextureID;
 
+  friend std::ostream & operator<<(std::ostream &os, const mvImageData& iData);
+  
  public:
   mvImageData(std::string name, MinVR::VRDataIndex* index);
   virtual ~mvImageData() {};
@@ -67,6 +80,9 @@ class mvImageData {
   void useTexture() {
     std::cout << "use texture from: " << _fileName << std::endl;
   };
+
+  std::string print() const;
+    
 };
 
 // An object to hold the shape data for the object on which the
@@ -75,32 +91,49 @@ class mvImageData {
 // with different shapes later.  
 class mvImageShape {
  protected:
-  GLdouble _scale;
+  GLdouble _posx, _posy, _posz;
   GLdouble _angle;
   GLdouble _rotx, _roty, _rotz;
-  GLdouble _transx, _transy, _transz;
-
-  std::string _shape;
+  GLdouble _scalex, _scaley, _scalez;
   GLuint _gBufferId;
+  
+  IMG_SHAPEID _shapeID; 
+
+  static mvShapeMap _shapeMap;
+  static void _initializeShapeMap() {
+    _shapeMap[IMG_RECTANGLE] = "rectangle";
+    _shapeMap[IMG_BOX]       = "box";
+    _shapeMap[IMG_SPHERE]    = "sphere";
+  };
+  
+  friend std::ostream & operator<<(std::ostream &os, const mvImageShape& iShape);
   
  public:
   mvImageShape() { init(); };
   mvImageShape(std::string name, MinVR::VRDataIndex* index); 
 
+  std::string print() const;
+  
   void init() {
-    _scale = 1.0;
+    _initializeShapeMap();
+    _scalex = 1.0; _scaley = 1.0; _scalez = 1.0;
     _angle = 0.0;
     _rotx = 0.0; _roty = 0.0; _rotz = 1.0;
-    _transx = 0.0; _transy = 0.0; _transz = 0.0;
+    _posx = 0.0; _posy = 0.0; _posz = 0.0;
   }
   
   virtual ~mvImageShape() {};
   
-  void setShape(std::string shape) { _shape = shape; };
-  std::string getShape() { return _shape; };
+  void setShape(std::string shape);
+  std::string getShape() { return _shapeMap[_shapeID]; };
 
-  void setScale(GLdouble scale) { _scale = scale; };
-  GLdouble getScale() { return _scale; };
+  void setShapeID(IMG_SHAPEID shapeID) { _shapeID = shapeID; };
+  IMG_SHAPEID getShapeID() { return _shapeID; };
+
+  void setScale(GLdouble scalex, GLdouble scaley, GLdouble scalez) {
+    _scalex = scalex; _scaley = scaley; _scalez = scalez; };
+  MinVR::VRVector3 getScale() {
+    return MinVR::VRVector3(_scalex, _scaley, _scalez); };
 
   void setRotation(GLdouble angle, GLdouble rotx, GLdouble roty, GLdouble rotz) {
     _angle = angle; _rotx = rotx; _roty = roty; _rotz = rotz; };
@@ -108,9 +141,9 @@ class mvImageShape {
   MinVR::VRVector3 getRotAxis() { return MinVR::VRVector3(_rotx, _roty, _rotz); }
 
   void setPosition(GLdouble x, GLdouble y, GLdouble z) {
-    _transx = x; _transy = y; _transz = z; };
+    _posx = x; _posy = y; _posz = z; };
   MinVR::VRVector3 getPosition() {
-    return MinVR::VRVector3(_transx, _transy, _transz); };
+    return MinVR::VRVector3(_posx, _posy, _posz); };
   
   // Create is used to create the vertex buffers and set the pointers for
   // the shape.  Initializing the vertex arrays can go in there, too, but that
@@ -128,11 +161,15 @@ class mvImageShapeRectangle : public mvImageShape {
   double _height, _width;
   mvPoint _normal;
   GLfloat _vertices[32];
+
+  friend std::ostream & operator<<(std::ostream &os,
+                                   const mvImageShapeRectangle& iShape);
   
  public:
  mvImageShapeRectangle(std::string name, MinVR::VRDataIndex* index) :
   mvImageShape(name, index) {
     setShape("rectangle");
+    setShapeID(IMG_RECTANGLE);
 
     _width = index->getValue(name + "/width");
     _height = index->getValue(name + "/height");
@@ -142,6 +179,8 @@ class mvImageShapeRectangle : public mvImageShape {
   void setModelMatrix(MinVR::VRMatrix4 modelMatrix);
   void draw(const mvImageData* img);
   void create();
+
+  std::string print() const;
 };
 
 mvImageShape* createMvImageShapeRectangle(std::string shapeName,
@@ -152,11 +191,15 @@ class mvImageShapeBox : public mvImageShape {
   double _height, _width, _depth;
   mvPoint _normal;
   GLfloat _vertices[32];
+
+  friend std::ostream & operator<<(std::ostream &os,
+                                   const mvImageShapeBox& iShape);
   
  public:
  mvImageShapeBox(std::string name, MinVR::VRDataIndex* index) :
   mvImageShape(name, index) {
     setShape("box");
+    setShapeID(IMG_BOX);
 
     _height = index->getValue(name + "/height");
     _width = index->getValue(name + "/width");
@@ -167,6 +210,8 @@ class mvImageShapeBox : public mvImageShape {
   void setModelMatrix(MinVR::VRMatrix4 modelMatrix);
   void draw(const mvImageData* img);
   void create();
+
+  std::string print() const;
 };
 
 mvImageShape* createMvImageShapeBox(std::string shapeName,
@@ -181,16 +226,21 @@ class mvImageShapeSphere : public mvImageShape {
 
   void makeSolidSphere(GLdouble radius, GLint slices, GLint stacks);
   void circleTable(double **sint,double **cost,const int n);
+
+  friend std::ostream & operator<<(std::ostream &os,
+                                   const mvImageShapeSphere& iShape);
   
  public:
  mvImageShapeSphere(GLdouble radius, GLint slices=10, GLint stacks=10) :
   _radius(radius), _slices(slices), _stacks(stacks) {
     setShape("sphere");
+    setShapeID(IMG_SPHERE);    
   };
 
  mvImageShapeSphere(std::string name, MinVR::VRDataIndex* index) :
   mvImageShape(name, index) {
     setShape("sphere");
+    setShapeID(IMG_SPHERE);
 
     _radius = index->getValue(name + "/radius");
     if (index->exists(name + "/slices")) {
@@ -207,6 +257,8 @@ class mvImageShapeSphere : public mvImageShape {
 
   void draw(const mvImageData* img);
   void create();
+
+  std::string print() const;
 };
 
 mvImageShape* createMvImageShapeSphere(std::string shapeName,
@@ -255,6 +307,8 @@ class mvImage {
   mvImageData* _imageData;
   // imageShape contains the shape and the location in space.
   mvImageShape* _imageShape;
+
+  friend std::ostream & operator<<(std::ostream &os, const mvImage& image);
   
  public:
   mvImage(const std::string name, MinVR::VRDataIndex* index, mvImageShape* shape) {
@@ -282,8 +336,9 @@ class mvImage {
   
   virtual void draw();
 
-  void setScale(GLdouble scale) { _imageShape->setScale(scale); };
-  GLdouble getScale() { return _imageShape->getScale(); };
+  void setScale(GLdouble scalex, GLdouble scaley, GLdouble scalez) {
+    _imageShape->setScale(scalex, scaley, scalez); };
+  MinVR::VRVector3 getScale() { return _imageShape->getScale(); };
 
   void setRotation(GLdouble angle, GLdouble rotx, GLdouble roty, GLdouble rotz) {
     _imageShape->setRotation(angle, rotx, roty, rotz); };
@@ -294,6 +349,8 @@ class mvImage {
     _imageShape->setPosition(x, y, z); };
   MinVR::VRVector3 getPosition() {
     return _imageShape->getPosition(); };
+
+  std::string print() const;
 };
 
 
@@ -305,8 +362,10 @@ class mvImages {
   // We store the images in a map, so we can reference them by name or
   // ID string.
   typedef std::map<std::string, mvImage *> imageMap;
-  imageMap images;
+  imageMap _images;
 
+  friend std::ostream & operator<<(std::ostream &os, const mvImages& _images);
+  
  public:
   mvImages();
   ~mvImages();
@@ -321,6 +380,8 @@ class mvImages {
                        mvImageData* image, mvImageShape* shape);
   int delImage(const std::string name);
   mvImage* getImage(const std::string name);
+
+  std::string print() const;
 };
 
 #endif

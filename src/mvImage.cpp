@@ -10,15 +10,44 @@ mvImageData::mvImageData(std::string name, MinVR::VRDataIndex* index) {
 
  }
 
-
 // mvImageShape here
+
+// This is here just to satisfy the linker.  The definition is in the
+// header file, and so is the initialization.  But without this line,
+// the linker bombs, go figure.
+mvShapeMap mvImageShape::_shapeMap;
+
+// This is a reverse lookup of the shapeID map, to find the shape ID from
+// the string representation (such as might be in the XML config file).
+void mvImageShape::setShape(std::string shape) {
+  for (mvShapeMap::iterator it = _shapeMap.begin(); it != _shapeMap.end(); it++) {
+    if (it->second.compare(shape) == 0) {
+      setShapeID(it->first);
+      return;
+    }
+  }
+  throw std::runtime_error("no such shape in the catalog: " + shape);
+}
+
+// Initialize the shape from a config file.
 mvImageShape::mvImageShape(std::string name, MinVR::VRDataIndex* index) {
 
+  // Set the default values for the configurable position, rotation, and scale.
   init();
-  _shape = (std::string)index->getValue(name +  "/shape");
+  setShape(index->getValue(name +  "/shape"));
 
-  if (index->exists(name + "/scale"))
-    _scale = (GLdouble)index->getValue(name + "/scale");
+  if (index->exists(name + "/scale")) {
+    // Read in a double array.  If scale is actually a scalar, it will
+    // come in as a one-element array.  This way we can handle a
+    // 3-item scale vector or a scalar.
+    MinVR::VRDoubleArray v = index->getValue(name + "/scale");
+
+    if (v.size() > 1) {
+      _scalex = v[0]; _scaley = v[1]; _scalez = v[2];
+    } else {
+      _scalex = v[0]; _scaley = v[0]; _scalez = v[0];
+    }      
+  }
 
   if (index->exists(name + "/angle"))
     _angle = (GLdouble)index->getValue(name + "/angle");
@@ -30,7 +59,7 @@ mvImageShape::mvImageShape(std::string name, MinVR::VRDataIndex* index) {
   
   if (index->exists(name + "/position")) {
     MinVR::VRVector3 v = MinVR::VRVector3(index->getValue(name + "/position"));
-    _transx = v[0]; _transy = v[1]; _transz = v[2];
+    _posx = v[0]; _posy = v[1]; _posz = v[2];
   }
 }
 
@@ -323,8 +352,8 @@ mvImages::mvImages() {
 }
 
 mvImages::~mvImages() {
-  for (imageMap::iterator it = images.begin();
-       it != images.end(); it++) {
+  for (imageMap::iterator it = _images.begin();
+       it != _images.end(); it++) {
     delete it->second;
   }
 }
@@ -332,8 +361,8 @@ mvImages::~mvImages() {
 // Loop through each of the image objects in the list and draw them.
 void mvImages::draw() {
   std::cout << "draw objects" << std::endl;
-  for (imageMap::iterator it = images.begin();
-       it != images.end(); it++) {
+  for (imageMap::iterator it = _images.begin();
+       it != _images.end(); it++) {
     std::cout << "drawing: " << it->first << std::endl;
     it->second->draw();
   }
@@ -344,8 +373,8 @@ void mvImages::draw() {
 void mvImages::create() {
   std::cout << "create objects" << std::endl;
 
-  for (imageMap::iterator it = images.begin();
-       it != images.end(); it++) {
+  for (imageMap::iterator it = _images.begin();
+       it != _images.end(); it++) {
     std::cout << "creating: " << it->first << std::endl;
     it->second->create();
   }
@@ -356,7 +385,7 @@ std::string mvImages::addImage(const std::string name,
                                MinVR::VRDataIndex* index) {
 
   std::cout << "adding a new image with the name: " << name << std::endl;
-  images[name] = new mvImage(name, index,
+  _images[name] = new mvImage(name, index,
                              _shapeFactory.createMvImageShape(name, index));
   return name;
 }
@@ -368,17 +397,137 @@ std::string mvImages::addImage(const std::string name,
 
   std::cout << "adding a new image (" << shape->getShape() << ") with the name: " << name << std::endl;
   
-  images[name] = new mvImage(image, shape);
+  _images[name] = new mvImage(image, shape);
   return name;
 }
 
 
 int mvImages::delImage(const std::string name) {
-  delete images[name];
-  return images.erase(name);
+  delete _images[name];
+  return _images.erase(name);
 }
 
 mvImage* mvImages::getImage(const std::string name) {
-  return images[name];
+  return _images[name];
 }
 
+
+std::string mvImageData::print() const {
+  std::stringstream out;
+  
+  out <<  "imageData object from filename: " + _fileName << std::endl;
+
+  return out.str();
+}
+
+std::ostream & operator<<(std::ostream &os, const mvImageData& iData) {
+  return os << iData.print();
+}
+
+std::string mvImageShape::print() const {
+  std::stringstream out;
+
+  out << "This is a " << _shapeMap[_shapeID] << std::endl;
+  out << "position: (" << _posx << ", " << _posy << ", " << _posz << ")" << std::endl;
+  if (_angle != 0.0)
+    out << "rotation: " << _angle << " radians around (" << _rotx << ", " << _roty << ", " << _rotz << ")" << std::endl;
+
+  if ((_scalex * _scaley * _scalez) != 1.0) 
+    out << "scale:    (" << _scalex  << ", " << _scaley << ", " << _scalez << ")" << std::endl;
+
+  return out.str();
+}
+  
+std::ostream & operator<<(std::ostream &os, const mvImageShape& iShape) {
+  return os << iShape.print();
+}
+
+std::string mvImageShapeRectangle::print() const {
+  std::stringstream out;
+
+  out << mvImageShape::print();
+  out << "dimensions: " << _height << " (h) X " << _width << " (w)" << std::endl;
+
+  return out.str();
+}
+
+std::ostream & operator<<(std::ostream &os, const mvImageShapeRectangle& iShape) {
+  return os << iShape.print();
+}
+
+std::string mvImageShapeBox::print() const {
+  std::stringstream out;
+
+  out << mvImageShape::print();
+  out << "dimensions: " << _height << " (h) X " << _width << " (w) X " << _depth << " (d)" << std::endl;
+
+  return out.str();
+}
+
+std::ostream & operator<<(std::ostream &os, const mvImageShapeBox& iShape) {
+  return os << iShape.print();
+}
+
+std::string mvImageShapeSphere::print() const {
+  std::stringstream out;
+
+  out << mvImageShape::print();
+  out << "radius: " << _radius << std::endl;
+
+  return out.str();
+}
+
+std::ostream & operator<<(std::ostream &os, const mvImageShapeSphere& iShape) {
+  return os << iShape.print();
+}
+
+std::string mvImage::print() const {
+  std::stringstream out;
+
+  if (_imageData) out << _imageData->print();
+
+
+  switch (_imageShape->getShapeID()) {
+
+  case IMG_RECTANGLE:
+    out << ((mvImageShapeRectangle*)_imageShape)->print();
+      break;
+
+    case IMG_BOX:
+      out << ((mvImageShapeBox*)_imageShape)->print();
+      break;
+
+    case IMG_SPHERE:
+      out << ((mvImageShapeSphere*)_imageShape)->print();
+      break;
+
+    default:
+      out << _imageShape->print();
+  }
+  
+  return out.str();
+}
+
+
+std::ostream & operator<<(std::ostream &os, const mvImage& image) {
+  return os << image.print();
+}
+
+std::string mvImages::print() const {
+  std::stringstream out;
+
+  for (imageMap::const_iterator it = _images.begin(); it != _images.end(); it++) {
+
+    out << it->first << std::endl;
+    out << it->second->print();
+
+  }
+  
+  return out.str();
+}
+
+
+
+std::ostream & operator<<(std::ostream &os, const mvImages& _images) {
+  return os << _images.print();
+}

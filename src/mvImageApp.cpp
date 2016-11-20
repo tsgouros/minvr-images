@@ -14,15 +14,24 @@ void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
 
   std::cout << "initialize graphics using shaders: " << vertexShaderFile << " and " << fragmentShaderFile << std::endl;
 
-  std::cout << "create program object and attach shaders" << std::endl;
+  std::cout << "create program object to hold the shaders" << std::endl;
+  std::cout << "also link the program, check for errors" << std::endl;
+  _gProgram = glCreateProgram();
+  shaderAttach(_gProgram, GL_VERTEX_SHADER, vertexShaderFile);
+  shaderAttach(_gProgram, GL_FRAGMENT_SHADER, fragmentShaderFile);
 
-  std::cout << "link the program and make sure there were no errors" << std::endl;
+  
+  std::cout << "the shaders are linked, now get uniform locations" << std::endl;
 
-  std::cout << "get uniform locations" << std::endl;
-	// _gProgramCameraPositionLocation = glGetUniformLocation(_gProgram, "cameraPosition");
-	// _gProgramLightPositionLocation = glGetUniformLocation(_gProgram, "lightPosition");
-	// _gProgramLightColorLocation = glGetUniformLocation(_gProgram, "lightColor");
+  // These two are part of the vertex shader.
+  _gProgramCameraPositionLocation = glGetUniformLocation(_gProgram,
+                                                         "cameraPosition");
+  _gProgramLightPositionLocation = glGetUniformLocation(_gProgram, "lightPosition");
 
+  // The lightColor is part of the fragment shader.
+  _gProgramLightColorLocation = glGetUniformLocation(_gProgram, "lightColor");
+
+  
   std::cout << "set up red/green/blue lights" << std::endl;
 	_gLightColor[0] = 1.0f; _gLightColor[1] = 0.0f; _gLightColor[2] = 0.0f;
 	_gLightColor[3] = 0.0f; _gLightColor[4] = 1.0f; _gLightColor[5] = 0.0f;
@@ -32,7 +41,7 @@ void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
 	_gLightRotation = 0.0f;
   //	sceneCycle();
 
-  std::cout << "setup camera" << std::endl;
+  std::cout << "maybe setup camera?" << std::endl;
 	// _gCameraPosition[0] = 0.0f;
 	// _gCameraPosition[1] = 10.0f;
 	// _gCameraPosition[2] = 0.0f;
@@ -127,6 +136,10 @@ void mvImageApp::shaderAttach(const GLuint program,
 mvImageApp::mvImageApp(int argc, char** argv) :
   _vrMain(NULL), _lastMilliSeconds(0), _quit(false) {
 
+  _shapeFactory.registerMvImageShape("rectangle", createMvImageShapeRectangle);
+  _shapeFactory.registerMvImageShape("box", createMvImageShapeBox);
+  _shapeFactory.registerMvImageShape("sphere", createMvImageShapeSphere);
+  
   _vrMain = new MinVR::VRMain();
 
   // The first argument is an initialization file for the images.  Remove that
@@ -141,11 +154,13 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   _vrMain->addEventHandler(this);
   _vrMain->addRenderHandler(this);
 
+  // These angles control the desktop viewing position.
   _horizAngle = 0.0;
   _vertAngle = 0.0;
   _radius = 15.0;
   _incAngle = -0.1f;
 
+  // Read the appplication-specific config file.
   _vrMain->getConfig()->processXMLFile(MVIConfigFile);
   std::cout << _vrMain->getConfig()->printStructure() << std::endl;
   
@@ -156,8 +171,7 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   MinVR::VRContainer imgs = _vrMain->getConfig()->getValue("/mvImage/images");
   for (MinVR::VRContainer::iterator it = imgs.begin(); it != imgs.end(); it++) {
 
-
-    _images.addImage("/mvImage/images/" + *it, _vrMain->getConfig());
+    addImage("/mvImage/images/" + *it, _vrMain->getConfig());
     
   }
 
@@ -167,24 +181,64 @@ mvImageApp::mvImageApp(int argc, char** argv) :
     
     mvImageShapeSphere* s = new mvImageShapeSphere(0.4, 2, 2);
     sprintf(name, "sphere%d", i);
-    _images.addImage(std::string(name), NULL, (mvImageShape*)s);
+    addImage(std::string(name), NULL, (mvImageShape*)s);
     
   }
 
-  std::cout << "IMAGES:*****" << std::endl << _images << "*******" << std::endl;
-  
   // Create all the shapes.  This will go through each shape and load
   // its vertices into a vertex buffer and record where they are.
-  // Then the draw commands can just reference those buffers.
+  // Then the draw commands just references those buffers.
   std::cout << "create shapes" << std::endl;
-	_images.create();
-  
+
+  for (imageMap::iterator it = _images.begin();
+       it != _images.end(); it++) {
+    std::cout << "creating: " << it->first << std::endl;
+    it->second->create();
+  }
 }
 
 mvImageApp::~mvImageApp() {
   _vrMain->shutdown();
+
+  for (imageMap::iterator it = _images.begin();
+       it != _images.end(); it++) {
+    delete it->second;
+  }
+  
   delete _vrMain;
 }
+
+
+// Adds an image object to the collection to be drawn.
+std::string mvImageApp::addImage(const std::string name,
+                                 MinVR::VRDataIndex* index) {
+
+  std::cout << "adding a new image with the name: " << name << std::endl;
+  _images[name] = new mvImage(name, index,
+                              _shapeFactory.createMvImageShape(name, index));
+  return name;
+}
+
+// We do envision mvImage objects with null imageData.  Presumably
+// there is a color specified via the imageShape.
+std::string mvImageApp::addImage(const std::string name,
+                                 mvImageData* image, mvImageShape* shape) {
+
+  std::cout << "adding a new image (" << shape->getShape() << ") with the name: " << name << std::endl;
+  
+  _images[name] = new mvImage(image, shape);
+  return name;
+}
+
+int mvImageApp::delImage(const std::string name) {
+  delete _images[name];
+  return _images.erase(name);
+}
+
+mvImage* mvImageApp::getImage(const std::string name) {
+  return _images[name];
+}
+
 
 void
 mvImageApp::setPerspective(float fov, float aspect, float near, float far) {
@@ -412,14 +466,19 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
       // glColor3fv(_gLightColor + (i * 3));
 
       sprintf(name, "sphere%d", i);
-      _images.getImage(std::string(name))->setPosition(_gLightPosition[i * 3 + 0],
-                                                       _gLightPosition[i * 3 + 1],
-                                                       _gLightPosition[i * 3 + 2]);
+      getImage(std::string(name))->setPosition(_gLightPosition[i * 3 + 0],
+                                               _gLightPosition[i * 3 + 1],
+                                               _gLightPosition[i * 3 + 2]);
  
     }
    
     // Draw objects here.
-    _images.draw();
+    std::cout << "draw objects" << std::endl;
+    for (imageMap::iterator it = _images.begin();
+         it != _images.end(); it++) {
+      std::cout << "drawing: " << it->first << std::endl;
+      it->second->draw();
+    }
     
     std::cout << "Draw some axes because why not." << std::endl;
     // glBegin(GL_LINES);
@@ -441,9 +500,34 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
   }
 }
 
+std::string mvImageApp::print() const {
+  std::stringstream out;
+
+  for (imageMap::const_iterator it = _images.begin(); it != _images.end(); it++) {
+
+    out << it->first << std::endl;
+    out << it->second->print();
+
+  }
+  
+  return out.str();
+}
+
+
+
+std::ostream & operator<<(std::ostream &os, const mvImageApp& app) {
+  return os << app.print();
+}
+
+
+
 int main(int argc, char **argv) {
 
   mvImageApp app(argc, argv);
+
+    // Let's see the whole configuration.
+  std::cout << "IMAGES:*****" << std::endl << app << "*******" << std::endl;
+ 
   app.run();
 
   exit(0);  

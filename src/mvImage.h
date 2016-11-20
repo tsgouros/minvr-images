@@ -112,7 +112,7 @@ class mvImageShape {
   mvImageShape() { init(); };
   mvImageShape(std::string name, MinVR::VRDataIndex* index); 
 
-  std::string print() const;
+  virtual std::string print() const;
   
   void init() {
     _initializeShapeMap();
@@ -353,35 +353,5 @@ class mvImage {
   std::string print() const;
 };
 
-
-// Holds a collection of mvImage objects.
-class mvImages {
- protected:
-  mvImageShapeFactory _shapeFactory;
-
-  // We store the images in a map, so we can reference them by name or
-  // ID string.
-  typedef std::map<std::string, mvImage *> imageMap;
-  imageMap _images;
-
-  friend std::ostream & operator<<(std::ostream &os, const mvImages& _images);
-  
- public:
-  mvImages();
-  ~mvImages();
-  
-  void create();
-  void draw();
-
-  // We can add images either by reference to the input data index or
-  // by fiat.
-  std::string addImage(const std::string name, MinVR::VRDataIndex* index);
-  std::string addImage(const std::string name,
-                       mvImageData* image, mvImageShape* shape);
-  int delImage(const std::string name);
-  mvImage* getImage(const std::string name);
-
-  std::string print() const;
-};
 
 #endif

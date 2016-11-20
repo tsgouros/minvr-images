@@ -52,6 +52,11 @@ mvImageShape::mvImageShape(std::string name, MinVR::VRDataIndex* index) {
   if (index->exists(name + "/angle"))
     _angle = (GLdouble)index->getValue(name + "/angle");
 
+  // If the specified angle was more than 7, someone is probably using
+  // degrees instead of radians.
+  if ((_angle > 7.0) || (_angle < -7.0)) { _angle = _angle * TWOPI / 180.0; }
+
+  
   if (index->exists(name + "/rotAxis")) {
     MinVR::VRVector3 v = MinVR::VRVector3(index->getValue(name + "/rotAxis"));
     _rotx = v[0]; _roty = v[1]; _rotz = v[2];
@@ -344,74 +349,6 @@ mvImageShape* createMvImageShapeSphere(std::string shapeName,
   return (mvImageShape*)out;
 }
 
-// mvImages here
-mvImages::mvImages() {
-  _shapeFactory.registerMvImageShape("rectangle", createMvImageShapeRectangle);
-  _shapeFactory.registerMvImageShape("box", createMvImageShapeBox);
-  _shapeFactory.registerMvImageShape("sphere", createMvImageShapeSphere);
-}
-
-mvImages::~mvImages() {
-  for (imageMap::iterator it = _images.begin();
-       it != _images.end(); it++) {
-    delete it->second;
-  }
-}
-
-// Loop through each of the image objects in the list and draw them.
-void mvImages::draw() {
-  std::cout << "draw objects" << std::endl;
-  for (imageMap::iterator it = _images.begin();
-       it != _images.end(); it++) {
-    std::cout << "drawing: " << it->first << std::endl;
-    it->second->draw();
-  }
-};
-
-// Loop through each of the image objects in the list and create them.
-// This involves initializing the vertex buffers and positions and so on.
-void mvImages::create() {
-  std::cout << "create objects" << std::endl;
-
-  for (imageMap::iterator it = _images.begin();
-       it != _images.end(); it++) {
-    std::cout << "creating: " << it->first << std::endl;
-    it->second->create();
-  }
-};
-
-// Adds an image object to the collection to be drawn.
-std::string mvImages::addImage(const std::string name,
-                               MinVR::VRDataIndex* index) {
-
-  std::cout << "adding a new image with the name: " << name << std::endl;
-  _images[name] = new mvImage(name, index,
-                             _shapeFactory.createMvImageShape(name, index));
-  return name;
-}
-
-// We do envision mvImage objects with null imageData.  Presumably
-// there is a color specified via the imageShape.
-std::string mvImages::addImage(const std::string name,
-                               mvImageData* image, mvImageShape* shape) {
-
-  std::cout << "adding a new image (" << shape->getShape() << ") with the name: " << name << std::endl;
-  
-  _images[name] = new mvImage(image, shape);
-  return name;
-}
-
-
-int mvImages::delImage(const std::string name) {
-  delete _images[name];
-  return _images.erase(name);
-}
-
-mvImage* mvImages::getImage(const std::string name) {
-  return _images[name];
-}
-
-
 std::string mvImageData::print() const {
   std::stringstream out;
   
@@ -485,25 +422,7 @@ std::string mvImage::print() const {
   std::stringstream out;
 
   if (_imageData) out << _imageData->print();
-
-
-  switch (_imageShape->getShapeID()) {
-
-  case IMG_RECTANGLE:
-    out << ((mvImageShapeRectangle*)_imageShape)->print();
-      break;
-
-    case IMG_BOX:
-      out << ((mvImageShapeBox*)_imageShape)->print();
-      break;
-
-    case IMG_SPHERE:
-      out << ((mvImageShapeSphere*)_imageShape)->print();
-      break;
-
-    default:
-      out << _imageShape->print();
-  }
+  out << _imageShape->print();
   
   return out.str();
 }
@@ -513,21 +432,3 @@ std::ostream & operator<<(std::ostream &os, const mvImage& image) {
   return os << image.print();
 }
 
-std::string mvImages::print() const {
-  std::stringstream out;
-
-  for (imageMap::const_iterator it = _images.begin(); it != _images.end(); it++) {
-
-    out << it->first << std::endl;
-    out << it->second->print();
-
-  }
-  
-  return out.str();
-}
-
-
-
-std::ostream & operator<<(std::ostream &os, const mvImages& _images) {
-  return os << _images.print();
-}

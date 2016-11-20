@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <math.h>
 
@@ -32,9 +33,26 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   bool _quit;
   float _horizAngle, _vertAngle, _radius, _incAngle;
 
-  // These are the objects that will be drawn.
-  mvImages _images;
+  // Where do shape objects come from? 
+  mvImageShapeFactory _shapeFactory;
+  
+  // We store the images in a map, so we can reference them by name or
+  // ID string.
+  typedef std::map<std::string, mvImage *> imageMap;
+  imageMap _images;
 
+  friend std::ostream & operator<<(std::ostream &os, const mvImageApp& imageApp);
+
+  // We can add images either by reference to the input data index or
+  // by fiat.
+  std::string addImage(const std::string name, MinVR::VRDataIndex* index);
+  std::string addImage(const std::string name,
+                       mvImageData* image, mvImageShape* shape);
+  int delImage(const std::string name);
+  mvImage* getImage(const std::string name);
+
+  std::string print() const;
+  
   // The OpenGL details.
   GLuint _gProgram;
   GLuint _gProgramCameraPositionLocation;

@@ -5,7 +5,6 @@
 
 
 void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
-	GLint result;
 
   std::string vertexShaderFile =
     index->dereferenceEnvVars(index->getValue("/mvImage/shaders/vertex"));
@@ -19,17 +18,32 @@ void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
   _gProgram = glCreateProgram();
   shaderAttach(_gProgram, GL_VERTEX_SHADER, vertexShaderFile);
   shaderAttach(_gProgram, GL_FRAGMENT_SHADER, fragmentShaderFile);
-
   
   std::cout << "the shaders are linked, now get uniform locations" << std::endl;
 
-  // These two are part of the vertex shader.
+  // These are for the vertex shader.
   _gProgramCameraPositionLocation = glGetUniformLocation(_gProgram,
                                                          "cameraPosition");
   _gProgramLightPositionLocation = glGetUniformLocation(_gProgram, "lightPosition");
-
+  _gProgramModelMatrix = glGetUniformLocation(_gProgram, "modelMatrix");
+  _gProgramViewMatrix = glGetUniformLocation(_gProgram, "viewMatrix");
+  _gProgramProjMatrix = glGetUniformLocation(_gProgram, "projMatrix");
+  
   // The lightColor is part of the fragment shader.
   _gProgramLightColorLocation = glGetUniformLocation(_gProgram, "lightColor");
+
+  glBindAttribLocation(_gProgram, 1, "vertices");
+  glBindAttribLocation(_gProgram, 2, "colors");
+
+  GLuint vboIDs[4];
+  glGenBuffers(4, vboIDs);
+
+  glBindBuffer(GL_ARRAY_BUFFER, vboIDs[0]);
+  //  glBufferData(GL_ARRAY_BUFFER, sizeof(
+
+  
+  std::cout << "linking gl shaders to a program" << std::endl;
+  glLinkProgram(_gProgram);
 
   
   std::cout << "set up red/green/blue lights" << std::endl;
@@ -39,17 +53,27 @@ void mvImageApp::graphicsInit(MinVR::VRDataIndex* index) {
 
   std::cout << "do the first cycle to initialize positions" << std::endl;
 	_gLightRotation = 0.0f;
-  //	sceneCycle();
 
-  std::cout << "maybe setup camera?" << std::endl;
-	// _gCameraPosition[0] = 0.0f;
-	// _gCameraPosition[1] = 10.0f;
-	// _gCameraPosition[2] = 0.0f;
-	// glLoadIdentity();
-	// glTranslatef(-_gCameraPosition[0], -_gCameraPosition[1], -_gCameraPosition[2]);
+  std::cout << "Time for the real graphics initialization..." << std::endl;
 
+  glClearColor(0.5f, 0.5f, 1.0f, 0.0f);
+  glShadeModel(GL_SMOOTH);
+  glEnable(GL_DEPTH_TEST);
+
+  // Create all the shapes.  This will go through each shape and load
+  // its vertices into a vertex buffer and record where they are.
+  // Then the draw commands just references those buffers.
+  std::cout << "create shapes" << std::endl;
+  
+  for (imageMap::iterator it = _images.begin();
+       it != _images.end(); it++) {
+    std::cout << "creating: " << it->first << std::endl;
+    it->second->create();
+  }
 }
 
+// Reads a shader file into a string.  Just a locus for the error
+// checking and that kind of thing.
 std::string mvImageApp::shaderRead(std::string pathName) {
 
   std::string shaderString;
@@ -76,37 +100,38 @@ std::string mvImageApp::shaderRead(std::string pathName) {
 // Returns a shader object containing a shader compiled from the given
 // GLSL shader file.
 GLuint mvImageApp::shaderCompile(const GLenum type, const std::string pathName) {
-  std::string shaderSource;
 	GLuint shader;
 	GLint length, result;
 
 	// get shader source 
-	shaderSource = shaderRead(pathName);
-	if (shaderSource.size() == 0) return 0;
+  std::string shaderSource = shaderRead(pathName);
+  if (shaderSource.size() == 0) return 0;
 
 	// create shader object, set the source, and compile 
 	shader = glCreateShader(type);
   length = shaderSource.size();
-  // The cast in the following line is there because of a bug in the gl.h
-  // header file (missing comma) on Mac OSX 10.10
-  glShaderSource(shader, 1, (const char **)shaderSource.c_str(), &length);
+
+  const GLchar * source[] = {shaderSource.c_str()};
+  glShaderSource(shader, 1, source, &length);
 	glCompileShader(shader);
 
-	// make sure the compilation was successful 
+  // make sure the compilation was successful.
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
 	if(result == GL_FALSE) {
-		char *log;
+
+    char *log;
 
 		// get the shader info log 
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-		log = (char*)malloc(length);
-		glGetShaderInfoLog(shader, length, &result, log);
 
+    log = (char*)malloc(length);
+		glGetShaderInfoLog(shader, length, &result, log);
+    
 		// print an error message and the info log 
-    std::cerr << "ERR: Unable to compile " << pathName << ": " << log << std::endl;
+    std::cerr << "ERR: Unable to compile " << pathName << ": " << log << "<<" << std::endl;
 		free(log);
-    //    throw std::runtime_error("Unable to compile " + pathName + ": " +
-    //                             std::string(log));
+    // throw std::runtime_error("Unable to compile " + pathName + ": " +
+    //                          std::string(log));
     
 		glDeleteShader(shader);
 		return 0;
@@ -120,6 +145,7 @@ GLuint mvImageApp::shaderCompile(const GLenum type, const std::string pathName) 
 void mvImageApp::shaderAttach(const GLuint program,
                               const GLenum type,
                               const std::string pathName) {
+  
 	// compile the shader
 	GLuint shader = shaderCompile(type, pathName);
 	if(shader != 0) {
@@ -129,19 +155,21 @@ void mvImageApp::shaderAttach(const GLuint program,
 		// delete the shader - it won't actually be destroyed until the
 		// program that it's attached to has been destroyed.
 		glDeleteShader(shader);
-	}
+	} else {
+    throw std::runtime_error("shader attachment failed: " + pathName);
+  }
 }
 
 
 mvImageApp::mvImageApp(int argc, char** argv) :
-  _vrMain(NULL), _lastMilliSeconds(0), _quit(false) {
+  _lastMilliSeconds(0), _quit(false), _needInitialization(true) {
+
+  _vrMain = new MinVR::VRMain();
 
   _shapeFactory.registerMvImageShape("rectangle", createMvImageShapeRectangle);
   _shapeFactory.registerMvImageShape("box", createMvImageShapeBox);
   _shapeFactory.registerMvImageShape("sphere", createMvImageShapeSphere);
   
-  _vrMain = new MinVR::VRMain();
-
   // The first argument is an initialization file for the images.  Remove that
   // from the argument list and pass the rest to MinVR.
   if (argc < 3) {
@@ -149,8 +177,12 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   }
   std::string MVIConfigFile = std::string(argv[1]);
   std::string MinVRConfigFile = std::string(argv[2]);
-      
+
+  std::cout << "pre-initialize..." << std::endl;
   _vrMain->initialize(argc, argv, MinVRConfigFile);
+
+  // std::cout << "First CGLGetCurrentContext()" << CGLGetCurrentContext() << std::endl;
+  
   _vrMain->addEventHandler(this);
   _vrMain->addRenderHandler(this);
 
@@ -163,11 +195,9 @@ mvImageApp::mvImageApp(int argc, char** argv) :
   // Read the appplication-specific config file.
   _vrMain->getConfig()->processXMLFile(MVIConfigFile);
   std::cout << _vrMain->getConfig()->printStructure() << std::endl;
-  
-  // Do the graphics initialization.
-  graphicsInit(_vrMain->getConfig());
 
-  // Parse the image data out of the image config information.
+  // Parse the image data out of the image config information and add the
+  // image objects defined in there.
   MinVR::VRContainer imgs = _vrMain->getConfig()->getValue("/mvImage/images");
   for (MinVR::VRContainer::iterator it = imgs.begin(); it != imgs.end(); it++) {
 
@@ -175,7 +205,12 @@ mvImageApp::mvImageApp(int argc, char** argv) :
     
   }
 
-  // Add some miscellaneous objects here.
+  // Add any miscellaneous objects that appear regardless of config data
+  // (axes, light proxies, whatever).
+
+  // This loop adds three little light proxies to sit at the locations
+  // defined by the lightPosition array.  So they will appear like
+  // little lamps.
   char name[10];
   for(int i = 0; i < NUM_LIGHTS; ++i) {
     
@@ -183,17 +218,6 @@ mvImageApp::mvImageApp(int argc, char** argv) :
     sprintf(name, "sphere%d", i);
     addImage(std::string(name), NULL, (mvImageShape*)s);
     
-  }
-
-  // Create all the shapes.  This will go through each shape and load
-  // its vertices into a vertex buffer and record where they are.
-  // Then the draw commands just references those buffers.
-  std::cout << "create shapes" << std::endl;
-
-  for (imageMap::iterator it = _images.begin();
-       it != _images.end(); it++) {
-    std::cout << "creating: " << it->first << std::endl;
-    it->second->create();
   }
 }
 
@@ -240,72 +264,59 @@ mvImage* mvImageApp::getImage(const std::string name) {
 }
 
 
-void
-mvImageApp::setPerspective(float fov, float aspect, float near, float far) {
-	float f;
-	float mat[16];
+MinVR::VRMatrix4 mvImageApp::perspective(float fov,
+                                         float aspect,
+                                         float near,
+                                         float far) {
 
+  MinVR::VRMatrix4 out;
+  
+  float f;
 	f = 1.0f / tanf(fov / 2.0f);
 
-	mat[0] = f / aspect;
-	mat[1] = 0.0f;
-	mat[2] = 0.0f;
-	mat[3] = 0.0f;
+	out[0][0] = f / aspect;
+	out[1][1] = f;
+	out[2][2] = (far + near) / (near  - far);
+	out[2][3] = -1.0f;
+	out[3][2] = (2.0f * far * near) / (near - far);
 
-	mat[4] = 0.0f;
-	mat[5] = f;
-	mat[6] = 0.0f;
-	mat[7] = 0.0f;
-
-	mat[8] = 0.0f;
-	mat[9] = 0.0f;
-	mat[10] = (far + near) / (near  - far);
-	mat[11] = -1.0f;
-
-	mat[12] = 0.0f;
-	mat[13] = 0.0f;
-	mat[14] = (2.0f * far * near) / (near - far);
-	mat[15] = 0.0f;
-
-	glMultMatrixf(mat);
+	return out;
 }
 
-void mvImageApp::lookAt(float eyeX, float eyeY, float eyeZ,
-                        float centerX, float centerY, float centerZ,
-                        float upX, float upY, float upZ) {
-
-  MinVR::VRVector3 forward, side, up;
-  float m[4][4];
+MinVR::VRMatrix4 mvImageApp::lookat(MinVR::VRVector3 cameraPos,
+                                    MinVR::VRVector3 targetPos,
+                                    MinVR::VRVector3 cameraUp) {
 
   // Normalize and straighten out the input directions.
-  forward = MinVR::VRVector3(centerX - eyeX, centerY - eyeY, centerZ - eyeZ).normalize();
-  side = forward.cross( MinVR::VRVector3(upX, upY, upZ) ).normalize();
+  MinVR::VRVector3 forward = (targetPos - cameraPos).normalize();
+  MinVR::VRVector3 up = cameraUp.normalize();
+  MinVR::VRVector3 side = (forward.cross(up)).normalize();
   up = side.cross(forward);
 
   // Insert them into a view matrix.
-  MinVR::VRMatrix4 M;
-  M[0][0] = side[0];
-  M[1][0] = side[1];
-  M[2][0] = side[2];
+  MinVR::VRMatrix4 out;
+  out[0][0] = side.x;
+  out[1][0] = side.y;
+  out[2][0] = side.z;
   
-  M[0][1] = up[0];
-  M[1][1] = up[1];
-  M[2][1] = up[2];
+  out[0][1] = up.x;
+  out[1][1] = up.y;
+  out[2][1] = up.z;
   
-  M[0][2] = -forward[0];
-  M[1][2] = -forward[1];
-  M[2][2] = -forward[2];
+  out[0][2] = -forward.x;
+  out[1][2] = -forward.y;
+  out[2][2] = -forward.z;
 
-  // Add the view matrix to the mix.
-  glMultMatrixd( M.m );
-
-  // And translate away from the center.
-  glTranslated(-eyeX, -eyeY, -eyeZ);
+  out[3][0] = -side.dot(cameraPos);
+  out[3][1] = -up.dot(cameraPos);
+  out[3][2] = -forward.dot(cameraPos);
+  
+  return out;
 }
 
 void mvImageApp::onVREvent(const std::string &eventName, MinVR::VRDataIndex *eventData) {
 
-  //std::cout << "Event: " << eventName << std::endl;                    
+  std::cout << "Event: " << eventName << std::endl;                    
   if (eventName == "/KbdEsc_Down") {
     _quit = true;
   } else if (eventName == "/MouseBtnLeft_Down") {
@@ -333,7 +344,13 @@ void mvImageApp::onVRRenderContext(MinVR::VRDataIndex *renderState,
 				   MinVR::VRDisplayNode *callingNode) {
 
   std::cout << "on render context" << std::endl;
-
+  std::cout << "Got a CGLGetCurrentContext(): " << CGLGetCurrentContext() << std::endl;
+  // If this is the first time through, do the graphics initialization.
+  if (_needInitialization) {
+    graphicsInit(_vrMain->getConfig());
+    _needInitialization = false;
+  }
+  
   if (!renderState->exists("IsConsole", "/")) {
   }
 }
@@ -369,20 +386,15 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
     console->println("Console output...");
   } else {
 
-    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-    static unsigned int prevTicks = 0;
-    unsigned int ticks;
-    float secondsElapsed;
-    int i;
-
-    // calculate the number of seconds since the program started.
-    secondsElapsed = getElapsedSeconds();
+    // For a little animation effect, calculate the number of seconds
+    // since the program started.
+    float secondsElapsed = getElapsedSeconds();
     
     _gLightRotation += (M_PI / 4.0f) * secondsElapsed;
     //    std::cout << "rotation: " << _gLightRotation << std::endl;
-    for(i = 0; i < NUM_LIGHTS; ++i) {
+    for(int i = 0; i < NUM_LIGHTS; ++i) {
       const float radius = 1.75f;
       float r = (((M_PI * 2.0f) / (float)NUM_LIGHTS) * (float)i) + _gLightRotation;
 
@@ -391,7 +403,9 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
       _gLightPosition[i * 3 + 2] = sinf(r) * radius;
     }
 
-
+    // We are ready to execute our shader program...
+    std::cout << "using program: " << _gProgram << std::endl;
+    glUseProgram(_gProgram);
     
     if (renderState->exists("ProjectionMatrix", "/")) {
       // This is the typical case where the MinVR DisplayGraph contains      
@@ -400,27 +414,21 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
 
       std::cout << "projection matrix exists" << std::endl;
       
-      // glMatrixMode(GL_PROJECTION);
-      // glLoadIdentity();
-      // MinVR::VRMatrix4 P = renderState->getValue("ProjectionMatrix", "/");
-      // glLoadMatrixd(P.m);
+      MinVR::VRMatrix4 projMat = renderState->getValue("ProjectionMatrix", "/");
 
-      // glMatrixMode(GL_MODELVIEW);
-      // glLoadIdentity();
+      // Load it for access by the shader.
+      glUniformMatrix4fv(_gProgramProjMatrix, 1, GL_FALSE, projMat.getFloat());
 
       // In a VR program, we want the camera (Projection and View
-      // matrices) to be controlled by head tracking.  So, we switch
-      // to having the keyboard and mouse control the Model matrix.
+      // matrices) to be controlled by head tracking.  
       // Guideline: In VR, put all of the "scene navigation" into the
       // Model matrix and leave the Projection and View matrices for
       // head tracking.
-      MinVR::VRMatrix4 M =
-        MinVR::VRMatrix4::translation(MinVR::VRVector3(0.0, 0.0, -_radius)) *
-        MinVR::VRMatrix4::rotationX(_vertAngle) *
-        MinVR::VRMatrix4::rotationY(_horizAngle);
 
-      MinVR::VRMatrix4 V = renderState->getValue("ViewMatrix", "/");
-      //      glLoadMatrixd((V * M).m);
+      MinVR::VRMatrix4 viewMat = renderState->getValue("ViewMatrix", "/");
+
+      // Load it for access by the shader.
+      glUniformMatrix4fv(_gProgramViewMatrix, 1, GL_FALSE, viewMat.getFloat());
 
     } else {
 
@@ -429,71 +437,149 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
       // If the DisplayGraph does not contain a node that sets the
       // ProjectionMatrix and ViewMatrix, then we must be in a
       // non-headtracked simple desktop mode.  We can just set the
-      // projection and modelview matrices.
-      // glMatrixMode(GL_PROJECTION);
-      // glLoadIdentity();
-      // setPerspective(M_PI / 4.0f, 1.f, 0.1f, 100.0f);
-      // glMatrixMode(GL_MODELVIEW);
-      // glLoadIdentity();
+      // projection and view matrices.
 
-      float cameraPos[3];
-      cameraPos[0] = _radius * cos(_horizAngle) * cos(_vertAngle);
-      cameraPos[1] = -_radius * sin(_vertAngle);
-      cameraPos[2] = _radius * sin(_horizAngle) * cos(_vertAngle);
+      // Make a projection matrix with the perspective function above.
+      MinVR::VRMatrix4 perspMat = perspective(M_PI / 4.0f, 1.f, 0.1f, 100.0f);
 
-      float cameraAim[3];
-      cameraAim[0] = cos(_horizAngle) * sin(_vertAngle);
-      cameraAim[1] = cos(_vertAngle);
-      cameraAim[2] = sin(_horizAngle) * sin(_vertAngle);
+      // Load it for access by the shader.
+      glUniformMatrix4fv(_gProgramProjMatrix, 1, GL_FALSE, perspMat.getFloat());
 
-      float targetPos[3] = {0.0f, 0.0f, 0.0f};
-      lookAt(cameraPos[0], cameraPos[1], cameraPos[2],
-             targetPos[0], targetPos[1], targetPos[2],
-             cameraAim[0], cameraAim[1], cameraAim[2]);
+      // Just checking...
+      GLint count;
+      glGetProgramiv(_gProgram, GL_ACTIVE_UNIFORMS, &count);
+      std::cout << "**Active (in use by a shader) Uniforms: " << count << std::endl;
+
+      GLint params[4];
+      glGetActiveUniformsiv(_gProgram, 1, &_gProgramProjMatrix,
+                            GL_UNIFORM_TYPE, params);
+      std::cout << "params: " << params[0] << std::endl;
+      
+      
+      // Construct a view matrix, using lookat.
+      _gCameraPos.x = _radius * cos(_horizAngle) * cos(_vertAngle);
+      _gCameraPos.y = -_radius * sin(_vertAngle);
+      _gCameraPos.z = _radius * sin(_horizAngle) * cos(_vertAngle);
+
+      _gCameraUp.x = cos(_horizAngle) * sin(_vertAngle);
+      _gCameraUp.y = cos(_vertAngle);
+      _gCameraUp.z = sin(_horizAngle) * sin(_vertAngle);
+
+      MinVR::VRMatrix4 viewMat = lookat(_gCameraPos,
+                                        MinVR::VRVector3(0.0f, 0.0f, 0.0f),
+                                        _gCameraUp);
+
+      // Load it for access by the shader.
+      glUniform3fv(_gProgramCameraPositionLocation, 1, _gCameraPos.getFloat());
+      glUniformMatrix4fv(_gProgramViewMatrix, 1, GL_FALSE, viewMat.getFloat());
+
     }
 
-    // glUseProgram(_gProgram);
-    // glUniform3fv(_gProgramCameraPositionLocation, 1, _gCameraPosition);
-    // glUniform3fv(_gProgramLightPositionLocation, NUM_LIGHTS, _gLightPosition);
-    // glUniform3fv(_gProgramLightColorLocation, NUM_LIGHTS, _gLightColor);
+    glUniform3fv(_gProgramLightPositionLocation, NUM_LIGHTS, _gLightPosition);
+    glUniform3fv(_gProgramLightColorLocation, NUM_LIGHTS, _gLightColor);
 
     // Render something for each light.
     char name[10];
     for(int i = 0; i < NUM_LIGHTS; ++i) {
       // Render a shape with the light's color and position.
-      // glPushMatrix();
-      // glTranslatef(_gLightPosition[i * 3 + 0], _gLightPosition[i * 3 + 1], _gLightPosition[i * 3 + 2]);
-      // glColor3fv(_gLightColor + (i * 3));
-
       sprintf(name, "sphere%d", i);
-      getImage(std::string(name))->setPosition(_gLightPosition[i * 3 + 0],
-                                               _gLightPosition[i * 3 + 1],
-                                               _gLightPosition[i * 3 + 2]);
+      getImage(std::string(name))->getShape()->setPosition(_gLightPosition[i*3+0],
+                                                           _gLightPosition[i*3+1],
+                                                           _gLightPosition[i*3+2]);
  
     }
+
+    // Let's see the whole configuration.
+    std::cout << "APP:*****" << std::endl << (*this) << "*******" << std::endl;
+
+
+    // Debug stuff.
+    GLint i;
+    GLint count;
+
+    GLint size; // size of the variable
+    GLenum type; // type of the variable (float, vec3 or mat4, etc)
+
+    const GLsizei bufSize = 16; // maximum name length
+    GLchar vname[bufSize]; // variable name in GLSL
+    GLsizei length; // name length
+
+    // glGetProgramiv(_gProgram, GL_ACTIVE_ATTRIBUTES, &count);
+    // printf("Active Attributes: %d\n", count);
+
+    // for (i = 0; i < count; i++) {
+    //   glGetActiveAttrib(_gProgram, (GLuint)i, bufSize, &length, &size, &type, vname);
+
+    //   printf("Attribute #%d Type: %u Name: %s\n", i, type, vname);
+    // }
+
+    glGetProgramiv(_gProgram, GL_ACTIVE_UNIFORMS, &count);
+    printf("Active Uniforms: %d\n", count);
+
+    for (i = 0; i < count; i++) {
+      glGetActiveUniform(_gProgram, (GLuint)i, bufSize, &length, &size, &type, vname);
+
+      printf("Uniform #%d Type: %u Name: %s\n", i, type, vname);
+    }
+
+
+    
+    // GLint numActiveAttribs = 0;
+    // GLint numActiveUniforms = 0;
+    // glGetProgramInterfaceiv(prog, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &numActiveAttribs);
+    // glGetProgramInterfaceiv(prog, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numActiveUniforms);
+
+    // std::vector<GLchar> nameData(256);
+    // std::vector<GLenum> properties;
+    // properties.push_back(GL_NAME_LENGTH​);
+    // properties.push_back(GL_TYPE​);
+    // properties.push_back(GL_ARRAY_SIZE​);
+    // std::vector<GLint> values(properties.size());
+    // for(int attrib = 0; attrib < numActiveAttribs; ++attrib) {
+    //   glGetProgramResourceiv(prog, GL_PROGRAM_INPUT, attrib, properties.size(),
+    //                          &properties[0], values.size(), NULL, &values[0]);
+
+    //   nameData.resize(properties[0]); //The length of the name.
+    //   glGetProgramResourceName(prog, GL_PROGRAM_INPUT, attrib, nameData.size(), NULL, &nameData[0]);
+    //   std::string name((char*)&nameData[0], nameData.size() - 1);
+    // }
+
+
+
+
+
+   
    
     // Draw objects here.
     std::cout << "draw objects" << std::endl;
     for (imageMap::iterator it = _images.begin();
          it != _images.end(); it++) {
       std::cout << "drawing: " << it->first << std::endl;
+
+      // Retrieve the model matrix from the object about to be drawn.
+      MinVR::VRMatrix4 model = it->second->getShape()->getModelMatrix();
+
+      // Load it for access by the shader.
+      glUniformMatrix4fv(_gProgramModelMatrix, 1, GL_FALSE, model.getFloat());
+
+      // Draw it.
       it->second->draw();
     }
     
     std::cout << "Draw some axes because why not." << std::endl;
-    // glBegin(GL_LINES);
-    // glColor3f(1.0, 0.0, 0.0);
-    // glVertex3f(8.0, 0.0, 0.0);
-    // glVertex3f(0.0, 0.0, 0.0);
+    glBegin(GL_LINES);
+    glColor3f(1.0, 0.0, 0.0);
+    glVertex3f(8.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0);
 
-    // glColor3f(0.0, 1.0, 0.0);
-    // glVertex3f(0.0, 8.0, 0.0);
-    // glVertex3f(0.0, 0.0, 0.0);
+    glColor3f(0.0, 1.0, 0.0);
+    glVertex3f(0.0, 8.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0);
 
-    // glColor3f(0.0, 0.0, 1.0);
-    // glVertex3f(0.0, 0.0, 8.0);
-    // glVertex3f(0.0, 0.0, 0.0);
-    // glEnd();
+    glColor3f(0.0, 0.0, 1.0);
+    glVertex3f(0.0, 0.0, 8.0);
+    glVertex3f(0.0, 0.0, 0.0);
+    glEnd();
 
 
     // glPopMatrix();
@@ -503,6 +589,15 @@ void mvImageApp::onVRRenderScene(MinVR::VRDataIndex *renderState,
 std::string mvImageApp::print() const {
   std::stringstream out;
 
+  out << "Program: " << _gProgram << std::endl;
+  out << "Camera: (" << _gCameraPos[0] << ","  << _gCameraPos[1] << ","  << _gCameraPos[2] << ")" << std::endl;
+  out << "Light 1: (" << _gLightPosition[0] << ","  << _gLightPosition[1] << ","  << _gLightPosition[2] << ")" << std::endl;
+  out << "  color: (" << _gLightColor[0] << ","  << _gLightColor[1] << ","  << _gLightColor[2] << ")" << std::endl;
+  out << "Light 2: (" << _gLightPosition[3] << ","  << _gLightPosition[4] << ","  << _gLightPosition[5] << ")" << std::endl;  
+  out << "  color: (" << _gLightColor[3] << ","  << _gLightColor[4] << ","  << _gLightColor[5] << ")" << std::endl;
+  out << "Light 3: (" << _gLightPosition[6] << ","  << _gLightPosition[7] << ","  << _gLightPosition[8] << ")" << std::endl;  
+  out << "  color: (" << _gLightColor[6] << ","  << _gLightColor[7] << ","  << _gLightColor[8] << ")" << std::endl;
+  
   for (imageMap::const_iterator it = _images.begin(); it != _images.end(); it++) {
 
     out << it->first << std::endl;
@@ -525,7 +620,8 @@ int main(int argc, char **argv) {
 
   mvImageApp app(argc, argv);
 
-    // Let's see the whole configuration.
+  // Let's see the whole configuration.  It is not complete, since
+  // graphicsInit() waits for the first render to execute.
   std::cout << "IMAGES:*****" << std::endl << app << "*******" << std::endl;
  
   app.run();

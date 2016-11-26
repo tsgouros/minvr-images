@@ -11,7 +11,7 @@
 #include <GL/gl.h>
 #include <gl/GLU.h>
 #elif defined(__APPLE__)
-#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
 #include <OpenGL/glu.h>
 #else
@@ -30,7 +30,7 @@
 class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler  {
  protected:
   MinVR::VRMain *_vrMain;
-  bool _quit;
+  bool _quit, _needInitialization;
   float _horizAngle, _vertAngle, _radius, _incAngle;
 
   // Where do shape objects come from? 
@@ -53,13 +53,19 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
 
   std::string print() const;
   
-  // The OpenGL details.
+  // The OpenGL details.  First, where do we file all the information so the
+  // shaders can get at it?
   GLuint _gProgram;
   GLuint _gProgramCameraPositionLocation;
   GLuint _gProgramLightPositionLocation;
   GLuint _gProgramLightColorLocation;
+  GLuint _gProgramModelMatrix;
+  GLuint _gProgramViewMatrix;
+  GLuint _gProgramProjMatrix;
 
-  float _gCameraPosition[3];
+  // Second, what is the information?
+  MinVR::VRVector3 _gCameraPos;
+  MinVR::VRVector3 _gCameraUp;
 #define NUM_LIGHTS 3
   float _gLightPosition[NUM_LIGHTS * 3];
   float _gLightColor[NUM_LIGHTS * 3];
@@ -72,10 +78,13 @@ class mvImageApp :  public MinVR::VREventHandler, public MinVR::VRRenderHandler 
   void shaderAttach(const GLuint program,
                     const GLenum type, const std::string pathName);
 
-  static void setPerspective(float fov, float aspect, float near, float far);
-  static void lookAt(float eyeX, float eyeY, float eyeZ,
-                     float centerX, float centerY, float centerZ,
-                     float upX, float upY, float upZ);
+  static MinVR::VRMatrix4 perspective(float fov,
+                                      float aspect,
+                                      float near,
+                                      float far);
+  static MinVR::VRMatrix4 lookat(MinVR::VRVector3 cameraPos,
+                                 MinVR::VRVector3 targetPos,
+                                 MinVR::VRVector3 cameraUp);
 
   // Used for animation features.
   unsigned long int _lastMilliSeconds;

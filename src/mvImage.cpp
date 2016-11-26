@@ -29,6 +29,16 @@ void mvImageShape::setShape(std::string shape) {
   throw std::runtime_error("no such shape in the catalog: " + shape);
 }
 
+MinVR::VRMatrix4 mvImageShape::getModelMatrix() {
+  MinVR::VRMatrix4 model =
+    MinVR::VRMatrix4::scale(MinVR::VRVector3(_scalex, _scaley, _scalez)) *
+    MinVR::VRMatrix4::rotation(MinVR::VRPoint3(_posx, _posy, _posz),
+                               MinVR::VRVector3(_rotx, _roty, _rotz), _angle) *
+    MinVR::VRMatrix4::translation(MinVR::VRVector3(-_posx, -_posy, -_posz));
+
+  return model;
+}
+
 // Initialize the shape from a config file.
 mvImageShape::mvImageShape(std::string name, MinVR::VRDataIndex* index) {
 
@@ -125,39 +135,68 @@ void mvImageShapeRectangle::create() {
 
   std::cout << "load rectangle vertices " << _height << "x" << _width << std::endl;
 
-    // Positions
-  _vertices[0]  =  1.0f; _vertices[1]  =  1.0f; _vertices[2]  = 0.0f; // UR
-  _vertices[8]  =  1.0f; _vertices[9]  = -1.0f; _vertices[10] = 0.0f; // LR
-  _vertices[16] = -1.0f; _vertices[17] = -1.0f; _vertices[18] = 0.0f; // LL
-  _vertices[24] = -1.0f; _vertices[25] =  1.0f; _vertices[26] = 0.0f; // UL
+  // Positions, UR, LR, LL, UL
+  _vertices[0].x =  _width; _vertices[0].y =  _height; _vertices[0].z = 0.0f;
+  _vertices[1].x =  _width; _vertices[1].y = -_height; _vertices[1].z = 0.0f;
+  _vertices[2].x = -_width; _vertices[2].y = -_height; _vertices[2].z = 0.0f;
+  _vertices[3].x = -_width; _vertices[3].y =  _height; _vertices[3].z = 0.5f;
 
-  _vertices[0]  *= _width;
-  _vertices[8]  *= _width;
-  _vertices[16] *= _width;
-  _vertices[24] *= _width;
-
-  _vertices[1]  *= _height;
-  _vertices[9]  *= _height;
-  _vertices[17] *= _height;
-  _vertices[25] *= _height;
-
+  // Normals
+  _vertices[0].nx = 0.0f; _vertices[0].ny = 0.0f; _vertices[0].nz = 1.0f;
+  _vertices[1].nx = 0.0f; _vertices[1].ny = 0.0f; _vertices[1].nz = 1.0f;
+  _vertices[2].nx = 0.0f; _vertices[2].ny = 0.0f; _vertices[2].nz = 1.0f;
+  _vertices[3].nx = 0.0f; _vertices[3].ny = 0.0f; _vertices[3].nz = 1.0f;
+               
   // Colors
-  _vertices[3]  = 1.0f; _vertices[4]  = 0.0f; _vertices[5]  = 0.0f;
-  _vertices[11] = 0.0f; _vertices[12] = 1.0f; _vertices[13] = 0.0f;
-  _vertices[19] = 0.0f; _vertices[20] = 0.0f; _vertices[21] = 1.0f;
-  _vertices[27] = 1.0f; _vertices[28] = 1.0f; _vertices[29] = 0.0f;
+  _vertices[0].r = 1.0f; _vertices[0].g = 0.0f; _vertices[0].b = 0.0f;
+  _vertices[1].r = 0.0f; _vertices[1].g = 1.0f; _vertices[1].b = 0.0f;
+  _vertices[2].r = 0.0f; _vertices[2].g = 0.0f; _vertices[2].b = 1.0f;
+  _vertices[3].r = 1.0f; _vertices[3].g = 1.0f; _vertices[3].b = 0.0f;
 
   // Texture coordinates
-  _vertices[6]  = 1.0f; _vertices[7]  = 1.0f;
-  _vertices[14] = 1.0f; _vertices[15] = 1.0f;
-  _vertices[22] = 1.0f; _vertices[23] = 1.0f;
-  _vertices[30] = 1.0f; _vertices[31] = 1.0f;
+  _vertices[0].u = 1.0f; _vertices[0].v  = 1.0f;
+  _vertices[1].u = 1.0f; _vertices[1].v = 1.0f;
+  _vertices[2].u = 1.0f; _vertices[2].v = 1.0f;
+  _vertices[3].u = 1.0f; _vertices[3].v = 1.0f;
+
+  glGenBuffers(1, &_gBufferId);
+  glBindBuffer(GL_ARRAY_BUFFER, _gBufferId);
+  // The '4' is the number of vertices.
+  glBufferData(GL_ARRAY_BUFFER, sizeof(mvVertex) * 4, &_vertices[0].x, GL_STATIC_DRAW);
+
+  glEnableVertexAttribArray(_vptr); // For vertex coordinates.
+  glVertexAttribPointer(_vptr, 3, GL_FLOAT, GL_FALSE, sizeof(mvVertex),
+                        reinterpret_cast<void*>(offsetof(mvVertex, x)));
+  glEnableVertexAttribArray(_nptr); // Normals.
+  glVertexAttribPointer(_nptr, 3, GL_FLOAT, GL_FALSE, sizeof(mvVertex),
+                        reinterpret_cast<void*>(offsetof(mvVertex, nx)));
+  glEnableVertexAttribArray(_tptr); // Textures.
+  glVertexAttribPointer(_tptr, 2, GL_FLOAT, GL_FALSE, sizeof(mvVertex),
+                        reinterpret_cast<void*>(offsetof(mvVertex, u)));
+  glEnableVertexAttribArray(_cptr); // Colors.
+  glVertexAttribPointer(_cptr, 4, GL_FLOAT, GL_FALSE, sizeof(mvVertex),
+                        reinterpret_cast<void*>(offsetof(mvVertex, r)));  
+
+  // We are using an index array.
+  _indices[0] = 0; _indices[1] = 1; _indices[2] = 2; _indices[3] = 3; 
   
+  glGenBuffers(1, &_gIndexId);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _gIndexId);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * 4, _indices, GL_STATIC_DRAW);
+
+
+
 };
 
+// The model matrix is retrieved separately by the calling program,
+// and sent to the shader, so it should be waiting there already for
+// the vertices here.
 void mvImageShapeRectangle::draw(const mvImageData* img) {
-
+  
   std::cout << "draw rectangle" << std::endl;
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _gIndexId);
+  glDrawElements(GL_TRIANGLES, 2, GL_UNSIGNED_INT,
+                 reinterpret_cast<void*>(offsetof(mvVertex, x)));  
   
 }
 
@@ -339,9 +378,6 @@ void mvImageShapeSphere::draw(const mvImageData* img) {
   std::cout << "draw sphere" << std::endl;
   
 }
-
-
-
 
 mvImageShape* createMvImageShapeSphere(std::string shapeName,
                                        MinVR::VRDataIndex* index) {

@@ -1,6 +1,7 @@
 #ifndef MVIMAGE_H
 #define MVIMAGE_H
 
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -15,8 +16,9 @@
 #include <GL/gl.h>
 #include <gl/GLU.h>
 #elif defined(__APPLE__)
+#include <OpenGL/gl3.h>
 #include <OpenGL/OpenGL.h>
-#include <OpenGL/glu.h>
+
 #else
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
@@ -95,7 +97,7 @@ class mvImageShape {
   GLdouble _angle;
   GLdouble _rotx, _roty, _rotz;
   GLdouble _scalex, _scaley, _scalez;
-  GLuint _gBufferId;
+  GLuint _gBufferId, _gIndexId;
   
   IMG_SHAPEID _shapeID; 
 
@@ -107,6 +109,15 @@ class mvImageShape {
   };
   
   friend std::ostream & operator<<(std::ostream &os, const mvImageShape& iShape);
+
+  struct mvVertex {
+    GLfloat x, y, z;
+    GLfloat nx, ny, nz;
+    GLfloat u, v;
+    GLfloat r, g, b, a;
+  };
+  // These are index values for the glVertexAttribPointer() calls.
+  static const GLuint _vptr = 0, _nptr = 1, _tptr = 2, _cptr = 3;
   
  public:
   mvImageShape() { init(); };
@@ -123,7 +134,8 @@ class mvImageShape {
   }
   
   virtual ~mvImageShape() {};
-  
+
+  // Here are the basic accessors and mutators.
   void setShape(std::string shape);
   std::string getShape() { return _shapeMap[_shapeID]; };
 
@@ -150,17 +162,27 @@ class mvImageShape {
   // probably should have been done in the constructor.
   virtual void create();
 
+  // Call this just before draw to submit the model matrix to the
+  // vertex shader before drawing.  Composes the scale, rotate, and
+  // transpose values into a model matrix, and returns the result.
+  // Note that this has to be converted into a matrix of float values
+  // in order to be useful to many OpenGL implementations.  Or at
+  // least the implementation on my Mac.
+  MinVR::VRMatrix4 getModelMatrix();
+  
   // The draw() function here has imageData as an input and draws each
   // polygon of the shape after first checking with the imageData
   // object for the appropriate mipmap.
   virtual void draw(const mvImageData* img);
+
 };
 
 class mvImageShapeRectangle : public mvImageShape {
  protected:
   double _height, _width;
   mvPoint _normal;
-  GLfloat _vertices[32];
+  mvVertex _vertices[4];
+  GLuint _indices[4];
 
   friend std::ostream & operator<<(std::ostream &os,
                                    const mvImageShapeRectangle& iShape);
@@ -335,20 +357,6 @@ class mvImage {
   void create() { _imageShape->create(); };
   
   virtual void draw();
-
-  void setScale(GLdouble scalex, GLdouble scaley, GLdouble scalez) {
-    _imageShape->setScale(scalex, scaley, scalez); };
-  MinVR::VRVector3 getScale() { return _imageShape->getScale(); };
-
-  void setRotation(GLdouble angle, GLdouble rotx, GLdouble roty, GLdouble rotz) {
-    _imageShape->setRotation(angle, rotx, roty, rotz); };
-  GLdouble getAngle() { return _imageShape->getAngle(); };
-  MinVR::VRVector3 getRotAxis() { return _imageShape->getRotAxis(); }
-
-  void setPosition(GLdouble x, GLdouble y, GLdouble z) {
-    _imageShape->setPosition(x, y, z); };
-  MinVR::VRVector3 getPosition() {
-    return _imageShape->getPosition(); };
 
   std::string print() const;
 };

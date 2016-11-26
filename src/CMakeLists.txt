@@ -35,7 +35,7 @@ add_executable(tgl
 	common/shader.cpp
 	common/shader.hpp
 	common/controls.cpp
-	common/controls.hpp
+	common/controls.h
 	common/texture.cpp
 	common/texture.hpp
 	common/objloader.cpp

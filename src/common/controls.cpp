@@ -1,39 +1,22 @@
-// Include GLFW
-#include <glfw3.h>
+#include "controls.h"
 
-// Include GLM
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-using namespace glm;
-
-#include "controls.hpp"
-
-glm::mat4 ViewMatrix;
-glm::mat4 ProjectionMatrix;
-
-glm::mat4 getViewMatrix(){
+VRControl::VRControl() {
+  position = glm::vec3( 0, 0, 5 ); 
+  horizontalAngle = 3.14f;
+  verticalAngle = 0.0f;
+  initialFoV = 45.0f;
+  speed = 3.0f; // 3 units / second
+  mouseSpeed = 0.005f;
+}
+  
+glm::mat4 VRControl::getViewMatrix(){
 	return ViewMatrix;
 }
-glm::mat4 getProjectionMatrix(){
+glm::mat4 VRControl::getProjectionMatrix(){
 	return ProjectionMatrix;
 }
 
-
-// Initial position : on +Z
-glm::vec3 position = glm::vec3( 0, 0, 5 ); 
-// Initial horizontal angle : toward -Z
-float horizontalAngle = 3.14f;
-// Initial vertical angle : none
-float verticalAngle = 0.0f;
-// Initial Field of View
-float initialFoV = 45.0f;
-
-float speed = 3.0f; // 3 units / second
-float mouseSpeed = 0.005f;
-
-
-
-void computeMatricesFromInputs(GLFWwindow* window){
+void VRControl::computeMatricesFromInputs(GLFWwindow* window){
 
 	// glfwGetTime is called only once, the first time this function is called
 	static double lastTime = glfwGetTime();

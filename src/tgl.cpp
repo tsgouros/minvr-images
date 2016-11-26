@@ -1,6 +1,4 @@
-// Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 #include <vector>
 
 // Include GLEW
@@ -12,11 +10,10 @@
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-using namespace glm;
 
 #include <common/shader.hpp>
 #include <common/texture.hpp>
-#include <common/controls.hpp>
+#include <common/controls.h>
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
 
@@ -37,8 +34,11 @@ public:
 	GLuint _uvBuffer;
 	GLuint _normalBuffer;
   GLuint _LightID;
-
+  VRControl control;
+  
   VRApp() {
+    control = VRControl();
+
     // Initialise GLFW
     if( !glfwInit() ) {
       throw std::runtime_error("Failed to initialize GLFW.");
@@ -124,45 +124,53 @@ public:
     _LightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
     
   };
-};
 
-int main( void )
-{
-  VRApp app = VRApp();
+  ~VRApp() {
+
+    // Cleanup VBO and shader
+    glDeleteBuffers(1, &_vertexBuffer);
+    glDeleteBuffers(1, &_uvBuffer);
+    glDeleteBuffers(1, &_normalBuffer);
+    glDeleteProgram(_programID);
+    glDeleteTextures(1, &_Texture);
+    glDeleteVertexArrays(1, &_VertexArrayID);
+
+    // Close OpenGL window and terminate GLFW
+    glfwTerminate();
+  };
   
-	do{
-
-		// Clear the screen
+  void draw() {
+    // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Use our shader
-		glUseProgram(app._programID);
+		glUseProgram(_programID);
 
 		// Compute the MVP matrix from keyboard and mouse input
-		computeMatricesFromInputs(app._window);
-		glm::mat4 ProjectionMatrix = getProjectionMatrix();
-		glm::mat4 ViewMatrix = getViewMatrix();
+		control.computeMatricesFromInputs(_window);
+		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
+		glm::mat4 ViewMatrix = control.getViewMatrix();
 		glm::mat4 ModelMatrix = glm::mat4(1.0);
 		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform
-		glUniformMatrix4fv(app._MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(app._ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		glUniformMatrix4fv(app._ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+		glUniformMatrix4fv(_MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(_ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(_ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
 		glm::vec3 lightPos = glm::vec3(4,4,4);
-		glUniform3f(app._LightID, lightPos.x, lightPos.y, lightPos.z);
+		glUniform3f(_LightID, lightPos.x, lightPos.y, lightPos.z);
 
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, app._Texture);
+		glBindTexture(GL_TEXTURE_2D, _Texture);
 		// Set our "myTextureSampler" sampler to user Texture Unit 0
-		glUniform1i(app._TextureID, 0);
+		glUniform1i(_TextureID, 0);
 
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, app._vertexBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
 		glVertexAttribPointer(
 			0,                  // attribute
 			3,                  // size
@@ -174,7 +182,7 @@ int main( void )
 
 		// 2nd attribute buffer : UVs
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, app._uvBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
 		glVertexAttribPointer(
 			1,                                // attribute
 			2,                                // size
@@ -186,7 +194,7 @@ int main( void )
 
 		// 3rd attribute buffer : normals
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, app._normalBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
 		glVertexAttribPointer(
 			2,                                // attribute
 			3,                                // size
@@ -197,30 +205,31 @@ int main( void )
 		);
 
 		// Draw the triangles !
-		glDrawArrays(GL_TRIANGLES, 0, app._vertices.size() );
+		glDrawArrays(GL_TRIANGLES, 0, _vertices.size() );
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
 
 		// Swap buffers
-		glfwSwapBuffers(app._window);
+		glfwSwapBuffers(_window);
+  };
+
+};
+
+int main( void )
+{
+  VRApp app = VRApp();
+  
+	do{
+
+    app.draw();
+    
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
 	while( glfwGetKey(app._window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
 		   glfwWindowShouldClose(app._window) == 0 );
-
-	// Cleanup VBO and shader
-	glDeleteBuffers(1, &app._vertexBuffer);
-	glDeleteBuffers(1, &app._uvBuffer);
-	glDeleteBuffers(1, &app._normalBuffer);
-	glDeleteProgram(app._programID);
-	glDeleteTextures(1, &app._Texture);
-	glDeleteVertexArrays(1, &app._VertexArrayID);
-
-	// Close OpenGL window and terminate GLFW
-	glfwTerminate();
 
 	return 0;
 }

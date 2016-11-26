@@ -8,7 +8,6 @@
 
 // Include GLFW
 #include <glfw3.h>
-GLFWwindow* window;
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -21,8 +20,31 @@ using namespace glm;
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
 
+class VRApp {
+public:
+  GLFWwindow* window;
+ 	GLuint VertexArrayID;
+  GLuint programID;
+  GLuint MatrixID;
+	GLuint ViewMatrixID;
+	GLuint ModelMatrixID;
+  GLuint Texture;
+  GLuint TextureID;
+  std::vector<glm::vec3> vertices;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals;
+	GLuint vertexBuffer;
+	GLuint uvBuffer;
+	GLuint normalBuffer;
+  GLuint LightID;
+
+
+};
+
 int main( void )
 {
+  VRApp app = VRApp();
+  
 	// Initialise GLFW
 	if( !glfwInit() )
 	{
@@ -38,14 +60,14 @@ int main( void )
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "Tutorial 08 - Basic Shading", NULL, NULL);
-	if( window == NULL ){
+	app.window = glfwCreateWindow( 1024, 768, "tgl", NULL, NULL);
+	if( app.window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		getchar();
 		glfwTerminate();
 		return -1;
 	}
-	glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(app.window);
 
 	// Initialize GLEW
 	glewExperimental = true; // Needed for core profile
@@ -57,13 +79,13 @@ int main( void )
 	}
 
 	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	glfwSetInputMode(app.window, GLFW_STICKY_KEYS, GL_TRUE);
     // Hide the mouse and enable unlimited mouvement
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(app.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     // Set the mouse at the center of the screen
     glfwPollEvents();
-    glfwSetCursorPos(window, 1024/2, 768/2);
+    glfwSetCursorPos(app.window, 1024/2, 768/2);
 
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -76,50 +98,43 @@ int main( void )
 	// Cull triangles which normal is not towards the camera
 	glEnable(GL_CULL_FACE);
 
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
+	glGenVertexArrays(1, &app.VertexArrayID);
+	glBindVertexArray(app.VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+	app.programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
 	// Get a handle for our "MVP" uniform
-	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
-	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
+  app.MatrixID = glGetUniformLocation(app.programID, "MVP");
+  app.ViewMatrixID = glGetUniformLocation(app.programID, "V");
+  app.ModelMatrixID = glGetUniformLocation(app.programID, "M");
 
 	// Load the texture
-	GLuint Texture = loadDDS("uvmap.DDS");
+	app.Texture = loadDDS("uvmap.DDS");
 	
 	// Get a handle for our "myTextureSampler" uniform
-	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+	app.TextureID  = glGetUniformLocation(app.programID, "myTextureSampler");
 
 	// Read our .obj file
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec2> uvs;
-	std::vector<glm::vec3> normals;
-	bool res = loadOBJ("suzanne.obj", vertices, uvs, normals);
+	bool res = loadOBJ("suzanne.obj", app.vertices, app.uvs, app.normals);
 
 	// Load it into a VBO
 
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &app.vertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, app.vertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, app.vertices.size() * sizeof(glm::vec3), &app.vertices[0], GL_STATIC_DRAW);
 
-	GLuint uvbuffer;
-	glGenBuffers(1, &uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &app.uvBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, app.uvBuffer);
+	glBufferData(GL_ARRAY_BUFFER, app.uvs.size() * sizeof(glm::vec2), &app.uvs[0], GL_STATIC_DRAW);
 
-	GLuint normalbuffer;
-	glGenBuffers(1, &normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &app.normalBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, app.normalBuffer);
+	glBufferData(GL_ARRAY_BUFFER, app.normals.size() * sizeof(glm::vec3), &app.normals[0], GL_STATIC_DRAW);
 
 	// Get a handle for our "LightPosition" uniform
-	glUseProgram(programID);
-	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+	glUseProgram(app.programID);
+	app.LightID = glGetUniformLocation(app.programID, "LightPosition_worldspace");
 
 	do{
 
@@ -127,10 +142,10 @@ int main( void )
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Use our shader
-		glUseProgram(programID);
+		glUseProgram(app.programID);
 
 		// Compute the MVP matrix from keyboard and mouse input
-		computeMatricesFromInputs(window);
+		computeMatricesFromInputs(app.window);
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
 		glm::mat4 ModelMatrix = glm::mat4(1.0);
@@ -138,22 +153,22 @@ int main( void )
 
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform
-		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+		glUniformMatrix4fv(app.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(app.ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(app.ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
 		glm::vec3 lightPos = glm::vec3(4,4,4);
-		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
+		glUniform3f(app.LightID, lightPos.x, lightPos.y, lightPos.z);
 
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Texture);
+		glBindTexture(GL_TEXTURE_2D, app.Texture);
 		// Set our "myTextureSampler" sampler to user Texture Unit 0
-		glUniform1i(TextureID, 0);
+		glUniform1i(app.TextureID, 0);
 
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, app.vertexBuffer);
 		glVertexAttribPointer(
 			0,                  // attribute
 			3,                  // size
@@ -165,7 +180,7 @@ int main( void )
 
 		// 2nd attribute buffer : UVs
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, app.uvBuffer);
 		glVertexAttribPointer(
 			1,                                // attribute
 			2,                                // size
@@ -177,7 +192,7 @@ int main( void )
 
 		// 3rd attribute buffer : normals
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, app.normalBuffer);
 		glVertexAttribPointer(
 			2,                                // attribute
 			3,                                // size
@@ -188,27 +203,27 @@ int main( void )
 		);
 
 		// Draw the triangles !
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
+		glDrawArrays(GL_TRIANGLES, 0, app.vertices.size() );
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
 
 		// Swap buffers
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(app.window);
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-		   glfwWindowShouldClose(window) == 0 );
+	while( glfwGetKey(app.window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
+		   glfwWindowShouldClose(app.window) == 0 );
 
 	// Cleanup VBO and shader
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &uvbuffer);
-	glDeleteBuffers(1, &normalbuffer);
-	glDeleteProgram(programID);
-	glDeleteTextures(1, &Texture);
-	glDeleteVertexArrays(1, &VertexArrayID);
+	glDeleteBuffers(1, &app.vertexBuffer);
+	glDeleteBuffers(1, &app.uvBuffer);
+	glDeleteBuffers(1, &app.normalBuffer);
+	glDeleteProgram(app.programID);
+	glDeleteTextures(1, &app.Texture);
+	glDeleteVertexArrays(1, &app.VertexArrayID);
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();

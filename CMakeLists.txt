@@ -56,5 +56,7 @@ endif (WIN32)
 
 #enable_testing()
 
+add_subdirectory(external)
+
 set(img_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(src)

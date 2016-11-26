@@ -1,30 +1,38 @@
 #include "controls.h"
 
 VRControl::VRControl() {
-  position = glm::vec3( 0, 0, 5 ); 
-  horizontalAngle = 3.14f;
-  verticalAngle = 0.0f;
-  initialFoV = 45.0f;
-  speed = 3.0f; // 3 units / second
-  mouseSpeed = 0.005f;
+  _position = glm::vec3( 0, 0, 5 ); 
+  _horizontalAngle = 3.14f;  // Initial horizontal angle : toward -Z
+  _verticalAngle = 0.0f;     // Initial vertical angle : none
+  _initialFoV = 45.0f;
+  _speed = 3.0f;             // 3 units / second
+  _mouseSpeed = 0.005f;
 }
   
+// Camera matrix, at _position, looking in _direction, head
+// up. (0,-1,0) is upside-down.
 glm::mat4 VRControl::getViewMatrix(){
-	return ViewMatrix;
+	return glm::lookAt(_position,
+                     _position + _direction,
+                     up());
 }
+
+// Projection matrix : 45Â° Field of View, 4:3 ratio, display range :
+// 0.1 unit <-> 100 units
 glm::mat4 VRControl::getProjectionMatrix(){
-	return ProjectionMatrix;
+	return glm::perspective(glm::radians(_initialFoV), 4.0f / 3.0f, 0.1f, 100.0f);
 }
 
-void VRControl::computeMatricesFromInputs(GLFWwindow* window){
-
+void VRControl::handleEvents(GLFWwindow* window) {
 	// glfwGetTime is called only once, the first time this function is called
 	static double lastTime = glfwGetTime();
 
 	// Compute time difference between current and last frame
 	double currentTime = glfwGetTime();
-	float deltaTime = float(currentTime - lastTime);
-
+	_deltaTime = float(currentTime - lastTime);
+	// For the next frame, the "last time" will be "now"
+	lastTime = currentTime;
+  
 	// Get mouse position
 	double xpos, ypos;
 	glfwGetCursorPos(window, &xpos, &ypos);
@@ -33,54 +41,43 @@ void VRControl::computeMatricesFromInputs(GLFWwindow* window){
 	glfwSetCursorPos(window, 1024/2, 768/2);
 
 	// Compute new orientation
-	horizontalAngle += mouseSpeed * float(1024/2 - xpos );
-	verticalAngle   += mouseSpeed * float( 768/2 - ypos );
+	_horizontalAngle += _mouseSpeed * float(1024/2 - xpos );
+	_verticalAngle   += _mouseSpeed * float( 768/2 - ypos );
 
 	// Direction : Spherical coordinates to Cartesian coordinates conversion
-	glm::vec3 direction(
-		cos(verticalAngle) * sin(horizontalAngle), 
-		sin(verticalAngle),
-		cos(verticalAngle) * cos(horizontalAngle)
+	_direction = glm::vec3(
+		cos(_verticalAngle) * sin(_horizontalAngle), 
+		sin(_verticalAngle),
+		cos(_verticalAngle) * cos(_horizontalAngle)
 	);
-	
-	// Right vector
-	glm::vec3 right = glm::vec3(
-		sin(horizontalAngle - 3.14f/2.0f), 
-		0,
-		cos(horizontalAngle - 3.14f/2.0f)
-	);
-	
-	// Up vector
-	glm::vec3 up = glm::cross( right, direction );
 
+	// Right vector
+	_right = glm::vec3(
+		sin(_horizontalAngle - 3.14f/2.0f), 
+		0,
+		cos(_horizontalAngle - 3.14f/2.0f)
+	);
+	
 	// Move forward
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
-		position += direction * deltaTime * speed;
+		_position += _direction * _deltaTime * _speed;
 	}
 	// Move backward
 	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS){
-		position -= direction * deltaTime * speed;
+		_position -= _direction * _deltaTime * _speed;
 	}
 	// Strafe right
 	if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
-		position += right * deltaTime * speed;
+		_position += _right * _deltaTime * _speed;
 	}
 	// Strafe left
 	if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS){
-		position -= right * deltaTime * speed;
+		_position -= _right * _deltaTime * _speed;
 	}
 
-	float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
+}
 
-	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
-	// Camera matrix
-	ViewMatrix       = glm::lookAt(
-								position,           // Camera is here
-								position+direction, // and looks here : at the same position, plus "direction"
-								up                  // Head is up (set to 0,-1,0 to look upside-down)
-						   );
+void VRControl::computeMatricesFromInputs(GLFWwindow* window){
 
-	// For the next frame, the "last time" will be "now"
-	lastTime = currentTime;
+
 }

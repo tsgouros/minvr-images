@@ -11,26 +11,31 @@
 
 class VRControl {
  protected:
-  glm::mat4 ViewMatrix;
-  glm::mat4 ProjectionMatrix;
+  glm::mat4 _ViewMatrix;
+  glm::mat4 _ProjectionMatrix;
 
  public:
   VRControl();
   
   // Initial position : on +Z
-  glm::vec3 position; 
-  // Initial horizontal angle : toward -Z
-  float horizontalAngle;
-  // Initial vertical angle : none
-  float verticalAngle;
-  
+  glm::vec3 _position;
+  glm::vec3 _direction;
+	glm::vec3 _right;
+  float _horizontalAngle;
+  float _verticalAngle;
+    
   // Initial Field of View
-  float initialFoV;
-  float speed; 
-  float mouseSpeed;
+  float _initialFoV;
+  float _speed; 
+  float _mouseSpeed;
+
+  float _deltaTime;
   
+  void handleEvents(GLFWwindow* window);
   void computeMatricesFromInputs(GLFWwindow* window);
   glm::mat4 getViewMatrix();
   glm::mat4 getProjectionMatrix();
+
+  glm::vec3 up() { return glm::cross( _right, _direction ); };
 };
 #endif

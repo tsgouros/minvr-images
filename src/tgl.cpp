@@ -138,8 +138,15 @@ public:
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
   };
+
+  void checkEvents() {
+    control.handleEvents(_window);
+    control.computeMatricesFromInputs(_window);
+		glfwPollEvents();
+  }
   
   void draw() {
+
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -147,7 +154,6 @@ public:
 		glUseProgram(_programID);
 
 		// Compute the MVP matrix from keyboard and mouse input
-		control.computeMatricesFromInputs(_window);
 		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
 		glm::mat4 ViewMatrix = control.getViewMatrix();
 		glm::mat4 ModelMatrix = glm::mat4(1.0);
@@ -222,10 +228,10 @@ int main( void )
   VRApp app = VRApp();
   
 	do{
-
+    app.checkEvents();
+    
     app.draw();
     
-		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
 	while( glfwGetKey(app._window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&

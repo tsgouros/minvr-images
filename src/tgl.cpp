@@ -82,10 +82,46 @@ public:
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS); 
 
-    // Cull triangles which normal is not towards the camera
+    // Cull triangles whose normal is not towards the camera.
     glEnable(GL_CULL_FACE);
 
 
+    glGenVertexArrays(1, &_VertexArrayID);
+    glBindVertexArray(_VertexArrayID);
+
+    // Create and compile our GLSL program from the shaders
+    _programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+
+    // Get a handle for our "MVP" uniform
+    _MatrixID = glGetUniformLocation(_programID, "MVP");
+    _ViewMatrixID = glGetUniformLocation(_programID, "V");
+    _ModelMatrixID = glGetUniformLocation(_programID, "M");
+
+    // Load the texture
+    _Texture = loadDDS("uvmap.DDS");
+    
+    // Get a handle for our "myTextureSampler" uniform
+    _TextureID  = glGetUniformLocation(_programID, "myTextureSampler");
+
+    // Read our .obj file
+    bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
+
+    // Load it into a VBO
+    glGenBuffers(1, &_vertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3), &_vertices[0], GL_STATIC_DRAW);
+
+    glGenBuffers(1, &_uvBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(glm::vec2), &_uvs[0], GL_STATIC_DRAW);
+
+    glGenBuffers(1, &_normalBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3), &_normals[0], GL_STATIC_DRAW);
+
+    // Get a handle for our "LightPosition" uniform
+    glUseProgram(_programID);
+    _LightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
     
   };
 };
@@ -94,45 +130,6 @@ int main( void )
 {
   VRApp app = VRApp();
   
-
-	glGenVertexArrays(1, &app._VertexArrayID);
-	glBindVertexArray(app._VertexArrayID);
-
-	// Create and compile our GLSL program from the shaders
-	app._programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
-
-	// Get a handle for our "MVP" uniform
-  app._MatrixID = glGetUniformLocation(app._programID, "MVP");
-  app._ViewMatrixID = glGetUniformLocation(app._programID, "V");
-  app._ModelMatrixID = glGetUniformLocation(app._programID, "M");
-
-	// Load the texture
-	app._Texture = loadDDS("uvmap.DDS");
-	
-	// Get a handle for our "myTextureSampler" uniform
-	app._TextureID  = glGetUniformLocation(app._programID, "myTextureSampler");
-
-	// Read our .obj file
-	bool res = loadOBJ("suzanne.obj", app._vertices, app._uvs, app._normals);
-
-	// Load it into a VBO
-
-	glGenBuffers(1, &app._vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, app._vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, app._vertices.size() * sizeof(glm::vec3), &app._vertices[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &app._uvBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, app._uvBuffer);
-	glBufferData(GL_ARRAY_BUFFER, app._uvs.size() * sizeof(glm::vec2), &app._uvs[0], GL_STATIC_DRAW);
-
-	glGenBuffers(1, &app._normalBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, app._normalBuffer);
-	glBufferData(GL_ARRAY_BUFFER, app._normals.size() * sizeof(glm::vec3), &app._normals[0], GL_STATIC_DRAW);
-
-	// Get a handle for our "LightPosition" uniform
-	glUseProgram(app._programID);
-	app._LightID = glGetUniformLocation(app._programID, "LightPosition_worldspace");
-
 	do{
 
 		// Clear the screen

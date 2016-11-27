@@ -6,6 +6,7 @@
 
 #include <glfw3.h>
 
+#include "texture.h"
 
 GLuint loadBMP_custom(const char * imagepath){
 

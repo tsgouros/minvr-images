@@ -11,11 +11,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <common/shader.hpp>
-#include <common/texture.hpp>
+#include <common/shader.h>
+#include <common/texture.h>
 #include <common/controls.h>
-#include <common/objloader.hpp>
-#include <common/vboindexer.hpp>
+#include <common/objloader.h>
 
 class VRApp {
 public:

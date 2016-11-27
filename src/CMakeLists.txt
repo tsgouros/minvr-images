@@ -33,13 +33,13 @@ include_directories(
 add_executable(tgl
 	tgl.cpp
 	common/shader.cpp
-	common/shader.hpp
+	common/shader.h
 	common/controls.cpp
 	common/controls.h
 	common/texture.cpp
-	common/texture.hpp
+	common/texture.h
 	common/objloader.cpp
-	common/objloader.hpp
+	common/objloader.h
 	
 	StandardShading.vertexshader
 	StandardShading.fragmentshader
@@ -48,5 +48,6 @@ target_link_libraries(tgl MinVR
   ${OPENGL_LIBRARY}
   glfw
   GLEW_1130
+  ${ALL_LIBS}
 )
                      

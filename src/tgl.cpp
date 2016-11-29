@@ -16,6 +16,16 @@
 #include <common/controls.h>
 #include <common/objloader.h>
 
+void printMat(std::string name, glm::mat4 mat) {
+  std::cout << name << std::endl;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      printf("%6.2f ", mat[i][j]);
+    }
+    std::cout << std::endl;
+  }
+}
+
 class VRApp {
 public:
   GLFWwindow* _window;
@@ -158,6 +168,11 @@ public:
 		glm::mat4 ModelMatrix = glm::mat4(1.0);
 		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
+    printMat("proj", ProjectionMatrix);
+    printMat("view", ViewMatrix);
+    printMat("model", ModelMatrix);
+    printMat("MVP", MVP);
+    
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform
 		glUniformMatrix4fv(_MatrixID, 1, GL_FALSE, &MVP[0][0]);

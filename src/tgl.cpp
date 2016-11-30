@@ -168,10 +168,10 @@ public:
 		glm::mat4 ModelMatrix = glm::mat4(1.0);
 		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
-    printMat("proj", ProjectionMatrix);
-    printMat("view", ViewMatrix);
-    printMat("model", ModelMatrix);
-    printMat("MVP", MVP);
+    // printMat("proj", ProjectionMatrix);
+    // printMat("view", ViewMatrix);
+    // printMat("model", ModelMatrix);
+    // printMat("MVP", MVP);
     
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform

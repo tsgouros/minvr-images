@@ -1,6 +1,8 @@
 #ifndef CONTROLS_HPP
 #define CONTROLS_HPP
 
+#include <iostream> 
+
 // Include GLFW
 #include <glfw3.h>
 

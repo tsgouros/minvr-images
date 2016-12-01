@@ -13,26 +13,26 @@ VRControl::VRControl() {
 // up. (0,-1,0) is upside-down.
 glm::mat4 VRControl::getViewMatrix(){
 
-  int i, j;
-  std::cout << "pos: ";
-  for (i = 0; i < 3; i++) printf("%6.2f ", _position[i]);
-  std::cout << std::endl << "dir: ";
-  for (i = 0; i < 3; i++) printf("%6.2f ", _direction[i]);
-  std::cout << std::endl << "up : ";
-  glm::vec3 u = up();
-  for (i = 0; i < 3; i++) printf("%6.2f ", u[i]);
+  // int i, j;
+  // std::cout << "pos: ";
+  // for (i = 0; i < 3; i++) printf("%6.2f ", _position[i]);
+  // std::cout << std::endl << "dir: ";
+  // for (i = 0; i < 3; i++) printf("%6.2f ", _direction[i]);
+  // std::cout << std::endl << "up : ";
+  // glm::vec3 u = up();
+  // for (i = 0; i < 3; i++) printf("%6.2f ", u[i]);
 
-  glm::mat4 out = glm::lookAt(_position,
-                              _position + _direction,
-                              up());
+  // glm::mat4 out = glm::lookAt(_position,
+  //                             _position + _direction,
+  //                             up());
   
-  std::cout << "lookat:" << std::endl;
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
-      printf("%6.2f ", out[i][j]);
-    }
-    std::cout << std::endl;
-  }
+  // std::cout << "lookat:" << std::endl;
+  // for (int i = 0; i < 4; i++) {
+  //   for (int j = 0; j < 4; j++) {
+  //     printf("%6.2f ", out[i][j]);
+  //   }
+  //   std::cout << std::endl;
+  // }
 
   
 	return glm::lookAt(_position,
@@ -64,10 +64,10 @@ void VRControl::handleEvents(GLFWwindow* window) {
 	glfwSetCursorPos(window, 1024/2, 768/2);
 
 	// Compute new orientation
-  std::cout << "x: " << xpos << " y: " << ypos << " ms: " << _mouseSpeed ;
+  //std::cout << "x: " << xpos << " y: " << ypos << " ms: " << _mouseSpeed ;
 	_horizontalAngle += _mouseSpeed * float(1024/2 - xpos );
 	_verticalAngle   += _mouseSpeed * float( 768/2 - ypos );
-  std::cout << " ha: " << _horizontalAngle << " va: " << _verticalAngle << std::endl;
+  //std::cout << " ha: " << _horizontalAngle << " va: " << _verticalAngle << std::endl;
 
 	// Direction : Spherical coordinates to Cartesian coordinates conversion
 	_direction = glm::vec3(

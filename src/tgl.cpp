@@ -26,12 +26,94 @@ void printMat(std::string name, glm::mat4 mat) {
   }
 }
 
+// =========== Axis Data ======================================================
+
+//      Y
+//      |           Z
+//      |         /
+//      |       /
+//      |     /
+//      |   /
+//      | /
+//      /--------------
+//      O              X
+
+GLuint VERTEX_ATTR_COORDS = 1;
+GLuint VERTEX_ATTR_COLOR = 2;
+
+const int nCoordsComponents = 3;
+const int nColorComponents = 3;
+const int nLines = 3;
+const int nVerticesPerLine = 2;
+const int nFaces = 6;
+const int nVerticesPerFace = 3;
+
+float av[] = { 0.0, 0.0, 0.0,    // origin
+               4.0, 0.0, 0.0,    // x-axis
+               0.0, 4.0, 0.0,    // y-axis
+               0.0, 0.0, 4.0 };  // z-axis
+
+GLubyte avi[] = { 0, 1,
+                  0, 2,
+                  0, 3 };
+
+float ac[] = { 1.0, 0.0, 0.0,    // red   x-axis
+               0.0, 1.0, 0.0,    // green y-axis
+               0.0, 0.0, 1.0 };  // blue  z-axis
+
+GLubyte aci[] = { 0, 0,
+                  1, 1,
+                  2, 2 };
+
+float ave[nLines*nVerticesPerLine*nCoordsComponents];
+void expandAxesVertices()
+{
+    for (int i=0; i<6; i++)
+    {
+        ave[i*3+0] = av[avi[i]*3+0];
+        ave[i*3+1] = av[avi[i]*3+1];
+        ave[i*3+2] = av[avi[i]*3+2];
+    }
+}
+
+float ace[nLines*nVerticesPerLine*nColorComponents];
+void expandAxesColors()
+{
+    for (int i=0; i<6; i++)
+    {
+        ace[i*3+0] = ac[aci[i]*3+0];
+        ace[i*3+1] = ac[aci[i]*3+1];
+        ace[i*3+2] = ac[aci[i]*3+2];
+    }
+}
+
+const char* axis_vertex_shader =
+  "#version 330 core "
+  "layout(location = 0) in vec3 aCoords;"
+  "layout(location = 1) in vec3 aColor;"
+  "uniform mat4 MVP;"
+  "out vec3 vColor;"
+  "void main () {"
+    "gl_Position = MVP * vec4(aCoords, 1.0);"
+    "vColor = aColor;"
+  "}";
+
+const char* axis_fragment_shader =
+  "#version 330 core\n"
+  "in vec3 vColor;"
+  "out vec4 fragColor;"
+  "void main () {"
+    "fragColor = vec4(vColor, 1.0);"
+  "}";
+
+
 class VRApp {
 public:
   GLFWwindow* _window;
  	GLuint _VertexArrayID;
-  GLuint _programID;
-  GLuint _MatrixID;
+  GLuint _programID, _axisProgramID;
+  GLuint _axisArrayID, _axisVerticesID, _axisColorID;
+  GLuint _MatrixID, _axisMatrixID;
 	GLuint _ViewMatrixID;
 	GLuint _ModelMatrixID;
   GLuint _Texture;
@@ -44,10 +126,9 @@ public:
 	GLuint _normalBuffer;
   GLuint _LightID;
   VRControl control;
-  
-  VRApp() {
-    control = VRControl();
 
+  // Put all the GLFW setup business here.
+  void setupWin() {
     // Initialise GLFW
     if( !glfwInit() ) {
       throw std::runtime_error("Failed to initialize GLFW.");
@@ -62,17 +143,10 @@ public:
     // Open a window and create its OpenGL context
     _window = glfwCreateWindow( 1024, 768, "tgl", NULL, NULL);
     if( _window == NULL ){
-      throw std::runtime_error("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials." );
+      throw std::runtime_error("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible." );
       glfwTerminate();
     }
     glfwMakeContextCurrent(_window);
-
-    // Initialize GLEW
-    glewExperimental = true; // Needed for core profile
-    if (glewInit() != GLEW_OK) {
-      throw std::runtime_error("Failed to initialize GLEW");
-      glfwTerminate();
-    }
 
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(_window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -82,6 +156,19 @@ public:
     // Set the mouse at the center of the screen
     glfwPollEvents();
     glfwSetCursorPos(_window, 1024/2, 768/2);
+  };
+
+  
+  VRApp() {
+    control = VRControl();
+    setupWin();
+
+    // Initialize GLEW
+    glewExperimental = true; // Needed for core profile
+    if (glewInit() != GLEW_OK) {
+      throw std::runtime_error("Failed to initialize GLEW");
+      glfwTerminate();
+    }
 
     // Dark blue background
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -94,13 +181,11 @@ public:
     // Cull triangles whose normal is not towards the camera.
     glEnable(GL_CULL_FACE);
 
-
-    glGenVertexArrays(1, &_VertexArrayID);
-    glBindVertexArray(_VertexArrayID);
-
+    //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
     _programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
-
+    
+    // Arrange the data for the shaders to work on.  "Uniforms" first.
     // Get a handle for our "MVP" uniform
     _MatrixID = glGetUniformLocation(_programID, "MVP");
     _ViewMatrixID = glGetUniformLocation(_programID, "V");
@@ -112,8 +197,44 @@ public:
     // Get a handle for our "myTextureSampler" uniform
     _TextureID  = glGetUniformLocation(_programID, "myTextureSampler");
 
+    // Now set up the axis program.
+    GLuint vs = glCreateShader (GL_VERTEX_SHADER);
+    //std::cout << "AVS:" << axis_vertex_shader << std::endl;
+    glShaderSource (vs, 1, &axis_vertex_shader, NULL);
+    glCompileShader (vs);
+
+    GLint Result = GL_FALSE;
+    int InfoLogLength;
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if ( InfoLogLength > 0 ){
+      std::vector<char> ShaderErrorMessage(InfoLogLength+1);
+      glGetShaderInfoLog(vs, InfoLogLength, NULL, &ShaderErrorMessage[0]);
+      printf("ERROR: %s\n", &ShaderErrorMessage[0]);
+    }
+
+    GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
+    glShaderSource (fs, 1, &axis_fragment_shader, NULL);
+    glCompileShader (fs);
+    
+    _axisProgramID = glCreateProgram();
+    glAttachShader (_axisProgramID, fs);
+    glAttachShader (_axisProgramID, vs);
+
+    glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COORDS, "aCoords");
+    glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COLOR, "aColor");
+
+    glLinkProgram (_axisProgramID);
+
+    _axisMatrixID = glGetUniformLocation(_axisProgramID, "MVP");
+
+    
     // Read our .obj file
     bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
+
+    // Now the vertex data.
+    glGenVertexArrays(1, &_VertexArrayID);
+    glBindVertexArray(_VertexArrayID);
 
     // Load it into a VBO
     glGenBuffers(1, &_vertexBuffer);
@@ -131,7 +252,23 @@ public:
     // Get a handle for our "LightPosition" uniform
     glUseProgram(_programID);
     _LightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
+
+    // Switch to axes
+    glUseProgram(_axisProgramID);
+    expandAxesVertices();
+    expandAxesColors();
     
+    glGenVertexArrays(1, &_axisArrayID);
+    glBindVertexArray(_axisArrayID);
+
+    glGenBuffers(1, &_axisVerticesID);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ave), ave, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &_axisColorID);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ace), ace, GL_STATIC_DRAW);
+
   };
 
   ~VRApp() {
@@ -188,6 +325,11 @@ public:
 		// Set our "myTextureSampler" sampler to user Texture Unit 0
 		glUniform1i(_TextureID, 0);
 
+    // GLint countt;
+    // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
+    // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl
+      ;
+    
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
@@ -231,6 +373,35 @@ public:
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
 
+    GLint vertexAttribCoords = glGetAttribLocation(_axisProgramID, "aCoords");
+    GLint vertexAttribColor = glGetAttribLocation(_axisProgramID, "aColor");
+
+    // Use our other shader.
+    glUseProgram(_axisProgramID);
+
+    glUniformMatrix4fv(_axisMatrixID, 1, GL_FALSE, &MVP[0][0]);
+    
+    // Just checking...
+    // GLint count;
+    // glGetProgramiv(_axisProgramID, GL_ACTIVE_UNIFORMS, &count);
+    // std::cout << "**Active (in use by a shader) Uniforms: " << count << std::endl;
+
+    // Enable VAO to set axes data
+    glBindVertexArray(_axisArrayID);
+    
+    glEnableVertexAttribArray(vertexAttribCoords);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
+    glVertexAttribPointer(vertexAttribCoords, nCoordsComponents, GL_FLOAT, GL_FALSE, 0, 0);
+
+
+    glEnableVertexAttribArray(vertexAttribColor);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
+    glVertexAttribPointer(vertexAttribColor, nColorComponents, GL_FLOAT, GL_FALSE, 0, 0);
+    
+    // Draw axes
+    glDrawArrays(GL_LINES, 0, nLines*nVerticesPerLine);
+
+    
 		// Swap buffers
 		glfwSwapBuffers(_window);
   };

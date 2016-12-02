@@ -41,27 +41,27 @@ void printMat(std::string name, glm::mat4 mat) {
 GLuint VERTEX_ATTR_COORDS = 1;
 GLuint VERTEX_ATTR_COLOR = 2;
 
-const int nCoordsComponents = 3;
-const int nColorComponents = 3;
-const int nLines = 3;
-const int nVerticesPerLine = 2;
-const int nFaces = 6;
-const int nVerticesPerFace = 3;
+static const int nCoordsComponents = 3;
+static const int nColorComponents = 3;
+static const int nLines = 3;
+static const int nVerticesPerLine = 2;
+static const int nFaces = 6;
+static const int nVerticesPerFace = 3;
 
-float av[] = { 0.0, 0.0, 0.0,    // origin
+float av[12] = { 0.0, 0.0, 0.0,    // origin
                4.0, 0.0, 0.0,    // x-axis
                0.0, 4.0, 0.0,    // y-axis
                0.0, 0.0, 4.0 };  // z-axis
 
-GLubyte avi[] = { 0, 1,
+GLubyte avi[6] = { 0, 1,
                   0, 2,
                   0, 3 };
 
-float ac[] = { 1.0, 0.0, 0.0,    // red   x-axis
+float ac[9] = { 1.0, 0.0, 0.0,    // red   x-axis
                0.0, 1.0, 0.0,    // green y-axis
                0.0, 0.0, 1.0 };  // blue  z-axis
 
-GLubyte aci[] = { 0, 0,
+GLubyte aci[6] = { 0, 0,
                   1, 1,
                   2, 2 };
 
@@ -87,7 +87,7 @@ void expandAxesColors()
     }
 }
 
-const char* axis_vertex_shader =
+static const char* axis_vertex_shader =
   "#version 330 core "
   "layout(location = 0) in vec3 aCoords;"
   "layout(location = 1) in vec3 aColor;"
@@ -98,7 +98,7 @@ const char* axis_vertex_shader =
     "vColor = aColor;"
   "}";
 
-const char* axis_fragment_shader =
+static const char* axis_fragment_shader =
   "#version 330 core\n"
   "in vec3 vColor;"
   "out vec4 fragColor;"
@@ -183,7 +183,9 @@ public:
 
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
-    _programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+    mvShaders shaders = mvShaders("StandardShading.vertexshader",
+                                  "StandardShading.fragmentshader");
+    _programID = shaders.getProgram();
     
     // Arrange the data for the shaders to work on.  "Uniforms" first.
     // Get a handle for our "MVP" uniform
@@ -197,34 +199,13 @@ public:
     // Get a handle for our "myTextureSampler" uniform
     _TextureID  = glGetUniformLocation(_programID, "myTextureSampler");
 
-    // Now set up the axis program.
-    GLuint vs = glCreateShader (GL_VERTEX_SHADER);
-    //std::cout << "AVS:" << axis_vertex_shader << std::endl;
-    glShaderSource (vs, 1, &axis_vertex_shader, NULL);
-    glCompileShader (vs);
+    mvShaders axisShaders = mvShaders(&axis_vertex_shader,
+                                      &axis_fragment_shader);
 
-    GLint Result = GL_FALSE;
-    int InfoLogLength;
-    glGetShaderiv(vs, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-      std::vector<char> ShaderErrorMessage(InfoLogLength+1);
-      glGetShaderInfoLog(vs, InfoLogLength, NULL, &ShaderErrorMessage[0]);
-      printf("ERROR: %s\n", &ShaderErrorMessage[0]);
-    }
-
-    GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-    glShaderSource (fs, 1, &axis_fragment_shader, NULL);
-    glCompileShader (fs);
-    
-    _axisProgramID = glCreateProgram();
-    glAttachShader (_axisProgramID, fs);
-    glAttachShader (_axisProgramID, vs);
+    _axisProgramID = axisShaders.getProgram();
 
     glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COORDS, "aCoords");
     glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COLOR, "aColor");
-
-    glLinkProgram (_axisProgramID);
 
     _axisMatrixID = glGetUniformLocation(_axisProgramID, "MVP");
 

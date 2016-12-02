@@ -184,6 +184,7 @@ public:
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
     mvShaders shaders = mvShaders("StandardShading.vertexshader",
+                                  "",
                                   "StandardShading.fragmentshader");
     _programID = shaders.getProgram();
     
@@ -199,7 +200,7 @@ public:
     // Get a handle for our "myTextureSampler" uniform
     _TextureID  = glGetUniformLocation(_programID, "myTextureSampler");
 
-    mvShaders axisShaders = mvShaders(&axis_vertex_shader,
+    mvShaders axisShaders = mvShaders(&axis_vertex_shader, NULL,
                                       &axis_fragment_shader);
 
     _axisProgramID = axisShaders.getProgram();

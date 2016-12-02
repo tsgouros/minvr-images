@@ -32,7 +32,9 @@ GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
     break;
   };
   
+  // Feed in the source.
   glShaderSource(outID, 1, shaderLines, NULL);
+  // Compile it.
   glCompileShader(outID);
 
   // Pick up the error log of the compilation, just in case.
@@ -42,6 +44,7 @@ GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
   glGetShaderiv(outID, GL_COMPILE_STATUS, &result);
   glGetShaderiv(outID, GL_INFO_LOG_LENGTH, &compilationLogLength);
 
+  // Ask if there has been an error, and if so, print from that version.
   if ( compilationLogLength > 0 ){
 
     _compilationLog = std::string("");
@@ -93,16 +96,20 @@ mvShader::~mvShader() {
 
 
 mvShaders::mvShaders(const char** vertShader,
+                     const char** geomShader,
                      const char** fragShader) {
 
   _programID = glCreateProgram();
   
   _vertShader = new mvShader(VERTEX, vertShader);
   _fragShader = new mvShader(FRAGMENT, fragShader);
+  if (geomShader != NULL) _geomShader = new mvShader(GEOMETRY, geomShader);
+  else _geomShader = NULL;
 
   glAttachShader(_programID, _vertShader->getShaderID());
   glAttachShader(_programID, _fragShader->getShaderID());
-
+  if (_geomShader != NULL) glAttachShader(_programID, _geomShader->getShaderID());
+  
 	glLinkProgram(_programID);
 
 	// Check the program
@@ -128,21 +135,31 @@ mvShaders::mvShaders(const char** vertShader,
   glDetachShader(_programID, _vertShader->getShaderID());
   delete _vertShader;
 
+  if (_geomShader != NULL) {
+
+    glDetachShader(_programID, _geomShader->getShaderID());
+    delete _geomShader;
+  }
+
   glDetachShader(_programID, _fragShader->getShaderID());
   delete _fragShader;
 
 }
 
 mvShaders::mvShaders(const std::string vertFilePath,
+                     const std::string geomFilePath,
                      const std::string fragFilePath) {
 
   _programID = glCreateProgram();
   
   _vertShader = new mvShader(VERTEX, vertFilePath);
   _fragShader = new mvShader(FRAGMENT, fragFilePath);
+  if (!geomFilePath.empty()) _geomShader = new mvShader(GEOMETRY, geomFilePath);
+  else _geomShader = NULL;
 
   glAttachShader(_programID, _vertShader->getShaderID());
   glAttachShader(_programID, _fragShader->getShaderID());
+  if (_geomShader != NULL) glAttachShader(_programID, _geomShader->getShaderID());
 
 	glLinkProgram(_programID);
 
@@ -172,6 +189,12 @@ mvShaders::mvShaders(const std::string vertFilePath,
 
   glDetachShader(_programID, _vertShader->getShaderID());
   delete _vertShader;
+
+  if (_geomShader != NULL) {
+
+    glDetachShader(_programID, _geomShader->getShaderID());
+    delete _geomShader;
+  }
 
   glDetachShader(_programID, _fragShader->getShaderID());
   delete _fragShader;

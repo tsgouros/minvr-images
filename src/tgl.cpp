@@ -117,6 +117,11 @@ protected:
 	GLuint _normalBufferID;
   GLuint _colorBufferID;
 
+  GLuint _vertexAttribID;
+  GLuint _uvAttribID;
+  GLuint _normalAttribID;
+  GLuint _colorAttribID;
+  
   GLuint _mvpMatrixID;
 	GLuint _viewMatrixID;
 	GLuint _modelMatrixID;
@@ -198,6 +203,13 @@ public:
     glUseProgram(programID);
     _lightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
+    // Get handles for the various shader inputs.
+    GLuint _vertexAttribID =
+      glGetAttribLocation(programID, "vertexPosition_modelspace");
+    GLuint _uvAttribID = glGetAttribLocation(programID, "vertexUV");
+    GLuint _normalAttribID = 
+      glGetAttribLocation(programID, "vertexNormal_modelspace");
+    
   }
   
   void draw(GLuint programID, VRControl control) {
@@ -234,12 +246,12 @@ public:
     // GLint countt;
     // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
     // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;
-    
+
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
 		glVertexAttribPointer(
-			0,                  // attribute
+			0,    // attribute
 			3,                  // size
 			GL_FLOAT,           // type
 			GL_FALSE,           // normalized?
@@ -251,7 +263,7 @@ public:
 		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
 		glVertexAttribPointer(
-			1,                                // attribute
+			1,                      // attribute
 			2,                                // size
 			GL_FLOAT,                         // type
 			GL_FALSE,                         // normalized?
@@ -263,7 +275,7 @@ public:
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
 		glVertexAttribPointer(
-			2,                                // attribute
+			2,                  // attribute
 			3,                                // size
 			GL_FLOAT,                         // type
 			GL_FALSE,                         // normalized?
@@ -310,8 +322,8 @@ public:
   
   void draw(GLuint programID, VRControl control) {
 
-    GLuint vertexAttribCoords = glGetAttribLocation(programID, "aCoords");
-    GLuint vertexAttribColor = glGetAttribLocation(programID, "aColor");
+    GLuint _vertexAttribID = glGetAttribLocation(programID, "aCoords");
+    GLuint _colorAttribID = glGetAttribLocation(programID, "aColor");
 
     glUseProgram(programID);
 
@@ -331,14 +343,14 @@ public:
     // Enable VAO to set axes data
     glBindVertexArray(_arrayID);
     
-    glEnableVertexAttribArray(vertexAttribCoords);
+    glEnableVertexAttribArray(_vertexAttribID);
     glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);  // coordinates
-    glVertexAttribPointer(vertexAttribCoords, nCoordsComponents, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(_vertexAttribID, nCoordsComponents, GL_FLOAT, GL_FALSE, 0, 0);
 
 
-    glEnableVertexAttribArray(vertexAttribColor);
+    glEnableVertexAttribArray(_colorAttribID);
     glBindBuffer(GL_ARRAY_BUFFER, _colorBufferID);  // color
-    glVertexAttribPointer(vertexAttribColor, nColorComponents, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(_colorAttribID, nColorComponents, GL_FLOAT, GL_FALSE, 0, 0);
     
     // Draw axes
     glDrawArrays(GL_LINES, 0, nLines*nVerticesPerLine);

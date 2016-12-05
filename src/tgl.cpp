@@ -236,17 +236,17 @@ public:
 
 class shapeAxes : public shape {
 
-  // =========== Axis Data ======================================================
-
-//      Y
-//      |           Z
-//      |         /
-//      |       /
-//      |     /
-//      |   /
-//      | /
-//      /--------------
-//      O              X
+  // =========== Axis Data ===================
+  //
+  //      Y
+  //      |           Z
+  //      |         /
+  //      |       /
+  //      |     /
+  //      |   /
+  //      | /
+  //      /--------------
+  //      O              X
 
   static const GLuint VERTEX_ATTR_COORDS = 1;
   static const GLuint VERTEX_ATTR_COLOR = 2;
@@ -302,10 +302,9 @@ public:
   }    
   
   void load(GLuint programID) {
-    std::cout << "loading shapeAxes" << std::endl;
 
-    glBindAttribLocation(programID, VERTEX_ATTR_COORDS, "vertexPosition_modelspace");
-    glBindAttribLocation(programID, VERTEX_ATTR_COLOR, "vertexColor");
+    //    glBindAttribLocation(programID, VERTEX_ATTR_COORDS, "vertexPosition_modelspace");
+    //    glBindAttribLocation(programID, VERTEX_ATTR_COLOR, "vertexColor");
   
     _mvpMatrixID = glGetUniformLocation(programID, "MVP");
 

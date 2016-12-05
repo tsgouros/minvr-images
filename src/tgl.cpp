@@ -108,6 +108,28 @@ static const char* axis_fragment_shader =
 
 
 class shape {
+protected:
+
+  GLuint _arrayID;
+
+  GLuint _vertexBufferID;
+	GLuint _uvBufferID;
+	GLuint _normalBufferID;
+  GLuint _colorBufferID;
+
+  GLuint _mvpMatrixID;
+	GLuint _viewMatrixID;
+	GLuint _modelMatrixID;
+
+  glm::mat4 _modelMatrix;
+  
+  std::vector<glm::vec3> _vertices;
+	std::vector<glm::vec2> _uvs;
+	std::vector<glm::vec3> _normals;
+	//std::vector<glm::vec3> _colors;
+
+
+
 public:
   virtual void load(GLuint programID) = 0;
   virtual void draw(GLuint programID, VRControl control) = 0;
@@ -116,17 +138,8 @@ public:
 class shapeObj : public shape {
 private:
 
-  GLuint _vertexArrayID;
-  std::vector<glm::vec3> _vertices;
-	std::vector<glm::vec2> _uvs;
-	std::vector<glm::vec3> _normals;
-	GLuint _vertexBuffer;
-	GLuint _uvBuffer;
-	GLuint _normalBuffer;
+  // Some of these should move into the parent class.  Also the destructor.
   GLuint _lightID;
-  GLuint _MatrixID;
-	GLuint _ViewMatrixID;
-	GLuint _ModelMatrixID;
   GLuint _Texture;
   GLuint _TextureID;
 
@@ -134,11 +147,11 @@ private:
 public:
   ~shapeObj() {
     // Cleanup VBO and shader
-    glDeleteBuffers(1, &_vertexBuffer);
-    glDeleteBuffers(1, &_uvBuffer);
-    glDeleteBuffers(1, &_normalBuffer);
+    glDeleteBuffers(1, &_vertexBufferID);
+    glDeleteBuffers(1, &_uvBufferID);
+    glDeleteBuffers(1, &_normalBufferID);
     glDeleteTextures(1, &_Texture);
-    glDeleteVertexArrays(1, &_vertexArrayID);
+    glDeleteVertexArrays(1, &_arrayID);
   }
 
 
@@ -147,9 +160,9 @@ public:
 
     // Arrange the data for the shaders to work on.  "Uniforms" first.
     // Get a handle for our "MVP" uniform
-    _MatrixID = glGetUniformLocation(programID, "MVP");
-    _ViewMatrixID = glGetUniformLocation(programID, "V");
-    _ModelMatrixID = glGetUniformLocation(programID, "M");
+    _mvpMatrixID = glGetUniformLocation(programID, "MVP");
+    _viewMatrixID = glGetUniformLocation(programID, "V");
+    _modelMatrixID = glGetUniformLocation(programID, "M");
 
     // Load the texture
     _Texture = loadDDS("uvmap.DDS");
@@ -162,22 +175,22 @@ public:
     bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
 
     // Now the vertex data.
-    glGenVertexArrays(1, &_vertexArrayID);
-    glBindVertexArray(_vertexArrayID);
+    glGenVertexArrays(1, &_arrayID);
+    glBindVertexArray(_arrayID);
 
     // Load it into a VBO
-    glGenBuffers(1, &_vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+    glGenBuffers(1, &_vertexBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
     glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3),
                  &_vertices[0], GL_STATIC_DRAW);
 
-    glGenBuffers(1, &_uvBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
+    glGenBuffers(1, &_uvBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
     glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(glm::vec2),
                  &_uvs[0], GL_STATIC_DRAW);
 
-    glGenBuffers(1, &_normalBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
+    glGenBuffers(1, &_normalBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
     glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
                  &_normals[0], GL_STATIC_DRAW);
 
@@ -195,19 +208,19 @@ public:
 		// Compute the MVP matrix from keyboard and mouse input
 		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
 		glm::mat4 ViewMatrix = control.getViewMatrix();
-		glm::mat4 ModelMatrix = glm::mat4(1.0);
-		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+    _modelMatrix = glm::mat4(1.0);
+		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
 
     // printMat("proj", ProjectionMatrix);
     // printMat("view", ViewMatrix);
-    // printMat("model", ModelMatrix);
+    // printMat("model", _modelMatrix);
     // printMat("MVP", MVP);
     
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform
-		glUniformMatrix4fv(_MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(_ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		glUniformMatrix4fv(_ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+		glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
+		glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
 		glm::vec3 lightPos = glm::vec3(4,4,4);
 		glUniform3f(_lightID, lightPos.x, lightPos.y, lightPos.z);
@@ -224,7 +237,7 @@ public:
     
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
 		glVertexAttribPointer(
 			0,                  // attribute
 			3,                  // size
@@ -236,7 +249,7 @@ public:
 
 		// 2nd attribute buffer : UVs
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
 		glVertexAttribPointer(
 			1,                                // attribute
 			2,                                // size
@@ -248,7 +261,7 @@ public:
 
 		// 3rd attribute buffer : normals
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
 		glVertexAttribPointer(
 			2,                                // attribute
 			3,                                // size
@@ -268,9 +281,6 @@ public:
 };  
 
 class shapeAxes : public shape {
-private:
-  GLuint _axisArrayID, _axisVerticesID, _axisColorID;
-  GLuint _axisMatrixID;
 
 public:
 
@@ -280,38 +290,38 @@ public:
     glBindAttribLocation(programID, VERTEX_ATTR_COORDS, "aCoords");
     glBindAttribLocation(programID, VERTEX_ATTR_COLOR, "aColor");
   
-    _axisMatrixID = glGetUniformLocation(programID, "MVP");
+    _mvpMatrixID = glGetUniformLocation(programID, "MVP");
 
     expandAxesVertices();
     expandAxesColors();
     
-    glGenVertexArrays(1, &_axisArrayID);
-    glBindVertexArray(_axisArrayID);
+    glGenVertexArrays(1, &_arrayID);
+    glBindVertexArray(_arrayID);
 
-    glGenBuffers(1, &_axisVerticesID);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
+    glGenBuffers(1, &_vertexBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);  // coordinates
     glBufferData(GL_ARRAY_BUFFER, sizeof(ave), ave, GL_STATIC_DRAW);
 
-    glGenBuffers(1, &_axisColorID);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
+    glGenBuffers(1, &_colorBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, _colorBufferID);  // color
     glBufferData(GL_ARRAY_BUFFER, sizeof(ace), ace, GL_STATIC_DRAW);
 
   }
   
   void draw(GLuint programID, VRControl control) {
 
-    GLint vertexAttribCoords = glGetAttribLocation(programID, "aCoords");
-    GLint vertexAttribColor = glGetAttribLocation(programID, "aColor");
+    GLuint vertexAttribCoords = glGetAttribLocation(programID, "aCoords");
+    GLuint vertexAttribColor = glGetAttribLocation(programID, "aColor");
 
     glUseProgram(programID);
 
 		// Compute the MVP matrix from keyboard and mouse input
 		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
 		glm::mat4 ViewMatrix = control.getViewMatrix();
-		glm::mat4 ModelMatrix = glm::mat4(1.0);
-		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+    _modelMatrix = glm::mat4(1.0);
+		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
     
-    glUniformMatrix4fv(_axisMatrixID, 1, GL_FALSE, &MVP[0][0]);
+    glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
     
     // Just checking...
     // GLint count;
@@ -319,15 +329,15 @@ public:
     // std::cout << "**Active (in use by a shader) Uniforms: " << count << std::endl;
 
     // Enable VAO to set axes data
-    glBindVertexArray(_axisArrayID);
+    glBindVertexArray(_arrayID);
     
     glEnableVertexAttribArray(vertexAttribCoords);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
+    glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);  // coordinates
     glVertexAttribPointer(vertexAttribCoords, nCoordsComponents, GL_FLOAT, GL_FALSE, 0, 0);
 
 
     glEnableVertexAttribArray(vertexAttribColor);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
+    glBindBuffer(GL_ARRAY_BUFFER, _colorBufferID);  // color
     glVertexAttribPointer(vertexAttribColor, nColorComponents, GL_FLOAT, GL_FALSE, 0, 0);
     
     // Draw axes

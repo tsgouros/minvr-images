@@ -141,7 +141,8 @@ public:
     glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
                  &_normals[0], GL_STATIC_DRAW);
 
-    // Get a handle for our "LightPosition" uniform
+    // Get a handle for our "LightPosition" uniform.  We are not
+    // binding the attribute location, just asking politely for it.
     glUseProgram(programID);
     _lightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
@@ -248,9 +249,6 @@ class shapeAxes : public shape {
   //      /--------------
   //      O              X
 
-  static const GLuint VERTEX_ATTR_COORDS = 1;
-  static const GLuint VERTEX_ATTR_COLOR = 2;
-
   static const int nCoordsComponents = 3;
   static const int nColorComponents = 3;
   static const int nLines = 3;
@@ -303,9 +301,6 @@ public:
   
   void load(GLuint programID) {
 
-    //    glBindAttribLocation(programID, VERTEX_ATTR_COORDS, "vertexPosition_modelspace");
-    //    glBindAttribLocation(programID, VERTEX_ATTR_COLOR, "vertexColor");
-  
     _mvpMatrixID = glGetUniformLocation(programID, "MVP");
 
     glGenVertexArrays(1, &_arrayID);
@@ -323,6 +318,7 @@ public:
   
   void draw(GLuint programID, VRControl control) {
 
+    // We have to ask where these attributes are located.
     _vertexAttribID = glGetAttribLocation(programID, "vertexPosition_modelspace");
     _colorAttribID = glGetAttribLocation(programID, "vertexColor");
 

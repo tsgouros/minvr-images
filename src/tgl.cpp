@@ -26,67 +26,6 @@ void printMat(std::string name, glm::mat4 mat) {
   }
 }
 
-// =========== Axis Data ======================================================
-
-//      Y
-//      |           Z
-//      |         /
-//      |       /
-//      |     /
-//      |   /
-//      | /
-//      /--------------
-//      O              X
-
-GLuint VERTEX_ATTR_COORDS = 1;
-GLuint VERTEX_ATTR_COLOR = 2;
-
-static const int nCoordsComponents = 3;
-static const int nColorComponents = 3;
-static const int nLines = 3;
-static const int nVerticesPerLine = 2;
-static const int nFaces = 6;
-static const int nVerticesPerFace = 3;
-
-float av[12] = { 0.0, 0.0, 0.0,    // origin
-               4.0, 0.0, 0.0,    // x-axis
-               0.0, 4.0, 0.0,    // y-axis
-               0.0, 0.0, 4.0 };  // z-axis
-
-GLubyte avi[6] = { 0, 1,
-                  0, 2,
-                  0, 3 };
-
-float ac[9] = { 1.0, 0.0, 0.0,    // red   x-axis
-               0.0, 1.0, 0.0,    // green y-axis
-               0.0, 0.0, 1.0 };  // blue  z-axis
-
-GLubyte aci[6] = { 0, 0,
-                  1, 1,
-                  2, 2 };
-
-float ave[nLines*nVerticesPerLine*nCoordsComponents];
-void expandAxesVertices()
-{
-    for (int i=0; i<6; i++)
-    {
-        ave[i*3+0] = av[avi[i]*3+0];
-        ave[i*3+1] = av[avi[i]*3+1];
-        ave[i*3+2] = av[avi[i]*3+2];
-    }
-}
-
-float ace[nLines*nVerticesPerLine*nColorComponents];
-void expandAxesColors()
-{
-    for (int i=0; i<6; i++)
-    {
-        ace[i*3+0] = ac[aci[i]*3+0];
-        ace[i*3+1] = ac[aci[i]*3+1];
-        ace[i*3+2] = ac[aci[i]*3+2];
-    }
-}
-
 static const char* axis_vertex_shader =
   "#version 330 core "
   "layout(location = 0) in vec3 vertexPosition_modelspace;"
@@ -151,6 +90,9 @@ private:
 
 public:
   ~shapeObj() {
+    // Can we test if these are in use, and delete if so? If yes, move
+    // this into parent class.
+
     // Cleanup VBO and shader
     glDeleteBuffers(1, &_vertexBufferID);
     glDeleteBuffers(1, &_uvBufferID);
@@ -294,8 +236,71 @@ public:
 
 class shapeAxes : public shape {
 
-public:
+  // =========== Axis Data ======================================================
 
+//      Y
+//      |           Z
+//      |         /
+//      |       /
+//      |     /
+//      |   /
+//      | /
+//      /--------------
+//      O              X
+
+  static const GLuint VERTEX_ATTR_COORDS = 1;
+  static const GLuint VERTEX_ATTR_COLOR = 2;
+
+  static const int nCoordsComponents = 3;
+  static const int nColorComponents = 3;
+  static const int nLines = 3;
+  static const int nVerticesPerLine = 2;
+  static const int nFaces = 6;
+  static const int nVerticesPerFace = 3;
+
+  float ave[nLines*nVerticesPerLine*nCoordsComponents];
+  void expandAxesVertices() {
+
+    float av[12] = { 0.0, 0.0, 0.0,    // origin
+                     4.0, 0.0, 0.0,    // x-axis
+                     0.0, 4.0, 0.0,    // y-axis
+                     0.0, 0.0, 4.0 };  // z-axis
+    
+    GLubyte avi[6] = { 0, 1,
+                       0, 2,
+                       0, 3 };
+
+    for (int i=0; i<6; i++) {
+      ave[i*3+0] = av[avi[i]*3+0];
+      ave[i*3+1] = av[avi[i]*3+1];
+      ave[i*3+2] = av[avi[i]*3+2];
+    }
+  }
+
+  float ace[nLines*nVerticesPerLine*nColorComponents];
+  void expandAxesColors() {
+
+    float ac[9] = { 1.0, 0.0, 0.0,    // red   x-axis
+                    0.0, 1.0, 0.0,    // green y-axis
+                    0.0, 0.0, 1.0 };  // blue  z-axis
+
+    GLubyte aci[6] = { 0, 0,
+                       1, 1,
+                       2, 2 };
+
+    for (int i=0; i<6; i++) {
+      ace[i*3+0] = ac[aci[i]*3+0];
+      ace[i*3+1] = ac[aci[i]*3+1];
+      ace[i*3+2] = ac[aci[i]*3+2];
+    }
+  }
+  
+public:
+  shapeAxes() {
+    expandAxesVertices();
+    expandAxesColors();
+  }    
+  
   void load(GLuint programID) {
     std::cout << "loading shapeAxes" << std::endl;
 
@@ -304,9 +309,6 @@ public:
   
     _mvpMatrixID = glGetUniformLocation(programID, "MVP");
 
-    expandAxesVertices();
-    expandAxesColors();
-    
     glGenVertexArrays(1, &_arrayID);
     glBindVertexArray(_arrayID);
 

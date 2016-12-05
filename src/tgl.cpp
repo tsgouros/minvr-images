@@ -107,26 +107,193 @@ static const char* axis_fragment_shader =
   "}";
 
 
-class VRApp {
+class shape {
 public:
-  GLFWwindow* _window;
- 	GLuint _VertexArrayID;
-  GLuint _programID, _axisProgramID;
-  GLuint _axisArrayID, _axisVerticesID, _axisColorID;
-  GLuint _MatrixID, _axisMatrixID;
-	GLuint _ViewMatrixID;
-	GLuint _ModelMatrixID;
-  GLuint _Texture;
-  GLuint _TextureID;
+  virtual void load(GLuint programID) = 0;
+  virtual void draw(GLuint programID, VRControl control) = 0;
+};
+
+class shapeObj : public shape {
+private:
+
+  GLuint _vertexArrayID;
   std::vector<glm::vec3> _vertices;
 	std::vector<glm::vec2> _uvs;
 	std::vector<glm::vec3> _normals;
 	GLuint _vertexBuffer;
 	GLuint _uvBuffer;
 	GLuint _normalBuffer;
-  GLuint _LightID;
+  GLuint _lightID;
+  GLuint _MatrixID;
+	GLuint _ViewMatrixID;
+	GLuint _ModelMatrixID;
+  GLuint _Texture;
+  GLuint _TextureID;
+
+
+public:
+  ~shapeObj() {
+    // Cleanup VBO and shader
+    glDeleteBuffers(1, &_vertexBuffer);
+    glDeleteBuffers(1, &_uvBuffer);
+    glDeleteBuffers(1, &_normalBuffer);
+    glDeleteTextures(1, &_Texture);
+    glDeleteVertexArrays(1, &_vertexArrayID);
+  }
+
+
+
+  void load(GLuint programID) {
+
+    // Arrange the data for the shaders to work on.  "Uniforms" first.
+    // Get a handle for our "MVP" uniform
+    _MatrixID = glGetUniformLocation(programID, "MVP");
+    _ViewMatrixID = glGetUniformLocation(programID, "V");
+    _ModelMatrixID = glGetUniformLocation(programID, "M");
+
+    // Load the texture
+    _Texture = loadDDS("uvmap.DDS");
+    
+    // Get a handle for our "myTextureSampler" uniform
+    _TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+
+    std::cout << "loading shapeObj" << std::endl;
+    // Read our .obj file
+    bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
+
+    // Now the vertex data.
+    glGenVertexArrays(1, &_vertexArrayID);
+    glBindVertexArray(_vertexArrayID);
+
+    // Load it into a VBO
+    glGenBuffers(1, &_vertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3),
+                 &_vertices[0], GL_STATIC_DRAW);
+
+    glGenBuffers(1, &_uvBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(glm::vec2),
+                 &_uvs[0], GL_STATIC_DRAW);
+
+    glGenBuffers(1, &_normalBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
+                 &_normals[0], GL_STATIC_DRAW);
+
+    // Get a handle for our "LightPosition" uniform
+    glUseProgram(programID);
+    _lightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+
+  }
+  
+  void draw(GLuint programID, VRControl control) {
+    std::cout << "drawing shapeObj" << std::endl;
+
+		// Use our shader
+		glUseProgram(programID);
+
+		// Compute the MVP matrix from keyboard and mouse input
+		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
+		glm::mat4 ViewMatrix = control.getViewMatrix();
+		glm::mat4 ModelMatrix = glm::mat4(1.0);
+		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+
+    // printMat("proj", ProjectionMatrix);
+    // printMat("view", ViewMatrix);
+    // printMat("model", ModelMatrix);
+    // printMat("MVP", MVP);
+    
+		// Send our transformation to the currently bound shader, 
+		// in the "MVP" uniform
+		glUniformMatrix4fv(_MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(_ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(_ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+		glm::vec3 lightPos = glm::vec3(4,4,4);
+		glUniform3f(_lightID, lightPos.x, lightPos.y, lightPos.z);
+
+		// Bind our texture in Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, _Texture);
+		// Set our "myTextureSampler" sampler to user Texture Unit 0
+		glUniform1i(_TextureID, 0);
+
+    // GLint countt;
+    // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
+    // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;
+    
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+		glVertexAttribPointer(
+			0,                  // attribute
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		// 2nd attribute buffer : UVs
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
+		glVertexAttribPointer(
+			1,                                // attribute
+			2,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+
+		// 3rd attribute buffer : normals
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
+		glVertexAttribPointer(
+			2,                                // attribute
+			3,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+
+		// Draw the triangles !
+		glDrawArrays(GL_TRIANGLES, 0, _vertices.size() );
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
+  }
+};  
+
+class shapeAxes : public shape {
+public:
+
+  void load(GLuint programID) {
+    std::cout << "loading shapeAxes" << std::endl;
+  }
+  
+  void draw(GLuint programID, VRControl control) {
+    std::cout << "drawing shapeAxes" << std::endl;
+  }
+};  
+
+
+class VRApp {
+public:
+  GLFWwindow* _window;
+  GLuint _programID;
+  GLuint _axisProgramID;
+  GLuint _axisArrayID, _axisVerticesID, _axisColorID;
+  GLuint _axisMatrixID;
+
   VRControl control;
 
+  shapeObj suzanne;
+  shapeAxes axes;
+  
   // Put all the GLFW setup business here.
   void setupWin() {
     // Initialise GLFW
@@ -183,60 +350,28 @@ public:
 
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
-    mvShaders shaders = mvShaders("StandardShading.vertexshader",
-                                  "",
+    mvShaders shaders = mvShaders("StandardShading.vertexshader", "",
                                   "StandardShading.fragmentshader");
     _programID = shaders.getProgram();
     
-    // Arrange the data for the shaders to work on.  "Uniforms" first.
-    // Get a handle for our "MVP" uniform
-    _MatrixID = glGetUniformLocation(_programID, "MVP");
-    _ViewMatrixID = glGetUniformLocation(_programID, "V");
-    _ModelMatrixID = glGetUniformLocation(_programID, "M");
+    suzanne.load(_programID);
 
-    // Load the texture
-    _Texture = loadDDS("uvmap.DDS");
-    
-    // Get a handle for our "myTextureSampler" uniform
-    _TextureID  = glGetUniformLocation(_programID, "myTextureSampler");
+    // Switch to axes
 
     mvShaders axisShaders = mvShaders(&axis_vertex_shader, NULL,
                                       &axis_fragment_shader);
 
     _axisProgramID = axisShaders.getProgram();
 
+    axes.load(_axisProgramID);
+
     glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COORDS, "aCoords");
     glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COLOR, "aColor");
 
-    _axisMatrixID = glGetUniformLocation(_axisProgramID, "MVP");
 
     
-    // Read our .obj file
-    bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
+    _axisMatrixID = glGetUniformLocation(_axisProgramID, "MVP");
 
-    // Now the vertex data.
-    glGenVertexArrays(1, &_VertexArrayID);
-    glBindVertexArray(_VertexArrayID);
-
-    // Load it into a VBO
-    glGenBuffers(1, &_vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3), &_vertices[0], GL_STATIC_DRAW);
-
-    glGenBuffers(1, &_uvBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(glm::vec2), &_uvs[0], GL_STATIC_DRAW);
-
-    glGenBuffers(1, &_normalBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3), &_normals[0], GL_STATIC_DRAW);
-
-    // Get a handle for our "LightPosition" uniform
-    glUseProgram(_programID);
-    _LightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
-
-    // Switch to axes
-    glUseProgram(_axisProgramID);
     expandAxesVertices();
     expandAxesColors();
     
@@ -255,13 +390,8 @@ public:
 
   ~VRApp() {
 
-    // Cleanup VBO and shader
-    glDeleteBuffers(1, &_vertexBuffer);
-    glDeleteBuffers(1, &_uvBuffer);
-    glDeleteBuffers(1, &_normalBuffer);
     glDeleteProgram(_programID);
-    glDeleteTextures(1, &_Texture);
-    glDeleteVertexArrays(1, &_VertexArrayID);
+    glDeleteProgram(_axisProgramID);
 
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
@@ -278,89 +408,23 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Use our shader
-		glUseProgram(_programID);
+    suzanne.draw(_programID, control);
+
+    GLint vertexAttribCoords = glGetAttribLocation(_axisProgramID, "aCoords");
+    GLint vertexAttribColor = glGetAttribLocation(_axisProgramID, "aColor");
+
+    // Use our other shader.
+
+    axes.draw(_axisProgramID, control);
+    
+    glUseProgram(_axisProgramID);
 
 		// Compute the MVP matrix from keyboard and mouse input
 		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
 		glm::mat4 ViewMatrix = control.getViewMatrix();
 		glm::mat4 ModelMatrix = glm::mat4(1.0);
 		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-
-    // printMat("proj", ProjectionMatrix);
-    // printMat("view", ViewMatrix);
-    // printMat("model", ModelMatrix);
-    // printMat("MVP", MVP);
     
-		// Send our transformation to the currently bound shader, 
-		// in the "MVP" uniform
-		glUniformMatrix4fv(_MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		glUniformMatrix4fv(_ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-		glUniformMatrix4fv(_ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-
-		glm::vec3 lightPos = glm::vec3(4,4,4);
-		glUniform3f(_LightID, lightPos.x, lightPos.y, lightPos.z);
-
-		// Bind our texture in Texture Unit 0
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, _Texture);
-		// Set our "myTextureSampler" sampler to user Texture Unit 0
-		glUniform1i(_TextureID, 0);
-
-    // GLint countt;
-    // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
-    // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl
-      ;
-    
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
-		glVertexAttribPointer(
-			0,                  // attribute
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
-
-		// 2nd attribute buffer : UVs
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, _uvBuffer);
-		glVertexAttribPointer(
-			1,                                // attribute
-			2,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
-
-		// 3rd attribute buffer : normals
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
-		glVertexAttribPointer(
-			2,                                // attribute
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
-
-		// Draw the triangles !
-		glDrawArrays(GL_TRIANGLES, 0, _vertices.size() );
-
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
-
-    GLint vertexAttribCoords = glGetAttribLocation(_axisProgramID, "aCoords");
-    GLint vertexAttribColor = glGetAttribLocation(_axisProgramID, "aColor");
-
-    // Use our other shader.
-    glUseProgram(_axisProgramID);
-
     glUniformMatrix4fv(_axisMatrixID, 1, GL_FALSE, &MVP[0][0]);
     
     // Just checking...

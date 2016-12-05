@@ -188,7 +188,6 @@ public:
   }
   
   void draw(GLuint programID, VRControl control) {
-    std::cout << "drawing shapeObj" << std::endl;
 
 		// Use our shader
 		glUseProgram(programID);
@@ -269,14 +268,71 @@ public:
 };  
 
 class shapeAxes : public shape {
+private:
+  GLuint _axisArrayID, _axisVerticesID, _axisColorID;
+  GLuint _axisMatrixID;
+
 public:
 
   void load(GLuint programID) {
     std::cout << "loading shapeAxes" << std::endl;
+
+    glBindAttribLocation(programID, VERTEX_ATTR_COORDS, "aCoords");
+    glBindAttribLocation(programID, VERTEX_ATTR_COLOR, "aColor");
+  
+    _axisMatrixID = glGetUniformLocation(programID, "MVP");
+
+    expandAxesVertices();
+    expandAxesColors();
+    
+    glGenVertexArrays(1, &_axisArrayID);
+    glBindVertexArray(_axisArrayID);
+
+    glGenBuffers(1, &_axisVerticesID);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ave), ave, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &_axisColorID);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ace), ace, GL_STATIC_DRAW);
+
   }
   
   void draw(GLuint programID, VRControl control) {
-    std::cout << "drawing shapeAxes" << std::endl;
+
+    GLint vertexAttribCoords = glGetAttribLocation(programID, "aCoords");
+    GLint vertexAttribColor = glGetAttribLocation(programID, "aColor");
+
+    glUseProgram(programID);
+
+		// Compute the MVP matrix from keyboard and mouse input
+		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
+		glm::mat4 ViewMatrix = control.getViewMatrix();
+		glm::mat4 ModelMatrix = glm::mat4(1.0);
+		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+    
+    glUniformMatrix4fv(_axisMatrixID, 1, GL_FALSE, &MVP[0][0]);
+    
+    // Just checking...
+    // GLint count;
+    // glGetProgramiv(programID, GL_ACTIVE_UNIFORMS, &count);
+    // std::cout << "**Active (in use by a shader) Uniforms: " << count << std::endl;
+
+    // Enable VAO to set axes data
+    glBindVertexArray(_axisArrayID);
+    
+    glEnableVertexAttribArray(vertexAttribCoords);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
+    glVertexAttribPointer(vertexAttribCoords, nCoordsComponents, GL_FLOAT, GL_FALSE, 0, 0);
+
+
+    glEnableVertexAttribArray(vertexAttribColor);
+    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
+    glVertexAttribPointer(vertexAttribColor, nColorComponents, GL_FLOAT, GL_FALSE, 0, 0);
+    
+    // Draw axes
+    glDrawArrays(GL_LINES, 0, nLines*nVerticesPerLine);
+
   }
 };  
 
@@ -286,8 +342,6 @@ public:
   GLFWwindow* _window;
   GLuint _programID;
   GLuint _axisProgramID;
-  GLuint _axisArrayID, _axisVerticesID, _axisColorID;
-  GLuint _axisMatrixID;
 
   VRControl control;
 
@@ -365,27 +419,6 @@ public:
 
     axes.load(_axisProgramID);
 
-    glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COORDS, "aCoords");
-    glBindAttribLocation(_axisProgramID, VERTEX_ATTR_COLOR, "aColor");
-
-
-    
-    _axisMatrixID = glGetUniformLocation(_axisProgramID, "MVP");
-
-    expandAxesVertices();
-    expandAxesColors();
-    
-    glGenVertexArrays(1, &_axisArrayID);
-    glBindVertexArray(_axisArrayID);
-
-    glGenBuffers(1, &_axisVerticesID);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
-    glBufferData(GL_ARRAY_BUFFER, sizeof(ave), ave, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &_axisColorID);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
-    glBufferData(GL_ARRAY_BUFFER, sizeof(ace), ace, GL_STATIC_DRAW);
-
   };
 
   ~VRApp() {
@@ -410,43 +443,8 @@ public:
 
     suzanne.draw(_programID, control);
 
-    GLint vertexAttribCoords = glGetAttribLocation(_axisProgramID, "aCoords");
-    GLint vertexAttribColor = glGetAttribLocation(_axisProgramID, "aColor");
-
     // Use our other shader.
-
     axes.draw(_axisProgramID, control);
-    
-    glUseProgram(_axisProgramID);
-
-		// Compute the MVP matrix from keyboard and mouse input
-		glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
-		glm::mat4 ViewMatrix = control.getViewMatrix();
-		glm::mat4 ModelMatrix = glm::mat4(1.0);
-		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-    
-    glUniformMatrix4fv(_axisMatrixID, 1, GL_FALSE, &MVP[0][0]);
-    
-    // Just checking...
-    // GLint count;
-    // glGetProgramiv(_axisProgramID, GL_ACTIVE_UNIFORMS, &count);
-    // std::cout << "**Active (in use by a shader) Uniforms: " << count << std::endl;
-
-    // Enable VAO to set axes data
-    glBindVertexArray(_axisArrayID);
-    
-    glEnableVertexAttribArray(vertexAttribCoords);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisVerticesID);  // coordinates
-    glVertexAttribPointer(vertexAttribCoords, nCoordsComponents, GL_FLOAT, GL_FALSE, 0, 0);
-
-
-    glEnableVertexAttribArray(vertexAttribColor);
-    glBindBuffer(GL_ARRAY_BUFFER, _axisColorID);  // color
-    glVertexAttribPointer(vertexAttribColor, nColorComponents, GL_FLOAT, GL_FALSE, 0, 0);
-    
-    // Draw axes
-    glDrawArrays(GL_LINES, 0, nLines*nVerticesPerLine);
-
     
 		// Swap buffers
 		glfwSwapBuffers(_window);

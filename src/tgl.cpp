@@ -89,13 +89,13 @@ void expandAxesColors()
 
 static const char* axis_vertex_shader =
   "#version 330 core "
-  "layout(location = 0) in vec3 aCoords;"
-  "layout(location = 1) in vec3 aColor;"
+  "layout(location = 0) in vec3 vertexPosition_modelspace;"
+  "layout(location = 1) in vec3 vertexColor;"
   "uniform mat4 MVP;"
   "out vec3 vColor;"
   "void main () {"
-    "gl_Position = MVP * vec4(aCoords, 1.0);"
-    "vColor = aColor;"
+    "gl_Position = MVP * vec4(vertexPosition_modelspace, 1.0);"
+    "vColor = vertexColor;"
   "}";
 
 static const char* axis_fragment_shader =
@@ -112,16 +112,20 @@ protected:
 
   GLuint _arrayID;
 
-  GLuint _vertexBufferID;
-	GLuint _uvBufferID;
-	GLuint _normalBufferID;
-  GLuint _colorBufferID;
-
+  // These IDs point to the names/locations of values in shaders.
   GLuint _vertexAttribID;
   GLuint _uvAttribID;
   GLuint _normalAttribID;
   GLuint _colorAttribID;
-  
+  GLuint _textureAttribID;
+
+  // These IDs point to actual data.
+  GLuint _vertexBufferID;
+	GLuint _uvBufferID;
+	GLuint _normalBufferID;
+  GLuint _colorBufferID;
+  GLuint _textureBufferID;
+
   GLuint _mvpMatrixID;
 	GLuint _viewMatrixID;
 	GLuint _modelMatrixID;
@@ -134,7 +138,6 @@ protected:
 	//std::vector<glm::vec3> _colors;
 
 
-
 public:
   virtual void load(GLuint programID) = 0;
   virtual void draw(GLuint programID, VRControl control) = 0;
@@ -145,9 +148,6 @@ private:
 
   // Some of these should move into the parent class.  Also the destructor.
   GLuint _lightID;
-  GLuint _Texture;
-  GLuint _TextureID;
-
 
 public:
   ~shapeObj() {
@@ -155,7 +155,7 @@ public:
     glDeleteBuffers(1, &_vertexBufferID);
     glDeleteBuffers(1, &_uvBufferID);
     glDeleteBuffers(1, &_normalBufferID);
-    glDeleteTextures(1, &_Texture);
+    glDeleteTextures(1, &_textureBufferID);
     glDeleteVertexArrays(1, &_arrayID);
   }
 
@@ -170,10 +170,10 @@ public:
     _modelMatrixID = glGetUniformLocation(programID, "M");
 
     // Load the texture
-    _Texture = loadDDS("uvmap.DDS");
+    _textureBufferID = loadDDS("uvmap.DDS");
     
     // Get a handle for our "myTextureSampler" uniform
-    _TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+    _textureAttribID  = glGetUniformLocation(programID, "myTextureSampler");
 
     std::cout << "loading shapeObj" << std::endl;
     // Read our .obj file
@@ -204,12 +204,12 @@ public:
     _lightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
     // Get handles for the various shader inputs.
-    GLuint _vertexAttribID =
+    _vertexAttribID =
       glGetAttribLocation(programID, "vertexPosition_modelspace");
-    GLuint _uvAttribID = glGetAttribLocation(programID, "vertexUV");
-    GLuint _normalAttribID = 
+    _uvAttribID = glGetAttribLocation(programID, "vertexUV");
+    _normalAttribID = 
       glGetAttribLocation(programID, "vertexNormal_modelspace");
-    
+
   }
   
   void draw(GLuint programID, VRControl control) {
@@ -239,19 +239,19 @@ public:
 
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, _Texture);
+		glBindTexture(GL_TEXTURE_2D, _textureBufferID);
 		// Set our "myTextureSampler" sampler to user Texture Unit 0
-		glUniform1i(_TextureID, 0);
+		glUniform1i(_textureAttribID, 0);
 
     // GLint countt;
     // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
     // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;
 
 		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(_vertexAttribID);
 		glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
 		glVertexAttribPointer(
-			0,    // attribute
+			_vertexAttribID,    // attribute
 			3,                  // size
 			GL_FLOAT,           // type
 			GL_FALSE,           // normalized?
@@ -260,10 +260,10 @@ public:
 		);
 
 		// 2nd attribute buffer : UVs
-		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(_uvAttribID);
 		glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
 		glVertexAttribPointer(
-			1,                      // attribute
+			_uvAttribID,                      // attribute
 			2,                                // size
 			GL_FLOAT,                         // type
 			GL_FALSE,                         // normalized?
@@ -272,10 +272,10 @@ public:
 		);
 
 		// 3rd attribute buffer : normals
-		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(_normalAttribID);
 		glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
 		glVertexAttribPointer(
-			2,                  // attribute
+			_normalAttribID,                  // attribute
 			3,                                // size
 			GL_FLOAT,                         // type
 			GL_FALSE,                         // normalized?
@@ -299,8 +299,8 @@ public:
   void load(GLuint programID) {
     std::cout << "loading shapeAxes" << std::endl;
 
-    glBindAttribLocation(programID, VERTEX_ATTR_COORDS, "aCoords");
-    glBindAttribLocation(programID, VERTEX_ATTR_COLOR, "aColor");
+    glBindAttribLocation(programID, VERTEX_ATTR_COORDS, "vertexPosition_modelspace");
+    glBindAttribLocation(programID, VERTEX_ATTR_COLOR, "vertexColor");
   
     _mvpMatrixID = glGetUniformLocation(programID, "MVP");
 
@@ -322,8 +322,8 @@ public:
   
   void draw(GLuint programID, VRControl control) {
 
-    GLuint _vertexAttribID = glGetAttribLocation(programID, "aCoords");
-    GLuint _colorAttribID = glGetAttribLocation(programID, "aColor");
+    _vertexAttribID = glGetAttribLocation(programID, "vertexPosition_modelspace");
+    _colorAttribID = glGetAttribLocation(programID, "vertexColor");
 
     glUseProgram(programID);
 

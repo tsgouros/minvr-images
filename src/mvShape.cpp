@@ -11,16 +11,17 @@ void mvShape::printMat(std::string name, glm::mat4 mat) {
   }
 }
 
-mvShapeObj::~mvShapeObj() {
+mvShape::~mvShape() {
   // Can we test if these are in use, and delete if so? If yes, move
   // this into parent class.
 
   // Cleanup VBO and shader
-  glDeleteBuffers(1, &_vertexBufferID);
-  glDeleteBuffers(1, &_uvBufferID);
-  glDeleteBuffers(1, &_normalBufferID);
-  glDeleteTextures(1, &_textureBufferID);
-  glDeleteVertexArrays(1, &_arrayID);
+  if (glIsBuffer(_vertexBufferID)) glDeleteBuffers(1, &_vertexBufferID);
+  if (glIsBuffer(_uvBufferID)) glDeleteBuffers(1, &_uvBufferID);
+  if (glIsBuffer(_normalBufferID)) glDeleteBuffers(1, &_normalBufferID);
+  if (glIsBuffer(_colorBufferID)) glDeleteBuffers(1, &_colorBufferID);
+  if (glIsTexture(_textureBufferID)) glDeleteTextures(1, &_textureBufferID);
+  if (glIsVertexArray(_arrayID)) glDeleteVertexArrays(1, &_arrayID);
 }
 
 

@@ -32,6 +32,8 @@ include_directories(
 # tgl
 add_executable(tgl
 	tgl.cpp
+  mvShape.cpp
+  mvShape.h
 	common/shader.cpp
 	common/shader.h
 	common/controls.cpp

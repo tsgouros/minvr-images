@@ -48,12 +48,10 @@ class mvShaders {
   std::string _linkLog;
 
  public:
-  mvShaders(const char** vertShader,
-            const char** geomShader,
-            const char** fragShader);
-  mvShaders(const std::string vertFilePath,
-            const std::string geomFilePath,
-            const std::string fragFilePath);
+  mvShaders();
+  mvShaders(const std::string vertShader,
+            const std::string geomShader,
+            const std::string fragShader);
 
   GLuint getProgram() { return _programID; };
   std::string getLinkLog() { return _linkLog; };

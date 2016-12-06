@@ -95,16 +95,39 @@ mvShader::~mvShader() {
 }
 
 
-mvShaders::mvShaders(const char** vertShader,
-                     const char** geomShader,
-                     const char** fragShader) {
 
+mvShaders::mvShaders() {
+
+  static const char* defaultVertexShader = 
+    "#version 330 core\n"
+    "layout(location = 0) in vec3 vertexPosition_modelspace;"
+    "layout(location = 1) in vec3 vertexInputColor;"
+    "uniform mat4 MVP;"
+    "out vec3 vertexColor;"
+    "void main () {"
+    "gl_Position = MVP * vec4(vertexPosition_modelspace, 1.0);"
+    "vertexColor = vertexInputColor;"
+    "}";
+
+  static const char* defaultFragmentShader =
+    "#version 330 core\n"
+    "in vec3 vertexColor;"
+    "out vec4 fragmentColor;"
+    "void main () {"
+    "fragmentColor = vec4(vertexColor, 1.0);"
+    "}";
+
+  static const char* defaultGeometryShader = NULL;
+  
   _programID = glCreateProgram();
   
-  _vertShader = new mvShader(VERTEX, vertShader);
-  _fragShader = new mvShader(FRAGMENT, fragShader);
-  if (geomShader != NULL) _geomShader = new mvShader(GEOMETRY, geomShader);
-  else _geomShader = NULL;
+  _vertShader = new mvShader(VERTEX, &defaultVertexShader);
+  _fragShader = new mvShader(FRAGMENT, &defaultFragmentShader);
+  if (defaultGeometryShader != NULL) {
+    _geomShader = new mvShader(GEOMETRY, &defaultGeometryShader);
+  } else {
+    _geomShader = NULL;
+  }
 
   glAttachShader(_programID, _vertShader->getShaderID());
   glAttachShader(_programID, _fragShader->getShaderID());
@@ -146,15 +169,15 @@ mvShaders::mvShaders(const char** vertShader,
 
 }
 
-mvShaders::mvShaders(const std::string vertFilePath,
-                     const std::string geomFilePath,
-                     const std::string fragFilePath) {
+mvShaders::mvShaders(const std::string vertShader,
+                     const std::string geomShader,
+                     const std::string fragShader) {
 
   _programID = glCreateProgram();
   
-  _vertShader = new mvShader(VERTEX, vertFilePath);
-  _fragShader = new mvShader(FRAGMENT, fragFilePath);
-  if (!geomFilePath.empty()) _geomShader = new mvShader(GEOMETRY, geomFilePath);
+  _vertShader = new mvShader(VERTEX, vertShader);
+  _fragShader = new mvShader(FRAGMENT, fragShader);
+  if (!geomShader.empty()) _geomShader = new mvShader(GEOMETRY, geomShader);
   else _geomShader = NULL;
 
   glAttachShader(_programID, _vertShader->getShaderID());

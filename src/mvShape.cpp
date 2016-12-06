@@ -1,10 +1,6 @@
 #include "mvShape.h"
 
 
-mvShape::mvShape() {
-
-}
-
 void mvShape::printMat(std::string name, glm::mat4 mat) {
   std::cout << name << std::endl;
   for (int i = 0; i < 4; i++) {

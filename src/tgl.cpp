@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <map>
 
 // Include GLEW
 #include <GL/glew.h>
@@ -26,8 +27,7 @@ public:
 
   VRControl control;
 
-  mvShapeObj suzanne;
-  mvShapeAxes axes;
+  std::map<std::string, mvShape*> _shapeMap;
   
   // Put all the GLFW setup business here.
   void setupWin() {
@@ -79,25 +79,29 @@ public:
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS); 
-
     // Cull triangles whose normal is not towards the camera.
     glEnable(GL_CULL_FACE);
+
+    mvShapeObj* suzanne = new mvShapeObj();
+    mvShapeAxes* axes = new mvShapeAxes();
+
+    _shapeMap["suzanne"] = (mvShape*)suzanne;
+    _shapeMap["axes"] = (mvShape*)axes;
 
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
     mvShaders shaders = mvShaders("StandardShading.vertexshader", "",
                                   "StandardShading.fragmentshader");
+
     _programID = shaders.getProgram();
-    
-    suzanne.load(_programID);
+    _shapeMap["suzanne"]->load(_programID);
 
-    // Switch to axes
-
+    // Switch to axes.  These use the default shader, which you get
+    // by initializing the shader object with no args.
     mvShaders axisShaders = mvShaders();
 
     _axisProgramID = axisShaders.getProgram();
-
-    axes.load(_axisProgramID);
+    _shapeMap["axes"]->load(_axisProgramID);
 
   };
 
@@ -121,10 +125,10 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    suzanne.draw(_programID, control);
+    _shapeMap["suzanne"]->draw(_programID, control);
 
     // Use our other shader.
-    axes.draw(_axisProgramID, control);
+    _shapeMap["axes"]->draw(_axisProgramID, control);
     
 		// Swap buffers
 		glfwSwapBuffers(_window);

@@ -98,6 +98,9 @@ mvShader::~mvShader() {
 
 mvShaders::mvShaders() {
 
+  // This is sort of hacky, but this is so that the default
+  // constructor for this class provides a trivial shader, so at least
+  // something will appear during the experimentation phase.
   static const char* defaultVertexShader = 
     "#version 330 core\n"
     "layout(location = 0) in vec3 vertexPosition_modelspace;"

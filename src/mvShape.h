@@ -16,9 +16,17 @@
 #include <common/controls.h>
 #include <common/objloader.h>
 
+typedef enum {
+  shapeOBJ = 0,
+  shapeAXES = 1
+} mvShapeType;
+  
+
 class mvShape {
 protected:
 
+  mvShapeType _type;
+  
   GLuint _arrayID;
 
   // These IDs point to the names/locations of values in shaders.
@@ -50,7 +58,7 @@ protected:
 
   
 public:
-  mvShape();
+ mvShape(mvShapeType type) : _type(type) {};
 
   virtual void load(GLuint programID) = 0;
   virtual void draw(GLuint programID, VRControl control) = 0;
@@ -67,6 +75,7 @@ private:
   GLuint _lightID;
 
 public:
+ mvShapeObj() : mvShape(shapeOBJ) {};
   ~mvShapeObj();
 
   void load(GLuint programID);
@@ -89,7 +98,7 @@ class mvShapeAxes : public mvShape {
   void expandAxesVertices();
 
  public:
-  mvShapeAxes() {
+ mvShapeAxes() : mvShape(shapeAXES) {
     expandAxesVertices();
     expandAxesColors();
   }    

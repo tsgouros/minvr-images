@@ -115,7 +115,11 @@ public:
     _rotQuaternion = rotQuaternion;
     _modelMatrixNeedsReset = true;
   };
-
+  void setRotation(glm::vec3 pitchRollYaw) {
+    _rotQuaternion = glm::quat(pitchRollYaw);      
+    _modelMatrixNeedsReset = true;
+  };
+  
   glm::vec3 getPosition() { return _position; };
   glm::vec3 getScale() { return _scale; };
   glm::quat getRotQuaternion() { return _rotQuaternion; };

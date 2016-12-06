@@ -38,6 +38,7 @@ mvShape::~mvShape() {
 
 glm::mat4 mvShape::getModelMatrix() {
 
+  //setRotation(glm::vec3(0.0,0.0,0.5));
   // _position = glm::vec3(0.5,0.5,0.0);
   // _rotQuaternion = glm::quat(0.5,1.0,0.0,0.0);
   // _scale = glm::vec3(1.0,0.5,0.2);

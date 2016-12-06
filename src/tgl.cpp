@@ -26,6 +26,7 @@ public:
   VRControl control;
 
   std::list<mvShape*> _shapeList;
+  std::list<mvShaders> _shaderList;
   
   // Put all the GLFW setup business here.
   void setupWin() {
@@ -85,11 +86,13 @@ public:
     // Create and compile our GLSL program from the shaders
     mvShaders shaders = mvShaders("StandardShading.vertexshader", "",
                                   "StandardShading.fragmentshader");
-
+    _shaderList.push_back(shaders);
+    
     // Switch to axes.  These use the default shader, which you get
     // by initializing the shader object with no args.
     mvShaders axisShaders = mvShaders();
-
+    _shaderList.push_back(axisShaders);
+    
     mvShapeObj* suzanne = new mvShapeObj(shaders.getProgram());
     mvShapeAxes* axes = new mvShapeAxes(axisShaders.getProgram());
     
@@ -104,10 +107,10 @@ public:
 
   ~VRApp() {
 
-    // TBD: We can't delete these in the mvShape object because more than one
-    // shape  might be using them.
-    //    glDeleteProgram(_programID);
-    //glDeleteProgram(_axisProgramID);
+    for (std::list<mvShaders>::iterator it = _shaderList.begin();
+         it != _shaderList.end(); it++) {
+      glDeleteProgram((*it).getProgram());
+    }
 
     // Close OpenGL window and terminate GLFW
     glfwTerminate();

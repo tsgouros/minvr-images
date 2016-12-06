@@ -247,6 +247,26 @@ void mvShapeAxes::draw(VRControl control) {
 
 }
 
+mvShape* mvShapeFactory::createMvShape(mvShapeType type, GLuint programID) {
+
+  callbackMap::const_iterator it = _callbacks.find(type);
+
+  if (it == _callbacks.end()) {
+    std::stringstream msg;
+    msg << "unknown shape: " << (int)(type);
+    throw std::runtime_error(msg.str());
+  } else {
+    return (it->second)(programID);
+  }
+}
+
+bool mvShapeFactory::registerMvShape(mvShapeType type,
+                                     createMvShapeCallback creator) {
+
+  return _callbacks.insert(callbackMap::value_type(type, creator)).second;
+}
+
+
 
 
 

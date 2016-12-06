@@ -1,5 +1,8 @@
 #include <iostream>
+#include <string>
+#include <sstream>
 #include <vector>
+#include <map>
 
 // Include GLEW
 #include <GL/glew.h>
@@ -92,6 +95,9 @@ public:
   const char** defaultFragmentShader;
 };
 
+
+
+
 class mvShapeObj : public mvShape {
 private:
 
@@ -128,6 +134,20 @@ class mvShapeAxes : public mvShape {
   void draw(VRControl control);
 
 };  
+
+class mvShapeFactory {
+ public:
+  typedef mvShape* (*createMvShapeCallback)(GLuint programID);
+
+  mvShape* createMvShape(mvShapeType type, GLuint programID);
+
+  bool registerMvShape(mvShapeType type, createMvShapeCallback creator);
+
+ private:
+  typedef std::map<mvShapeType, createMvShapeCallback> callbackMap;
+  callbackMap _callbacks;
+
+};
 
 /// TBD: Deleting the shader programs needs to be addressed. Also the
 /// detach* thing

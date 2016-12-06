@@ -11,9 +11,21 @@ void mvShape::printMat(std::string name, glm::mat4 mat) {
   }
 }
 
+mvShape::mvShape(mvShapeType type, GLuint programID) :
+  _type(type), _programID(programID) {
+
+  // Set all the translations and rotations to zero.
+  _scale = glm::vec3(1.0f, 1.0f, 1.0f);
+  // _rotQuaternion is initialized to zero rotation by default.
+  _position = glm::vec3(0.0f, 0.0f, 0.0f);
+
+  // Calculate the model matrix.  It should come out as an identity
+  // matrix, so this is not really necessary.
+  _modelMatrixNeedsReset = true;
+  _modelMatrix = getModelMatrix();
+}
+
 mvShape::~mvShape() {
-  // Can we test if these are in use, and delete if so? If yes, move
-  // this into parent class.
 
   // Cleanup VBO and shader
   if (glIsBuffer(_vertexBufferID)) glDeleteBuffers(1, &_vertexBufferID);
@@ -22,6 +34,24 @@ mvShape::~mvShape() {
   if (glIsBuffer(_colorBufferID)) glDeleteBuffers(1, &_colorBufferID);
   if (glIsTexture(_textureBufferID)) glDeleteTextures(1, &_textureBufferID);
   if (glIsVertexArray(_arrayID)) glDeleteVertexArrays(1, &_arrayID);
+}
+
+glm::mat4 mvShape::getModelMatrix() {
+
+  // _position = glm::vec3(0.5,0.5,0.0);
+  // _rotQuaternion = glm::quat(0.5,1.0,0.0,0.0);
+  // _scale = glm::vec3(1.0,0.5,0.2);
+  
+  if (_modelMatrixNeedsReset) {
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), _position);
+    glm::mat4 rotationMatrix = glm::mat4_cast(_rotQuaternion);
+    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), _scale);
+
+    _modelMatrix *= translationMatrix * rotationMatrix * scaleMatrix;
+    _modelMatrixNeedsReset = false;
+  }
+
+  return _modelMatrix;
 }
 
 
@@ -85,7 +115,6 @@ void mvShapeObj::draw(VRControl control) {
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
   glm::mat4 ViewMatrix = control.getViewMatrix();
-  _modelMatrix = glm::mat4(1.0);
   glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
 
   // printMat("proj", ProjectionMatrix);
@@ -221,7 +250,6 @@ void mvShapeAxes::draw(VRControl control) {
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
   glm::mat4 ViewMatrix = control.getViewMatrix();
-  _modelMatrix = glm::mat4(1.0);
   glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
     
   glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);

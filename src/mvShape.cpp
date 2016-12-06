@@ -24,19 +24,19 @@ mvShapeObj::~mvShapeObj() {
 }
 
 
-void mvShapeObj::load(GLuint programID) {
+void mvShapeObj::load() {
 
   // Arrange the data for the shaders to work on.  "Uniforms" first.
   // Get a handle for our "MVP" uniform
-  _mvpMatrixID = glGetUniformLocation(programID, "MVP");
-  _viewMatrixID = glGetUniformLocation(programID, "V");
-  _modelMatrixID = glGetUniformLocation(programID, "M");
+  _mvpMatrixID = glGetUniformLocation(_programID, "MVP");
+  _viewMatrixID = glGetUniformLocation(_programID, "V");
+  _modelMatrixID = glGetUniformLocation(_programID, "M");
 
   // Load the texture
   _textureBufferID = loadDDS("uvmap.DDS");
     
   // Get a handle for our "myTextureSampler" uniform
-  _textureAttribID  = glGetUniformLocation(programID, "myTextureSampler");
+  _textureAttribID  = glGetUniformLocation(_programID, "myTextureSampler");
 
   //std::cout << "loading mvShapeObj" << std::endl;
   // Read our .obj file
@@ -64,22 +64,22 @@ void mvShapeObj::load(GLuint programID) {
 
   // Get a handle for our "LightPosition" uniform.  We are not
   // binding the attribute location, just asking politely for it.
-  glUseProgram(programID);
-  _lightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+  glUseProgram(_programID);
+  _lightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
-    glGetAttribLocation(programID, "vertexPosition_modelspace");
-  _uvAttribID = glGetAttribLocation(programID, "vertexUV");
+    glGetAttribLocation(_programID, "vertexPosition_modelspace");
+  _uvAttribID = glGetAttribLocation(_programID, "vertexUV");
   _normalAttribID = 
-    glGetAttribLocation(programID, "vertexNormal_modelspace");
+    glGetAttribLocation(_programID, "vertexNormal_modelspace");
 
 }
 
-void mvShapeObj::draw(GLuint programID, VRControl control) {
+void mvShapeObj::draw(VRControl control) {
 
   // Use our shader
-  glUseProgram(programID);
+  glUseProgram(_programID);
 
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
@@ -190,9 +190,9 @@ void mvShapeAxes::expandAxesColors() {
   }
 }
 
-void mvShapeAxes::load(GLuint programID) {
+void mvShapeAxes::load() {
 
-  _mvpMatrixID = glGetUniformLocation(programID, "MVP");
+  _mvpMatrixID = glGetUniformLocation(_programID, "MVP");
 
   glGenVertexArrays(1, &_arrayID);
   glBindVertexArray(_arrayID);
@@ -207,13 +207,13 @@ void mvShapeAxes::load(GLuint programID) {
 
 }
 
-void mvShapeAxes::draw(GLuint programID, VRControl control) {
+void mvShapeAxes::draw(VRControl control) {
 
   // We have to ask where these attributes are located.
-  _vertexAttribID = glGetAttribLocation(programID, "vertexPosition_modelspace");
-  _colorAttribID = glGetAttribLocation(programID, "vertexInputColor");
+  _vertexAttribID = glGetAttribLocation(_programID, "vertexPosition_modelspace");
+  _colorAttribID = glGetAttribLocation(_programID, "vertexInputColor");
 
-  glUseProgram(programID);
+  glUseProgram(_programID);
 
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
@@ -225,7 +225,7 @@ void mvShapeAxes::draw(GLuint programID, VRControl control) {
     
   // Just checking...
   // GLint count;
-  // glGetProgramiv(programID, GL_ACTIVE_UNIFORMS, &count);
+  // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &count);
   // std::cout << "**Active (in use by a shader) Uniforms: " << count << std::endl;
 
   // Enable VAO to set axes data

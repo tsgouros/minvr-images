@@ -26,6 +26,9 @@ class mvShape {
 protected:
 
   mvShapeType _type;
+
+  // The program ID for the shaders to be used by this shape.
+  GLuint _programID; 
   
   GLuint _arrayID;
 
@@ -58,10 +61,11 @@ protected:
 
   
 public:
- mvShape(mvShapeType type) : _type(type) {};
+ mvShape(mvShapeType type, GLuint programID) :
+  _type(type), _programID(programID) {};
 
-  virtual void load(GLuint programID) = 0;
-  virtual void draw(GLuint programID, VRControl control) = 0;
+  virtual void load() = 0;
+  virtual void draw(VRControl control) = 0;
 
   // These are here so there is some default behavior beside blackness.  
   const char** defaultVertexShader;
@@ -75,11 +79,11 @@ private:
   GLuint _lightID;
 
 public:
- mvShapeObj() : mvShape(shapeOBJ) {};
+ mvShapeObj(GLuint programID) : mvShape(shapeOBJ, programID) {};
   ~mvShapeObj();
 
-  void load(GLuint programID);
-  void draw(GLuint programID, VRControl control);
+  void load();
+  void draw(VRControl control);
 };
 
 class mvShapeAxes : public mvShape {
@@ -98,13 +102,13 @@ class mvShapeAxes : public mvShape {
   void expandAxesVertices();
 
  public:
- mvShapeAxes() : mvShape(shapeAXES) {
+ mvShapeAxes(GLuint programID) : mvShape(shapeAXES, programID) {
     expandAxesVertices();
     expandAxesColors();
   }    
   
-  void load(GLuint programID);
+  void load();
+  void draw(VRControl control);
 
-  void draw(GLuint programID, VRControl control);
 };  
 

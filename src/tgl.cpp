@@ -22,8 +22,6 @@
 class VRApp {
 public:
   GLFWwindow* _window;
-  GLuint _programID;
-  GLuint _axisProgramID;
 
   VRControl control;
 
@@ -82,33 +80,33 @@ public:
     // Cull triangles whose normal is not towards the camera.
     glEnable(GL_CULL_FACE);
 
-    mvShapeObj* suzanne = new mvShapeObj();
-    mvShapeAxes* axes = new mvShapeAxes();
-
-    _shapeMap["suzanne"] = (mvShape*)suzanne;
-    _shapeMap["axes"] = (mvShape*)axes;
 
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
     mvShaders shaders = mvShaders("StandardShading.vertexshader", "",
                                   "StandardShading.fragmentshader");
 
-    _programID = shaders.getProgram();
-    _shapeMap["suzanne"]->load(_programID);
-
     // Switch to axes.  These use the default shader, which you get
     // by initializing the shader object with no args.
     mvShaders axisShaders = mvShaders();
 
-    _axisProgramID = axisShaders.getProgram();
-    _shapeMap["axes"]->load(_axisProgramID);
+    mvShapeObj* suzanne = new mvShapeObj(shaders.getProgram());
+    mvShapeAxes* axes = new mvShapeAxes(axisShaders.getProgram());
+    
+    _shapeMap["suzanne"] = (mvShape*)suzanne;
+    _shapeMap["axes"] = (mvShape*)axes;
+    
+    _shapeMap["suzanne"]->load();
+    _shapeMap["axes"]->load();
 
   };
 
   ~VRApp() {
 
-    glDeleteProgram(_programID);
-    glDeleteProgram(_axisProgramID);
+    // TBD: We can't delete these in the mvShape object because more than one
+    // shape  might be using them.
+    //    glDeleteProgram(_programID);
+    //glDeleteProgram(_axisProgramID);
 
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
@@ -125,10 +123,10 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    _shapeMap["suzanne"]->draw(_programID, control);
+    _shapeMap["suzanne"]->draw(control);
 
     // Use our other shader.
-    _shapeMap["axes"]->draw(_axisProgramID, control);
+    _shapeMap["axes"]->draw(control);
     
 		// Swap buffers
 		glfwSwapBuffers(_window);

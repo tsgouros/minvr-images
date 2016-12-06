@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <map>
+#include <list>
 
 // Include GLEW
 #include <GL/glew.h>
@@ -25,7 +25,7 @@ public:
 
   VRControl control;
 
-  std::map<std::string, mvShape*> _shapeMap;
+  std::list<mvShape*> _shapeList;
   
   // Put all the GLFW setup business here.
   void setupWin() {
@@ -93,11 +93,12 @@ public:
     mvShapeObj* suzanne = new mvShapeObj(shaders.getProgram());
     mvShapeAxes* axes = new mvShapeAxes(axisShaders.getProgram());
     
-    _shapeMap["suzanne"] = (mvShape*)suzanne;
-    _shapeMap["axes"] = (mvShape*)axes;
-    
-    _shapeMap["suzanne"]->load();
-    _shapeMap["axes"]->load();
+    _shapeList.push_back((mvShape*)suzanne);
+    _shapeList.push_back((mvShape*)axes);
+
+    // Load all the shapes.
+    for (std::list<mvShape*>::iterator it = _shapeList.begin();
+         it != _shapeList.end(); it++) (*it)->load();
 
   };
 
@@ -123,11 +124,9 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    _shapeMap["suzanne"]->draw(control);
+    for (std::list<mvShape*>::iterator it = _shapeList.begin();
+         it != _shapeList.end(); it++) (*it)->draw(control);
 
-    // Use our other shader.
-    _shapeMap["axes"]->draw(control);
-    
 		// Swap buffers
 		glfwSwapBuffers(_window);
   };

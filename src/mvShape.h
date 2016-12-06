@@ -21,7 +21,22 @@ typedef enum {
   shapeAXES = 1
 } mvShapeType;
   
-
+// This is a generic class to hold a shape to be drawn.  The actual
+// vertex coordinates of the shape are supplied in a sub-class, which
+// might hold a line, cylinder, rectangle, OBJ file, whatever.  There
+// is a load() method for getting vertices and texture coordinates and
+// whatever else ready, and a draw() method for the frame updates.
+//
+// This is meant to work with modern OpenGL, that uses shaders, and
+// the constructor to the class requires an OpenGL ID number for a
+// compiled set of shaders that will work with this class.  The
+// mvShaders class is available for managing a collection of shaders.
+//
+// The shaders themselves are not included in this object because many
+// objects will use the same shader.  The shader code will have to be
+// specifically referenced in the load() and draw() methods here.  I
+// have not come up with a clever way to avoid this.
+//
 class mvShape {
 protected:
 
@@ -46,16 +61,21 @@ protected:
   GLuint _colorBufferID;
   GLuint _textureBufferID;
 
+  // These matrices may appear in the shaders.
   GLuint _mvpMatrixID;
+  GLuint _projMatrixID;
 	GLuint _viewMatrixID;
 	GLuint _modelMatrixID;
 
+  // This is the matrix that controls the shape's position,
+  // orientation, and scale.
   glm::mat4 _modelMatrix;
-  
+
+  // The actual shape data is stored here.
   std::vector<glm::vec3> _vertices;
 	std::vector<glm::vec2> _uvs;
 	std::vector<glm::vec3> _normals;
-	//std::vector<glm::vec3> _colors;
+	std::vector<glm::vec3> _colors;
 
   static void printMat(std::string name, glm::mat4 mat);
 
@@ -95,9 +115,6 @@ class mvShapeAxes : public mvShape {
   static const int nFaces = 6;
   static const int nVerticesPerFace = 3;
 
-  float ave[nLines * nVerticesPerLine * nCoordsComponents];
-  float ace[nLines * nVerticesPerLine * nColorComponents];
-
   void expandAxesColors();
   void expandAxesVertices();
 
@@ -112,3 +129,7 @@ class mvShapeAxes : public mvShape {
 
 };  
 
+/// TBD: Deleting the shader programs needs to be addressed. Also the
+/// detach* thing
+
+// Next, 

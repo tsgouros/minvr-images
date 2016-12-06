@@ -167,9 +167,9 @@ void mvShapeAxes::expandAxesVertices() {
                      0, 3 };
 
   for (int i=0; i<6; i++) {
-    ave[i*3+0] = av[avi[i]*3+0];
-    ave[i*3+1] = av[avi[i]*3+1];
-    ave[i*3+2] = av[avi[i]*3+2];
+    _vertices.push_back(glm::vec3(av[avi[i]*3+0],
+                                  av[avi[i]*3+1],
+                                  av[avi[i]*3+2]));
   }
 }
 
@@ -184,9 +184,9 @@ void mvShapeAxes::expandAxesColors() {
                      2, 2 };
 
   for (int i=0; i<6; i++) {
-    ace[i*3+0] = ac[aci[i]*3+0];
-    ace[i*3+1] = ac[aci[i]*3+1];
-    ace[i*3+2] = ac[aci[i]*3+2];
+    _colors.push_back(glm::vec3(ac[aci[i]*3+0],
+                                ac[aci[i]*3+1],
+                                ac[aci[i]*3+2]));
   }
 }
 
@@ -199,11 +199,13 @@ void mvShapeAxes::load() {
 
   glGenBuffers(1, &_vertexBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);  // coordinates
-  glBufferData(GL_ARRAY_BUFFER, sizeof(ave), ave, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3),
+               &_vertices[0], GL_STATIC_DRAW);
 
   glGenBuffers(1, &_colorBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _colorBufferID);  // color
-  glBufferData(GL_ARRAY_BUFFER, sizeof(ace), ace, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, _colors.size() * sizeof(glm::vec3),
+               &_colors[0], GL_STATIC_DRAW);
 
 }
 

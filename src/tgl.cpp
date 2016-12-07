@@ -29,6 +29,11 @@ mvShape* createMvShapeAxes(GLuint programID) {
   return (mvShape*)out;
 }
 
+mvShape* createMvShapeRect(GLuint programID) {
+  mvShapeRect* out = new mvShapeRect(programID);
+  return (mvShape*)out;
+}
+
 class VRApp {
 public:
   GLFWwindow* _window;
@@ -86,6 +91,7 @@ public:
     // Fill factory.
     _shapeFactory.registerMvShape(shapeOBJ, createMvShapeObj);
     _shapeFactory.registerMvShape(shapeAXES, createMvShapeAxes);
+    _shapeFactory.registerMvShape(shapeRECT, createMvShapeRect);
     
     // Dark blue background
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -113,9 +119,14 @@ public:
                                                    shaders.getProgram());
     mvShape* axes = _shapeFactory.createMvShape(shapeAXES,
                                                 axisShaders.getProgram());
+    mvShape* rect = _shapeFactory.createMvShape(shapeRECT,
+                                                shaders.getProgram());
+
+    ((mvShapeRect*)rect)->setDimensions(3.0,4.0);
     
     _shapeList.push_back(suzanne);
     _shapeList.push_back(axes);
+    _shapeList.push_back(rect);
 
     // Load all the shapes.
     for (std::list<mvShape*>::iterator it = _shapeList.begin();

@@ -23,7 +23,8 @@
 
 typedef enum {
   shapeOBJ = 0,
-  shapeAXES = 1
+  shapeAXES = 1,
+  shapeRECT = 2
 } mvShapeType;
   
 // This is a generic class to hold a shape to be drawn.  The actual
@@ -129,8 +130,33 @@ public:
 
 };
 
+class mvShapeRect : public mvShape {
+private:
 
+  GLfloat _width, _height;
+  
+  // Some of these should move into the parent class.  Also the destructor.
+  GLuint _lightID;
 
+  void initVertices();
+
+public:
+ mvShapeRect(GLuint programID) : mvShape(shapeRECT, programID) {
+    // Set default rectangle dimensions.
+    _width = 1.0f;  _height = 1.0f;
+  };
+
+  void setWidth(GLfloat width) { _width = width; };
+  void setHeight(GLfloat height) { _height = height; };
+  void setDimensions(GLfloat width, GLfloat height) {
+    _width = width; _height = height; };
+
+  GLfloat getWidth() { return _width; };
+  GLfloat getHeight() { return _height; };
+  
+  void load();
+  void draw(VRControl control);
+};
 
 class mvShapeObj : public mvShape {
 private:

@@ -55,6 +55,183 @@ glm::mat4 mvShape::getModelMatrix() {
   return _modelMatrix;
 }
 
+void mvShapeRect::initVertices() {
+
+    _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3(-_width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3( _width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
+
+  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3(-_width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(glm::vec3( _width/2.0f, -_height/2.0f, 0.0f));
+
+  _uvs.push_back(glm::vec2(0.0f, 0.0f));
+  _uvs.push_back(glm::vec2(1.0f, 1.0f));
+  _uvs.push_back(glm::vec2(0.0f, 1.0f));
+  _uvs.push_back(glm::vec2(0.0f, 0.0f));
+  _uvs.push_back(glm::vec2(1.0f, 0.0f));
+  _uvs.push_back(glm::vec2(1.0f, 1.0f));
+
+  _uvs.push_back(glm::vec2(0.0f, 0.0f));
+  _uvs.push_back(glm::vec2(0.0f, 1.0f));
+  _uvs.push_back(glm::vec2(1.0f, 1.0f));
+  _uvs.push_back(glm::vec2(0.0f, 0.0f));
+  _uvs.push_back(glm::vec2(1.0f, 1.0f));
+  _uvs.push_back(glm::vec2(1.0f, 0.0f));
+
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
+void mvShapeRect::load() {
+
+  initVertices();
+  
+  // Arrange the data for the shaders to work on.  "Uniforms" first.
+  // Get a handle for our "MVP" uniform
+  _mvpMatrixID = glGetUniformLocation(_programID, "MVP");
+  _viewMatrixID = glGetUniformLocation(_programID, "V");
+  _modelMatrixID = glGetUniformLocation(_programID, "M");
+
+  // Load the texture
+  _textureBufferID = loadDDS("uvmap.DDS");
+    
+  // Get a handle for our "myTextureSampler" uniform
+  _textureAttribID  = glGetUniformLocation(_programID, "myTextureSampler");
+
+  //std::cout << "loading mvShapeObj" << std::endl;
+  // Read our .obj file
+  bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
+
+  // Now the vertex data.
+  glGenVertexArrays(1, &_arrayID);
+  glBindVertexArray(_arrayID);
+
+  // Load it into a VBO
+  glGenBuffers(1, &_vertexBufferID);
+  glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
+  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3),
+               &_vertices[0], GL_STATIC_DRAW);
+
+  glGenBuffers(1, &_uvBufferID);
+  glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
+  glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(glm::vec2),
+               &_uvs[0], GL_STATIC_DRAW);
+
+  glGenBuffers(1, &_normalBufferID);
+  glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
+  glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
+               &_normals[0], GL_STATIC_DRAW);
+
+  // Get a handle for our "LightPosition" uniform.  We are not
+  // binding the attribute location, just asking politely for it.
+  glUseProgram(_programID);
+  _lightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
+
+  // Get handles for the various shader inputs.
+  _vertexAttribID =
+    glGetAttribLocation(_programID, "vertexPosition_modelspace");
+  _uvAttribID = glGetAttribLocation(_programID, "vertexUV");
+  _normalAttribID = 
+    glGetAttribLocation(_programID, "vertexNormal_modelspace");
+
+}
+
+void mvShapeRect::draw(VRControl control) {
+
+  // Use our shader
+  glUseProgram(_programID);
+
+  // Compute the MVP matrix from keyboard and mouse input
+  glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
+  glm::mat4 ViewMatrix = control.getViewMatrix();
+  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
+
+  // printMat("proj", ProjectionMatrix);
+  // printMat("view", ViewMatrix);
+  // printMat("model", _modelMatrix);
+  // printMat("MVP", MVP);
+    
+  // Send our transformation to the currently bound shader, 
+  // in the "MVP" uniform
+  glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
+  glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
+  glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+  glm::vec3 lightPos = glm::vec3(4,4,4);
+  glUniform3f(_lightID, lightPos.x, lightPos.y, lightPos.z);
+
+  // Bind our texture in Texture Unit 0
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, _textureBufferID);
+  // Set our "myTextureSampler" sampler to user Texture Unit 0
+  glUniform1i(_textureAttribID, 0);
+
+  // GLint countt;
+  // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
+  // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;
+
+  // 1rst attribute buffer : vertices
+  glEnableVertexAttribArray(_vertexAttribID);
+  glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
+  glVertexAttribPointer(
+                        _vertexAttribID,    // attribute
+                        3,                  // size
+                        GL_FLOAT,           // type
+                        GL_FALSE,           // normalized?
+                        0,                  // stride
+                        (void*)0            // array buffer offset
+                        );
+
+  // 2nd attribute buffer : UVs
+  glEnableVertexAttribArray(_uvAttribID);
+  glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
+  glVertexAttribPointer(
+                        _uvAttribID,        // attribute
+                        2,                  // size
+                        GL_FLOAT,           // type
+                        GL_FALSE,           // normalized?
+                        0,                  // stride
+                        (void*)0            // array buffer offset
+                        );
+
+  // 3rd attribute buffer : normals
+  glEnableVertexAttribArray(_normalAttribID);
+  glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
+  glVertexAttribPointer(
+                        _normalAttribID,    // attribute
+                        3,                  // size
+                        GL_FLOAT,           // type
+                        GL_FALSE,           // normalized?
+                        0,                  // stride
+                        (void*)0            // array buffer offset
+                        );
+
+  // Draw the triangles !
+  glDrawArrays(GL_TRIANGLES, 0, _vertices.size() );
+
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+}
+
 
 void mvShapeObj::load() {
 

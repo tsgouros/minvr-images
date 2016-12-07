@@ -19,21 +19,6 @@
 
 #include "mvShape.h"
 
-mvShape* createMvShapeObj(GLuint programID) {
-  mvShapeObj* out = new mvShapeObj(programID);
-  return (mvShape*)out;
-}
-
-mvShape* createMvShapeAxes(GLuint programID) {
-  mvShapeAxes* out = new mvShapeAxes(programID);
-  return (mvShape*)out;
-}
-
-mvShape* createMvShapeRect(GLuint programID) {
-  mvShapeRect* out = new mvShapeRect(programID);
-  return (mvShape*)out;
-}
-
 class VRApp {
 public:
   GLFWwindow* _window;
@@ -87,11 +72,6 @@ public:
       throw std::runtime_error("Failed to initialize GLEW");
       glfwTerminate();
     }
-
-    // Fill factory.
-    _shapeFactory.registerMvShape(shapeOBJ, createMvShapeObj);
-    _shapeFactory.registerMvShape(shapeAXES, createMvShapeAxes);
-    _shapeFactory.registerMvShape(shapeRECT, createMvShapeRect);
     
     // Dark blue background
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -115,12 +95,12 @@ public:
     mvShaders axisShaders = mvShaders();
     _shaderList.push_back(axisShaders);
     
-    mvShape* suzanne = _shapeFactory.createMvShape(shapeOBJ,
-                                                   shaders.getProgram());
-    mvShape* axes = _shapeFactory.createMvShape(shapeAXES,
-                                                axisShaders.getProgram());
-    mvShape* rect = _shapeFactory.createMvShape(shapeRECT,
-                                                shaders.getProgram());
+    mvShape* suzanne = _shapeFactory.createShape(shapeOBJ,
+                                                 shaders.getProgram());
+    mvShape* axes = _shapeFactory.createShape(shapeAXES,
+                                              axisShaders.getProgram());
+    mvShape* rect = _shapeFactory.createShape(shapeRECT,
+                                              shaders.getProgram());
 
     ((mvShapeRect*)rect)->setDimensions(3.0,4.0);
     
@@ -157,8 +137,13 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
-         it != _shapeList.end(); it++) (*it)->draw(control);
+         it != _shapeList.end(); it++) {
 
+      if ((*it)->getType() == shapeRECT) 
+          
+      (*it)->draw(control);
+    }
+    
 		// Swap buffers
 		glfwSwapBuffers(_window);
   };

@@ -57,13 +57,15 @@ glm::mat4 mvShape::getModelMatrix() {
 
 void mvShapeRect::initVertices() {
 
-    _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  // Front side of rectangle.
+  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3(-_width/2.0f,  _height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3( _width/2.0f, -_height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
 
+  // Back side.
   _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3(-_width/2.0f,  _height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
@@ -71,6 +73,7 @@ void mvShapeRect::initVertices() {
   _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
   _vertices.push_back(glm::vec3( _width/2.0f, -_height/2.0f, 0.0f));
 
+  // Front side texture coordinates.
   _uvs.push_back(glm::vec2(0.0f, 0.0f));
   _uvs.push_back(glm::vec2(1.0f, 1.0f));
   _uvs.push_back(glm::vec2(0.0f, 1.0f));
@@ -78,6 +81,7 @@ void mvShapeRect::initVertices() {
   _uvs.push_back(glm::vec2(1.0f, 0.0f));
   _uvs.push_back(glm::vec2(1.0f, 1.0f));
 
+  // Back side.
   _uvs.push_back(glm::vec2(0.0f, 0.0f));
   _uvs.push_back(glm::vec2(0.0f, 1.0f));
   _uvs.push_back(glm::vec2(1.0f, 1.0f));
@@ -85,6 +89,7 @@ void mvShapeRect::initVertices() {
   _uvs.push_back(glm::vec2(1.0f, 1.0f));
   _uvs.push_back(glm::vec2(1.0f, 0.0f));
 
+  // The normals all point in the same direction.
   _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
   _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
   _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
@@ -102,6 +107,7 @@ void mvShapeRect::initVertices() {
 
 void mvShapeRect::load() {
 
+  // Set up the vertex and other arrays.
   initVertices();
   
   // Arrange the data for the shaders to work on.  "Uniforms" first.
@@ -111,7 +117,10 @@ void mvShapeRect::load() {
   _modelMatrixID = glGetUniformLocation(_programID, "M");
 
   // Load the texture
-  _textureBufferID = loadDDS("uvmap.DDS");
+  int width, height;
+  _textureBufferID = loadPNG("/Users/tomfool/Desktop/on-the-roof.png",
+                             &width, &height);
+  setDimensions(2.5, 2.5 * (height / width));
     
   // Get a handle for our "myTextureSampler" uniform
   _textureAttribID  = glGetUniformLocation(_programID, "myTextureSampler");
@@ -454,7 +463,7 @@ void mvShapeAxes::draw(VRControl control) {
 
 }
 
-mvShape* mvShapeFactory::createMvShape(mvShapeType type, GLuint programID) {
+mvShape* mvShapeFactory::createShape(mvShapeType type, GLuint programID) {
 
   callbackMap::const_iterator it = _callbacks.find(type);
 
@@ -467,7 +476,7 @@ mvShape* mvShapeFactory::createMvShape(mvShapeType type, GLuint programID) {
   }
 }
 
-bool mvShapeFactory::registerMvShape(mvShapeType type,
+bool mvShapeFactory::registerShape(mvShapeType type,
                                      createMvShapeCallback creator) {
 
   return _callbacks.insert(callbackMap::value_type(type, creator)).second;

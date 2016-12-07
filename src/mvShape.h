@@ -196,12 +196,27 @@ class mvShapeAxes : public mvShape {
 
 class mvShapeFactory {
  public:
+  template<typename T>
+    static mvShape* create(GLuint programID) {
+    T* out = new T(programID);
+    return (mvShape*)out;
+  }
+
   typedef mvShape* (*createMvShapeCallback)(GLuint programID);
 
-  mvShape* createMvShape(mvShapeType type, GLuint programID);
+  mvShape* createShape(mvShapeType type, GLuint programID);
 
-  bool registerMvShape(mvShapeType type, createMvShapeCallback creator);
+  bool registerShape(mvShapeType type, createMvShapeCallback creator);
 
+  mvShapeFactory() {
+
+    // Fill factory.
+    registerShape(shapeOBJ, create<mvShapeObj>);
+    registerShape(shapeAXES, create<mvShapeAxes>);
+    registerShape(shapeRECT, create<mvShapeRect>);
+    
+  }
+  
  private:
   typedef std::map<mvShapeType, createMvShapeCallback> callbackMap;
   callbackMap _callbacks;

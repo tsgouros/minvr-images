@@ -48,7 +48,7 @@ glm::mat4 mvShape::getModelMatrix() {
     glm::mat4 rotationMatrix = glm::mat4_cast(_rotQuaternion);
     glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), _scale);
 
-    _modelMatrix *= translationMatrix * rotationMatrix * scaleMatrix;
+    _modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
     _modelMatrixNeedsReset = false;
   }
 
@@ -127,7 +127,7 @@ void mvShapeRect::load() {
 
   //std::cout << "loading mvShapeObj" << std::endl;
   // Read our .obj file
-  bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
+  //bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
 
   // Now the vertex data.
   glGenVertexArrays(1, &_arrayID);
@@ -168,10 +168,14 @@ void mvShapeRect::draw(VRControl control) {
   // Use our shader
   glUseProgram(_programID);
 
+  glm::vec3 p = getPosition();
+  p.x += 0.01;
+  setPosition(p);
+  
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
   glm::mat4 ViewMatrix = control.getViewMatrix();
-  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
+  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
 
   // printMat("proj", ProjectionMatrix);
   // printMat("view", ViewMatrix);
@@ -302,7 +306,7 @@ void mvShapeObj::draw(VRControl control) {
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
   glm::mat4 ViewMatrix = control.getViewMatrix();
-  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
+  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
 
   // printMat("proj", ProjectionMatrix);
   // printMat("view", ViewMatrix);
@@ -482,6 +486,93 @@ bool mvShapeFactory::registerShape(mvShapeType type,
   return _callbacks.insert(callbackMap::value_type(type, creator)).second;
 }
 
+std::string mvShape::print() const {
+  std::stringstream out;
+
+  std::map<mvShapeType, std::string> map;
+  map[shapeOBJ] = "OBJ";
+  map[shapeAXES] = "AXES";
+  map[shapeRECT] = "RECT";
+  
+  out << "SHAPE data:" << std::endl;
+
+  out << "_type:            " << _type << " (" << map[_type] << ")" << std::endl;
+  out << "_programID:       " << _programID << std::endl;
+  out << "_arrayID:         " << _arrayID << std::endl;
+  out << "_vertexAttribID:  " << _vertexAttribID << std::endl;
+  out << "_uvAttribID:      " << _uvAttribID << std::endl;
+  out << "_normalAttribID:  " << _normalAttribID << std::endl;
+  out << "_colorAttribID:   " << _colorAttribID << std::endl;
+  out << "_textureAttribID: " << _textureAttribID << std::endl;
+  out << "_vertexBufferID:  " << _vertexBufferID << std::endl;
+  out << "_uvBufferID:      " << _uvBufferID << std::endl;
+  out << "_normalBufferID:  " << _normalBufferID << std::endl;
+  out << "_colorBufferID:   " << _colorBufferID << std::endl;
+  out << "_textureBufferID: " << _textureBufferID << std::endl;
+
+  // The actual shape data is stored here.
+  out << "_vertices:    N = " << _vertices.size() << std::endl;
+  out << "_uvs:         N = " << _uvs.size() << std::endl;
+  out << "_normals:     N = " << _normals.size() << std::endl;
+  out << "_colors:      N = " << _colors.size() << std::endl;
+
+  // These matrices may appear in the shaders.
+  out << "_mvpMatrixID:     " << _mvpMatrixID << std::endl;
+  out << "_projMatrixID:    " << _projMatrixID << std::endl;
+  out << "_viewMatrixID:    " << _viewMatrixID << std::endl;
+  out << "_modelMatrixID:   " << _modelMatrixID << std::endl;
+
+  out << "pos:   " << _position.x << "," << _position.y << "," << _position.z << std::endl;
+  out << "scale: " << _scale.x << "," << _scale.y << "," << _scale.z << std::endl;
+  out << "quat:  " << _rotQuaternion.x << "," << _rotQuaternion.y << "," << _rotQuaternion.z << "," << _rotQuaternion.w << std::endl;
+
+  return out.str();
+}
+
+std::string mvShapeRect::print() const {
+  std::stringstream out;
+
+  out << mvShape::print();
+
+  out << std::endl << "_lightID: " << _lightID << std::endl;
+  out << "width: " << _width << "  height: " << _height << std::endl;
+
+  return out.str();
+}
+
+std::string mvShapeObj::print() const {
+  std::stringstream out;
+
+  out << mvShape::print();
+  out << std::endl << "_lightID: " << _lightID << std::endl;
+
+  return out.str();
+}
+
+std::string mvShapeAxes::print() const {
+  std::stringstream out;
+
+  out << mvShape::print();
+  out << "nCoordsComponents:" << nCoordsComponents << std::endl;
+  out << "nColorComponents: " << nColorComponents << std::endl;
+  out << "nLines:           " << nLines << std::endl;
+  out << "nVerticesPerLine: " << nVerticesPerLine << std::endl;
+  out << "nFaces:           " << nFaces << std::endl;
+  out << "nVerticesPerFace: " << nVerticesPerFace << std::endl;
+
+  return out.str();
+}
+
+std::string mvShapeFactory::print() const {
+  std::stringstream out;
+
+  for (callbackMap::const_iterator it = _callbacks.begin();
+       it != _callbacks.end(); it++) {
+    out << "callback for: " << it->first << std::endl;
+  }
+
+  return out.str();
+}
 
 
 

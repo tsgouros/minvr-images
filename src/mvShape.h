@@ -89,6 +89,8 @@ protected:
   bool _modelMatrixNeedsReset;
 
   static void printMat(std::string name, glm::mat4 mat);
+  virtual std::string print() const;
+  friend std::ostream & operator<<(std::ostream &os, const mvShape& iShape);
 
   
 public:
@@ -102,6 +104,8 @@ public:
   // the default blackness.
   const char** defaultVertexShader;
   const char** defaultFragmentShader;
+
+  mvShapeType getType() { return _type; };
 
   // Position, rotation, scale control mutators.
   void setPosition(glm::vec3 position) {
@@ -131,7 +135,7 @@ public:
 };
 
 class mvShapeRect : public mvShape {
-private:
+protected:
 
   GLfloat _width, _height;
   
@@ -140,6 +144,10 @@ private:
 
   void initVertices();
 
+  std::string print() const;
+  friend std::ostream & operator<<(std::ostream &os, const mvShapeRect& iShape);
+
+  
 public:
  mvShapeRect(GLuint programID) : mvShape(shapeRECT, programID) {
     // Set default rectangle dimensions.
@@ -164,6 +172,9 @@ private:
   // Some of these should move into the parent class.  Also the destructor.
   GLuint _lightID;
 
+  std::string print() const;
+  friend std::ostream & operator<<(std::ostream &os, const mvShapeObj& iShape);
+  
 public:
  mvShapeObj(GLuint programID) : mvShape(shapeOBJ, programID) {};
 
@@ -172,7 +183,8 @@ public:
 };
 
 class mvShapeAxes : public mvShape {
-
+ private:
+  
   static const int nCoordsComponents = 3;
   static const int nColorComponents = 3;
   static const int nLines = 3;
@@ -183,6 +195,9 @@ class mvShapeAxes : public mvShape {
   void expandAxesColors();
   void expandAxesVertices();
 
+  std::string print() const;
+  friend std::ostream & operator<<(std::ostream &os, const mvShapeAxes& iShape);
+  
  public:
  mvShapeAxes(GLuint programID) : mvShape(shapeAXES, programID) {
     expandAxesVertices();
@@ -220,6 +235,9 @@ class mvShapeFactory {
  private:
   typedef std::map<mvShapeType, createMvShapeCallback> callbackMap;
   callbackMap _callbacks;
+
+  std::string print() const;
+  friend std::ostream & operator<<(std::ostream &os, const mvShapeFactory& iShape);
 
 };
 

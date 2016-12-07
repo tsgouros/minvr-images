@@ -139,7 +139,7 @@ public:
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) {
 
-      if ((*it)->getType() == shapeRECT) 
+      //      if ((*it)->getType() == shapeRECT) 
           
       (*it)->draw(control);
     }

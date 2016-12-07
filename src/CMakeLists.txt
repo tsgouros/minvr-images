@@ -3,6 +3,9 @@ project(mvImage)
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 
+find_package(PNG REQUIRED)
+include_directories(${PNG_INCLUDE_DIRS})
+
 set(mvImage_source_files
   mvImage.h
   mvImage.cpp
@@ -19,6 +22,7 @@ add_executable(mvImage ${mvImage_source_files})
 target_link_libraries(mvImage MinVR
   ${OPENGL_gl_LIBRARY}
   ${OPENGL_glu_LIBRARY}
+  ${PNG_LIBRARIES}
   ${ALL_LIBS})
 
 include_directories(
@@ -48,6 +52,7 @@ add_executable(tgl
 )
 target_link_libraries(tgl MinVR
   ${OPENGL_LIBRARY}
+  ${PNG_LIBRARIES}
   glfw
   GLEW_1130
   ${ALL_LIBS}

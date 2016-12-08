@@ -5,7 +5,7 @@ void mvShape::printMat(std::string name, glm::mat4 mat) {
   std::cout << name << std::endl;
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
-      printf("%6.2f ", mat[i][j]);
+      printf("%6.2f ", mat[j][i]);
     }
     std::cout << std::endl;
   }
@@ -50,6 +50,11 @@ glm::mat4 mvShape::getModelMatrix() {
 
     _modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
     _modelMatrixNeedsReset = false;
+
+    // printMat("scale:", scaleMatrix);
+    // printMat("rotat:", rotationMatrix);
+    // printMat("trans:", translationMatrix);
+    // printMat("model:", _modelMatrix);
   }
 
   return _modelMatrix;
@@ -116,12 +121,6 @@ void mvShapeRect::load() {
   _viewMatrixID = glGetUniformLocation(_programID, "V");
   _modelMatrixID = glGetUniformLocation(_programID, "M");
 
-  // Load the texture
-  int width, height;
-  _textureBufferID = loadPNG("/Users/tomfool/Desktop/on-the-roof.png",
-                             &width, &height);
-  setDimensions(2.5, 2.5 * (height / width));
-    
   // Get a handle for our "myTextureSampler" uniform
   _textureAttribID  = glGetUniformLocation(_programID, "myTextureSampler");
 
@@ -171,6 +170,11 @@ void mvShapeRect::draw(VRControl control) {
   glm::vec3 p = getPosition();
   p.x += 0.01;
   setPosition(p);
+  // glm::quat q = getRotQuaternion();
+  // q.z = 1.0;
+  // q.w += 0.01;
+  // setRotation(q);
+
   
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
@@ -254,9 +258,6 @@ void mvShapeObj::load() {
   _viewMatrixID = glGetUniformLocation(_programID, "V");
   _modelMatrixID = glGetUniformLocation(_programID, "M");
 
-  // Load the texture
-  _textureBufferID = loadDDS("uvmap.DDS");
-    
   // Get a handle for our "myTextureSampler" uniform
   _textureAttribID  = glGetUniformLocation(_programID, "myTextureSampler");
 

@@ -100,6 +100,17 @@ public:
   virtual void load() = 0;
   virtual void draw(VRControl control) = 0;
 
+  // These are here to specialize in the subclasses.
+  virtual void setDimensions(GLfloat a) {};
+  virtual void setDimensions(GLfloat a, GLfloat b) {};
+  virtual void setDimensions(GLfloat a, GLfloat b, GLfloat c) {};
+  
+  void setProgramID(GLuint programID) { _programID = programID; };
+  GLuint getProgramID() { return _programID; };
+
+  void setTextureID(GLuint textureID) { _textureBufferID = textureID; };
+  GLuint getTextureID() { return _textureBufferID; };
+  
   // These are here so there is some default shader behavior beside
   // the default blackness.
   const char** defaultVertexShader;
@@ -128,7 +139,8 @@ public:
   glm::vec3 getPosition() { return _position; };
   glm::vec3 getScale() { return _scale; };
   glm::quat getRotQuaternion() { return _rotQuaternion; };
-
+  glm::vec3 getPitchRollYaw() { return glm::vec3(0.0); };
+  
   glm::mat4 getModelMatrix();
 
 

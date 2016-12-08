@@ -97,13 +97,25 @@ public:
     
     mvShape* suzanne = _shapeFactory.createShape(shapeOBJ,
                                                  shaders.getProgram());
+
+    // Load the texture
+    GLuint textureBufferID = loadDDS("uvmap.DDS");
+    suzanne->setTextureID(textureBufferID);
+    
     mvShape* axes = _shapeFactory.createShape(shapeAXES,
                                               axisShaders.getProgram());
+
     mvShape* rect = _shapeFactory.createShape(shapeRECT,
                                               shaders.getProgram());
+    // Load the texture
+    int width, height;
+    textureBufferID = loadPNG("/Users/tomfool/Desktop/on-the-roof.png",
+                              &width, &height);
+    rect->setTextureID(textureBufferID);
+    rect->setDimensions(2.5, 2.5 * ((float)height / (float)width));
 
-    ((mvShapeRect*)rect)->setDimensions(3.0,4.0);
-    
+
+
     _shapeList.push_back(suzanne);
     _shapeList.push_back(axes);
     _shapeList.push_back(rect);

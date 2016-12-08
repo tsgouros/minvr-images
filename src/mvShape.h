@@ -55,10 +55,19 @@ protected:
 
   // These IDs point to the names/locations of values in shaders.
   GLuint _vertexAttribID;
+  std::string _vertexAttribName;
+  
   GLuint _uvAttribID;
+  std::string _uvAttribName;
+  
   GLuint _normalAttribID;
+  std::string _normalAttribName;
+  
   GLuint _colorAttribID;
+  std::string _colorAttribName;
+  
   GLuint _textureAttribID;
+  std::string _textureAttribName;
 
   // These IDs point to actual data.
   GLuint _vertexBufferID;
@@ -75,9 +84,16 @@ protected:
 
   // These matrices may appear in the shaders.
   GLuint _mvpMatrixID;
+  std::string  _mvpMatrixName;
+
   GLuint _projMatrixID;
+  std::string  _projMatrixName;
+
 	GLuint _viewMatrixID;
+  std::string  _viewMatrixName;
+
 	GLuint _modelMatrixID;
+  std::string  _modelMatrixName;
 
   glm::vec3 _position;
   glm::vec3 _scale;
@@ -92,6 +108,9 @@ protected:
   virtual std::string print() const;
   friend std::ostream & operator<<(std::ostream &os, const mvShape& iShape);
 
+  // This is just a central place to put all the names that will be
+  // relevant to your shaders.
+  void setupDefaultNames();
   
 public:
   mvShape(mvShapeType type, GLuint programID);
@@ -131,15 +150,15 @@ public:
     _rotQuaternion = rotQuaternion;
     _modelMatrixNeedsReset = true;
   };
-  void setRotation(glm::vec3 pitchRollYaw) {
-    _rotQuaternion = glm::quat(pitchRollYaw);      
+  void setRotation(glm::vec3 pitchYawRoll) {
+    _rotQuaternion = glm::quat(pitchYawRoll);      
     _modelMatrixNeedsReset = true;
   };
   
   glm::vec3 getPosition() { return _position; };
   glm::vec3 getScale() { return _scale; };
   glm::quat getRotQuaternion() { return _rotQuaternion; };
-  glm::vec3 getPitchRollYaw() { return glm::vec3(0.0); };
+  glm::vec3 getPitchYawRoll() { return glm::eulerAngles(_rotQuaternion); };
   
   glm::mat4 getModelMatrix();
 

@@ -11,9 +11,27 @@ void mvShape::printMat(std::string name, glm::mat4 mat) {
   }
 }
 
+// These are the default names of variables in the shaders.  Placed
+// here so they're all in one place, for easy comparison to the shader
+// you'll use.
+void mvShape::setupDefaultNames() {
+
+  _vertexAttribName = std::string("vertexPosition_modelspace");
+  _uvAttribName = std::string("vertexUV");
+  _normalAttribName = std::string("vertexNormal_modelspace");
+  _colorAttribName = std::string("vertexInputColor");
+  _textureAttribName = std::string("myTextureSampler");
+  _mvpMatrixName = std::string("MVP");
+  _projMatrixName = std::string("P");
+  _viewMatrixName = std::string("V");
+  _modelMatrixName = std::string("M");
+}
+
 mvShape::mvShape(mvShapeType type, GLuint programID) :
   _type(type), _programID(programID) {
 
+  setupDefaultNames();
+  
   // Set all the translations and rotations to zero.
   _scale = glm::vec3(1.0f, 1.0f, 1.0f);
   // _rotQuaternion is initialized to zero rotation by default.
@@ -32,17 +50,11 @@ mvShape::~mvShape() {
   if (glIsBuffer(_uvBufferID)) glDeleteBuffers(1, &_uvBufferID);
   if (glIsBuffer(_normalBufferID)) glDeleteBuffers(1, &_normalBufferID);
   if (glIsBuffer(_colorBufferID)) glDeleteBuffers(1, &_colorBufferID);
-  if (glIsTexture(_textureBufferID)) glDeleteTextures(1, &_textureBufferID);
   if (glIsVertexArray(_arrayID)) glDeleteVertexArrays(1, &_arrayID);
 }
 
 glm::mat4 mvShape::getModelMatrix() {
 
-  //setRotation(glm::vec3(0.0,0.0,0.5));
-  // _position = glm::vec3(0.5,0.5,0.0);
-  // _rotQuaternion = glm::quat(0.5,1.0,0.0,0.0);
-  // _scale = glm::vec3(1.0,0.5,0.2);
-  
   if (_modelMatrixNeedsReset) {
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), _position);
     glm::mat4 rotationMatrix = glm::mat4_cast(_rotQuaternion);
@@ -117,12 +129,12 @@ void mvShapeRect::load() {
   
   // Arrange the data for the shaders to work on.  "Uniforms" first.
   // Get a handle for our "MVP" uniform
-  _mvpMatrixID = glGetUniformLocation(_programID, "MVP");
-  _viewMatrixID = glGetUniformLocation(_programID, "V");
-  _modelMatrixID = glGetUniformLocation(_programID, "M");
+  _mvpMatrixID = glGetUniformLocation(_programID, _mvpMatrixName.c_str());
+  _viewMatrixID = glGetUniformLocation(_programID, _viewMatrixName.c_str());
+  _modelMatrixID = glGetUniformLocation(_programID, _modelMatrixName.c_str());
 
   // Get a handle for our "myTextureSampler" uniform
-  _textureAttribID  = glGetUniformLocation(_programID, "myTextureSampler");
+  _textureAttribID  = glGetUniformLocation(_programID, _textureAttribName.c_str());
 
   //std::cout << "loading mvShapeObj" << std::endl;
   // Read our .obj file
@@ -155,10 +167,10 @@ void mvShapeRect::load() {
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
-    glGetAttribLocation(_programID, "vertexPosition_modelspace");
-  _uvAttribID = glGetAttribLocation(_programID, "vertexUV");
+    glGetAttribLocation(_programID, _vertexAttribName.c_str());
+  _uvAttribID = glGetAttribLocation(_programID, _uvAttribName.c_str());
   _normalAttribID = 
-    glGetAttribLocation(_programID, "vertexNormal_modelspace");
+    glGetAttribLocation(_programID, _normalAttribName.c_str());
 
 }
 
@@ -254,12 +266,12 @@ void mvShapeObj::load() {
 
   // Arrange the data for the shaders to work on.  "Uniforms" first.
   // Get a handle for our "MVP" uniform
-  _mvpMatrixID = glGetUniformLocation(_programID, "MVP");
-  _viewMatrixID = glGetUniformLocation(_programID, "V");
-  _modelMatrixID = glGetUniformLocation(_programID, "M");
+  _mvpMatrixID = glGetUniformLocation(_programID, _mvpMatrixName.c_str());
+  _viewMatrixID = glGetUniformLocation(_programID, _viewMatrixName.c_str());
+  _modelMatrixID = glGetUniformLocation(_programID, _modelMatrixName.c_str());
 
   // Get a handle for our "myTextureSampler" uniform
-  _textureAttribID  = glGetUniformLocation(_programID, "myTextureSampler");
+  _textureAttribID  = glGetUniformLocation(_programID, _textureAttribName.c_str());
 
   //std::cout << "loading mvShapeObj" << std::endl;
   // Read our .obj file
@@ -292,10 +304,10 @@ void mvShapeObj::load() {
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
-    glGetAttribLocation(_programID, "vertexPosition_modelspace");
-  _uvAttribID = glGetAttribLocation(_programID, "vertexUV");
+    glGetAttribLocation(_programID, _vertexAttribName.c_str());
+  _uvAttribID = glGetAttribLocation(_programID, _uvAttribName.c_str());
   _normalAttribID = 
-    glGetAttribLocation(_programID, "vertexNormal_modelspace");
+    glGetAttribLocation(_programID, _normalAttribName.c_str());
 
 }
 
@@ -414,7 +426,7 @@ void mvShapeAxes::expandAxesColors() {
 
 void mvShapeAxes::load() {
 
-  _mvpMatrixID = glGetUniformLocation(_programID, "MVP");
+  _mvpMatrixID = glGetUniformLocation(_programID, _mvpMatrixName.c_str());
 
   glGenVertexArrays(1, &_arrayID);
   glBindVertexArray(_arrayID);
@@ -434,8 +446,8 @@ void mvShapeAxes::load() {
 void mvShapeAxes::draw(VRControl control) {
 
   // We have to ask where these attributes are located.
-  _vertexAttribID = glGetAttribLocation(_programID, "vertexPosition_modelspace");
-  _colorAttribID = glGetAttribLocation(_programID, "vertexInputColor");
+  _vertexAttribID = glGetAttribLocation(_programID, _vertexAttribName.c_str());
+  _colorAttribID = glGetAttribLocation(_programID, _colorAttribName.c_str());
 
   glUseProgram(_programID);
 
@@ -500,11 +512,16 @@ std::string mvShape::print() const {
   out << "_type:            " << _type << " (" << map[_type] << ")" << std::endl;
   out << "_programID:       " << _programID << std::endl;
   out << "_arrayID:         " << _arrayID << std::endl;
-  out << "_vertexAttribID:  " << _vertexAttribID << std::endl;
-  out << "_uvAttribID:      " << _uvAttribID << std::endl;
-  out << "_normalAttribID:  " << _normalAttribID << std::endl;
-  out << "_colorAttribID:   " << _colorAttribID << std::endl;
-  out << "_textureAttribID: " << _textureAttribID << std::endl;
+  out << "_vertexAttribID:  " << _vertexAttribID;
+  out << " (" << _vertexAttribName << ")" << std::endl;
+  out << "_uvAttribID:      " << _uvAttribID;
+  out << " (" << _uvAttribName << ")" << std::endl;
+  out << "_normalAttribID:  " << _normalAttribID;
+  out << " (" << _normalAttribName << ")" << std::endl;
+  out << "_colorAttribID:   " << _colorAttribID;
+  out << " (" << _colorAttribName << ")" << std::endl;
+  out << "_textureAttribID: " << _textureAttribID;
+  out << " (" << _textureAttribName << ")" << std::endl;
   out << "_vertexBufferID:  " << _vertexBufferID << std::endl;
   out << "_uvBufferID:      " << _uvBufferID << std::endl;
   out << "_normalBufferID:  " << _normalBufferID << std::endl;
@@ -518,10 +535,14 @@ std::string mvShape::print() const {
   out << "_colors:      N = " << _colors.size() << std::endl;
 
   // These matrices may appear in the shaders.
-  out << "_mvpMatrixID:     " << _mvpMatrixID << std::endl;
-  out << "_projMatrixID:    " << _projMatrixID << std::endl;
-  out << "_viewMatrixID:    " << _viewMatrixID << std::endl;
-  out << "_modelMatrixID:   " << _modelMatrixID << std::endl;
+  out << "_mvpMatrixID:     " << _mvpMatrixID;
+  out << " (" << _mvpMatrixName << ")" << std::endl;
+  out << "_projMatrixID:    " << _projMatrixID;
+  out << " (" << _projMatrixName << ")" << std::endl;
+  out << "_viewMatrixID:    " << _viewMatrixID;
+  out << " (" << _viewMatrixName << ")" << std::endl;
+  out << "_modelMatrixID:   " << _modelMatrixID;
+  out << " (" << _modelMatrixName << ")" << std::endl;
 
   out << "pos:   " << _position.x << "," << _position.y << "," << _position.z << std::endl;
   out << "scale: " << _scale.x << "," << _scale.y << "," << _scale.z << std::endl;
@@ -575,6 +596,21 @@ std::string mvShapeFactory::print() const {
   return out.str();
 }
 
+std::ostream & operator<<(std::ostream &os, const mvShape& iShape) {
+  return os << iShape.print();
+}
+std::ostream & operator<<(std::ostream &os, const mvShapeRect& iShape) {
+  return os << iShape.print();
+}
+std::ostream & operator<<(std::ostream &os, const mvShapeObj& iShape) {
+  return os << iShape.print();
+}
+std::ostream & operator<<(std::ostream &os, const mvShapeAxes& iShape) {
+  return os << iShape.print();
+}
+std::ostream & operator<<(std::ostream &os, const mvShapeFactory& iShape) {
+  return os << iShape.print();
+}
 
 
 

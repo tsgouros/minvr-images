@@ -114,11 +114,19 @@ public:
     rect->setTextureID(textureBufferID);
     rect->setDimensions(2.5, 2.5 * ((float)height / (float)width));
 
-
+    mvShape* rect2 = _shapeFactory.createShape(shapeRECT,
+                                               shaders.getProgram());
+    // Load the texture
+    textureBufferID = loadPNG("e.png", &width, &height);
+    rect2->setTextureID(textureBufferID);
+    rect2->setDimensions(1.5, 1.5 * ((float)height / (float)width));
+    rect2->setPosition(glm::vec3(0.5, 1.0, 0.7));
+    rect2->setRotation(glm::vec3(.7,.5,.3));
 
     _shapeList.push_back(suzanne);
     _shapeList.push_back(axes);
     _shapeList.push_back(rect);
+    _shapeList.push_back(rect2);
 
     // Load all the shapes.
     for (std::list<mvShape*>::iterator it = _shapeList.begin();

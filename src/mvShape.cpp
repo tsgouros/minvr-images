@@ -275,7 +275,7 @@ void mvShapeObj::load() {
 
   //std::cout << "loading mvShapeObj" << std::endl;
   // Read our .obj file
-  bool res = loadOBJ("suzanne.obj", _vertices, _uvs, _normals);
+  bool res = loadOBJ(_objFileName.c_str(), _vertices, _uvs, _normals);
 
   // Now the vertex data.
   glGenVertexArrays(1, &_arrayID);
@@ -567,7 +567,8 @@ std::string mvShapeObj::print() const {
 
   out << mvShape::print();
   out << std::endl << "_lightID: " << _lightID << std::endl;
-
+  out << "OBJ file: " << _objFileName << std::endl;
+  
   return out.str();
 }
 

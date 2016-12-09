@@ -53,7 +53,8 @@ protected:
   
   GLuint _arrayID;
 
-  // These IDs point to the names/locations of values in shaders.
+  // The IDs refer to the OpenGL attribute "names" and the strings
+  // that accompany them are the actual names used in the shaders.
   GLuint _vertexAttribID;
   std::string _vertexAttribName;
   
@@ -203,6 +204,8 @@ private:
   // Some of these should move into the parent class.  Also the destructor.
   GLuint _lightID;
 
+  std::string _objFileName;
+  
   std::string print() const;
   friend std::ostream & operator<<(std::ostream &os, const mvShapeObj& iShape);
   
@@ -211,6 +214,9 @@ public:
 
   void load();
   void draw(VRControl control);
+
+  std::string getObjFile() { return _objFileName; };
+  void setObjFile(std::string objFileName) { _objFileName = objFileName; };
 };
 
 class mvShapeAxes : public mvShape {

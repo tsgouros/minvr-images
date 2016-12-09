@@ -98,6 +98,8 @@ public:
     mvShape* suzanne = _shapeFactory.createShape(shapeOBJ,
                                                  shaders.getProgram());
 
+    ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
+    
     // Load the texture
     GLuint textureBufferID = loadDDS("uvmap.DDS");
     suzanne->setTextureID(textureBufferID);

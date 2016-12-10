@@ -207,7 +207,7 @@ void mvShapeRect::draw(VRControl control) {
 
   glm::vec3 lightPos = glm::vec3(4,4,4);
   glUniform3f(_lightPositionID, lightPos.x, lightPos.y, lightPos.z);
-  glm::vec3 lightCol = glm::vec3(0,1,1);
+  glm::vec3 lightCol = glm::vec3(0.5,0.5,1);
   glUniform3f(_lightColorID, lightCol.x, lightCol.y, lightCol.z);
 
   // Bind our texture in Texture Unit 0
@@ -338,7 +338,7 @@ void mvShapeObj::draw(VRControl control) {
 
   glm::vec3 lightPos = glm::vec3(4,4,4);
   glUniform3f(_lightPositionID, lightPos.x, lightPos.y, lightPos.z);
-  glm::vec3 lightCol = glm::vec3(1,1,1);
+  glm::vec3 lightCol = glm::vec3(1,0.5,0.5);
   glUniform3f(_lightColorID, lightCol.x, lightCol.y, lightCol.z);
 
   // Bind our texture in Texture Unit 0

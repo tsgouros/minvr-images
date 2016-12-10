@@ -163,7 +163,8 @@ void mvShapeRect::load() {
   // Get a handle for our "LightPosition" uniform.  We are not
   // binding the attribute location, just asking politely for it.
   glUseProgram(_programID);
-  _lightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
+  _lightPositionID = glGetUniformLocation(_programID, "LightPosition_worldspace");
+  _lightColorID = glGetUniformLocation(_programID, "LightColor");
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
@@ -205,7 +206,9 @@ void mvShapeRect::draw(VRControl control) {
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
   glm::vec3 lightPos = glm::vec3(4,4,4);
-  glUniform3f(_lightID, lightPos.x, lightPos.y, lightPos.z);
+  glUniform3f(_lightPositionID, lightPos.x, lightPos.y, lightPos.z);
+  glm::vec3 lightCol = glm::vec3(0,1,1);
+  glUniform3f(_lightColorID, lightCol.x, lightCol.y, lightCol.z);
 
   // Bind our texture in Texture Unit 0
   glActiveTexture(GL_TEXTURE0);
@@ -300,7 +303,8 @@ void mvShapeObj::load() {
   // Get a handle for our "LightPosition" uniform.  We are not
   // binding the attribute location, just asking politely for it.
   glUseProgram(_programID);
-  _lightID = glGetUniformLocation(_programID, "LightPosition_worldspace");
+  _lightPositionID = glGetUniformLocation(_programID, "LightPosition_worldspace");
+  _lightColorID = glGetUniformLocation(_programID, "LightColor");
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
@@ -333,7 +337,9 @@ void mvShapeObj::draw(VRControl control) {
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
   glm::vec3 lightPos = glm::vec3(4,4,4);
-  glUniform3f(_lightID, lightPos.x, lightPos.y, lightPos.z);
+  glUniform3f(_lightPositionID, lightPos.x, lightPos.y, lightPos.z);
+  glm::vec3 lightCol = glm::vec3(1,1,1);
+  glUniform3f(_lightColorID, lightCol.x, lightCol.y, lightCol.z);
 
   // Bind our texture in Texture Unit 0
   glActiveTexture(GL_TEXTURE0);
@@ -556,7 +562,8 @@ std::string mvShapeRect::print() const {
 
   out << mvShape::print();
 
-  out << std::endl << "_lightID: " << _lightID << std::endl;
+  out << std::endl << "_lightPositionID: " << _lightPositionID << std::endl;
+  out << std::endl << "_lightColorID: " << _lightColorID << std::endl;
   out << "width: " << _width << "  height: " << _height << std::endl;
 
   return out.str();
@@ -566,7 +573,8 @@ std::string mvShapeObj::print() const {
   std::stringstream out;
 
   out << mvShape::print();
-  out << std::endl << "_lightID: " << _lightID << std::endl;
+  out << std::endl << "_lightPositionID: " << _lightPositionID << std::endl;
+  out << std::endl << "_lightColorID: " << _lightColorID << std::endl;
   out << "OBJ file: " << _objFileName << std::endl;
   
   return out.str();

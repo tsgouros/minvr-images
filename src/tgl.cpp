@@ -86,8 +86,8 @@ public:
 
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
-    mvShaders shaders = mvShaders("StandardShading.vertexshader", "",
-                                  "StandardShading.fragmentshader");
+    mvShaders shaders = mvShaders("../src/StandardShading.vertexshader", "",
+                                  "../src/StandardShading.fragmentshader");
     _shaderList.push_back(shaders);
     
     // Switch to axes.  These use the default shader, which you get

@@ -58,7 +58,7 @@ GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
 
     std::cout << "compile error: " << _compilationLog << std::endl;
 
-    std::cout << "shader code: " << _shaderCode << std::endl;
+    //    std::cout << "shader code: " << _shaderCode << std::endl;
   }
 
   return outID; 
@@ -132,43 +132,7 @@ mvShaders::mvShaders() {
     _geomShader = NULL;
   }
 
-  glAttachShader(_programID, _vertShader->getShaderID());
-  glAttachShader(_programID, _fragShader->getShaderID());
-  if (_geomShader != NULL) glAttachShader(_programID, _geomShader->getShaderID());
-  
-	glLinkProgram(_programID);
-
-	// Check the program
-  GLint result = GL_FALSE;
-  int linkLogLength;
-
-	glGetProgramiv(_programID, GL_LINK_STATUS, &result);
-	glGetProgramiv(_programID, GL_INFO_LOG_LENGTH, &linkLogLength);
-
-  if ( linkLogLength > 0 ){
-
-    _linkLog = std::string("");
-		std::vector<char> programErrorMessage(linkLogLength + 1);
-		glGetProgramInfoLog(_programID, linkLogLength, NULL, &programErrorMessage[0]);
-
-    for (std::vector<char>::const_iterator it = programErrorMessage.begin();
-         it != programErrorMessage.end(); it++) 
-      _linkLog.push_back(*it);
-    
-    std::cout << "link error: " << _linkLog << std::endl;    
-	}
-
-  glDetachShader(_programID, _vertShader->getShaderID());
-  delete _vertShader;
-
-  if (_geomShader != NULL) {
-
-    glDetachShader(_programID, _geomShader->getShaderID());
-    delete _geomShader;
-  }
-
-  glDetachShader(_programID, _fragShader->getShaderID());
-  delete _fragShader;
+  attachAndLinkShaders();
 
 }
 
@@ -183,6 +147,12 @@ mvShaders::mvShaders(const std::string vertShader,
   if (!geomShader.empty()) _geomShader = new mvShader(GEOMETRY, geomShader);
   else _geomShader = NULL;
 
+  attachAndLinkShaders();
+
+}
+
+void mvShaders::attachAndLinkShaders() {
+  
   glAttachShader(_programID, _vertShader->getShaderID());
   glAttachShader(_programID, _fragShader->getShaderID());
   if (_geomShader != NULL) glAttachShader(_programID, _geomShader->getShaderID());

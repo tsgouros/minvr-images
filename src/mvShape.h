@@ -172,7 +172,8 @@ protected:
   GLfloat _width, _height;
   
   // Some of these should move into the parent class.  Also the destructor.
-  GLuint _lightID;
+  GLuint _lightPositionID;
+  GLuint _lightColorID;
 
   void initVertices();
 
@@ -202,7 +203,8 @@ class mvShapeObj : public mvShape {
 private:
 
   // Some of these should move into the parent class.  Also the destructor.
-  GLuint _lightID;
+  GLuint _lightPositionID;
+  GLuint _lightColorID;
 
   std::string _objFileName;
   

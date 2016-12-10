@@ -4,6 +4,30 @@
 #include <iostream>
 #include <string>
 
+#include <glm/glm.hpp>
+
+class mvLight {
+ private:
+
+  glm::vec3 _position;
+  glm::vec3 _color;
+  GLuint _lightID;
+
+ public:
+  mvLight(glm::vec3 position, glm::vec3 color) {};
+
+  GLuint getID() { return _lightID; }
+  
+  glm::vec3 getPosition() { return _position; };
+  void setPosition(glm::vec3 position) { _position = position; };
+
+  glm::vec3 getColor() { return _color; };
+  void setColor(glm::vec3 color) { _color = color; };  
+};
+      
+
+
+
 typedef enum {
   VERTEX   = 0,
   GEOMETRY = 1,
@@ -47,6 +71,10 @@ class mvShaders {
   GLuint _programID;
   std::string _linkLog;
 
+  std::vector<mvLight*> _lights;
+
+  void attachAndLinkShaders();
+  
  public:
   mvShaders();
   mvShaders(const std::string vertShader,
@@ -55,5 +83,9 @@ class mvShaders {
 
   GLuint getProgram() { return _programID; };
   std::string getLinkLog() { return _linkLog; };
+
+  uint addLight(glm::vec3 newLightPosition, glm::vec3 newLightColor);
+  bool modLight(uint lightIndex, glm::vec3 newLightPosition, glm::vec3 newLightColor);
+  
 };
 #endif

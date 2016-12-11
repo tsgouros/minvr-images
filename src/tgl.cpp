@@ -98,8 +98,7 @@ public:
     mvShaders axisShaders = mvShaders();
     _shaderList.push_back(axisShaders);
     
-    mvShape* suzanne = _shapeFactory.createShape(shapeOBJ,
-                                                 shaders.getProgram());
+    mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, &shaders);
 
     ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
     
@@ -107,11 +106,9 @@ public:
     GLuint textureBufferID = loadDDS("uvmap.DDS");
     suzanne->setTextureID(textureBufferID);
     
-    mvShape* axes = _shapeFactory.createShape(shapeAXES,
-                                              axisShaders.getProgram());
+    mvShape* axes = _shapeFactory.createShape(shapeAXES, &axisShaders);
 
-    mvShape* rect = _shapeFactory.createShape(shapeRECT,
-                                              shaders.getProgram());
+    mvShape* rect = _shapeFactory.createShape(shapeRECT, &shaders);
     // Load the texture
     int width, height;
     textureBufferID = loadPNG("/Users/tomfool/Desktop/on-the-roof.png",
@@ -119,8 +116,7 @@ public:
     rect->setTextureID(textureBufferID);
     rect->setDimensions(2.5, 2.5 * ((float)height / (float)width));
 
-    mvShape* rect2 = _shapeFactory.createShape(shapeRECT,
-                                               shaders.getProgram());
+    mvShape* rect2 = _shapeFactory.createShape(shapeRECT, &shaders);
     // Load the texture
     textureBufferID = loadPNG("e.png", &width, &height);
     rect2->setTextureID(textureBufferID);

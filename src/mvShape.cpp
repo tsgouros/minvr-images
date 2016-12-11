@@ -27,8 +27,10 @@ void mvShape::setupDefaultNames() {
   _modelMatrixName = std::string("M");
 }
 
-mvShape::mvShape(mvShapeType type, GLuint programID) :
-  _type(type), _programID(programID) {
+mvShape::mvShape(mvShapeType type, mvShaders* shaders) :
+  _type(type), _shaders(shaders) {
+
+  _programID = shaders->getProgram();
 
   setupDefaultNames();
   
@@ -472,7 +474,7 @@ void mvShapeAxes::draw(VRControl control) {
 
 }
 
-mvShape* mvShapeFactory::createShape(mvShapeType type, GLuint programID) {
+mvShape* mvShapeFactory::createShape(mvShapeType type, mvShaders* shaders) {
 
   callbackMap::const_iterator it = _callbacks.find(type);
 
@@ -481,7 +483,7 @@ mvShape* mvShapeFactory::createShape(mvShapeType type, GLuint programID) {
     msg << "unknown shape: " << (int)(type);
     throw std::runtime_error(msg.str());
   } else {
-    return (it->second)(programID);
+    return (it->second)(shaders);
   }
 }
 

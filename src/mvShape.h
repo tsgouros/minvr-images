@@ -49,7 +49,8 @@ protected:
   mvShapeType _type;
 
   // The program ID for the shaders to be used by this shape.
-  GLuint _programID; 
+  GLuint _programID;
+  mvShaders* _shaders;
   
   GLuint _arrayID;
 
@@ -114,7 +115,7 @@ protected:
   void setupDefaultNames();
   
 public:
-  mvShape(mvShapeType type, GLuint programID);
+  mvShape(mvShapeType type, mvShaders* shaders);
   ~mvShape();
   
   virtual void load() = 0;
@@ -182,7 +183,7 @@ protected:
 
   
 public:
- mvShapeRect(GLuint programID) : mvShape(shapeRECT, programID) {
+ mvShapeRect(mvShaders* shaders) : mvShape(shapeRECT, shaders) {
     // Set default rectangle dimensions.
     _width = 1.0f;  _height = 1.0f;
   };
@@ -212,7 +213,7 @@ private:
   friend std::ostream & operator<<(std::ostream &os, const mvShapeObj& iShape);
   
 public:
- mvShapeObj(GLuint programID) : mvShape(shapeOBJ, programID) {};
+ mvShapeObj(mvShaders* shaders) : mvShape(shapeOBJ, shaders) {};
 
   void load();
   void draw(VRControl control);
@@ -238,7 +239,7 @@ class mvShapeAxes : public mvShape {
   friend std::ostream & operator<<(std::ostream &os, const mvShapeAxes& iShape);
   
  public:
- mvShapeAxes(GLuint programID) : mvShape(shapeAXES, programID) {
+ mvShapeAxes(mvShaders* shaders) : mvShape(shapeAXES, shaders) {
     expandAxesVertices();
     expandAxesColors();
   }    
@@ -251,14 +252,14 @@ class mvShapeAxes : public mvShape {
 class mvShapeFactory {
  public:
   template<typename T>
-    static mvShape* create(GLuint programID) {
-    T* out = new T(programID);
+    static mvShape* create(mvShaders* shaders) {
+    T* out = new T(shaders);
     return (mvShape*)out;
   }
 
-  typedef mvShape* (*createMvShapeCallback)(GLuint programID);
+  typedef mvShape* (*createMvShapeCallback)(mvShaders* shaders);
 
-  mvShape* createShape(mvShapeType type, GLuint programID);
+  mvShape* createShape(mvShapeType type, mvShaders* shaders);
 
   bool registerShape(mvShapeType type, createMvShapeCallback creator);
 

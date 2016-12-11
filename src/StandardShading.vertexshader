@@ -1,6 +1,6 @@
 #version 330 core
 
-const int NUM_LIGHTS = 1;
+const int NUM_LIGHTS = 2;
 
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 vertexPosition_modelspace;
@@ -35,8 +35,10 @@ void main(){
 	EyeDirection_cameraspace = vec3(0,0,0) - vertexPosition_cameraspace;
 
 	// Vector that goes from the vertex to the light, in camera space. M is ommited because it's identity.
-	LightPosition_cameraspace[0] = ( V * vec4(LightPosition_worldspace[0],1)).xyz;
-	LightDirection_cameraspace[0] = LightPosition_cameraspace[0] + EyeDirection_cameraspace;
+  for (int i = 0; i < NUM_LIGHTS; i++) { 
+    LightPosition_cameraspace[i] = ( V * vec4(LightPosition_worldspace[i],1)).xyz;
+    LightDirection_cameraspace[i] = LightPosition_cameraspace[i] + EyeDirection_cameraspace;
+  }
 	
 	// Normal of the the vertex, in camera space
 	Normal_cameraspace = ( V * M * vec4(vertexNormal_modelspace,0)).xyz; // Only correct if ModelMatrix does not scale the model ! Use its inverse transpose if not.

@@ -205,10 +205,10 @@ void mvShapeRect::draw(VRControl control) {
   glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-  glm::vec3 lightPos = glm::vec3(4,4,4);
-  glUniform3f(_lightPositionID, lightPos.x, lightPos.y, lightPos.z);
-  glm::vec3 lightCol = glm::vec3(0.5,0.5,1);
-  glUniform3f(_lightColorID, lightCol.x, lightCol.y, lightCol.z);
+  GLfloat lightPos[6] = { 4,4,4,  4,4,4 };
+  glUniform3fv(_lightPositionID, 2, &lightPos[0]);
+  GLfloat lightCol[6] = { 1,1,1, 1,0.01,0.01 };
+  glUniform3fv(_lightColorID, 2, &lightCol[0]);
 
   // Bind our texture in Texture Unit 0
   glActiveTexture(GL_TEXTURE0);
@@ -336,10 +336,10 @@ void mvShapeObj::draw(VRControl control) {
   glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-  glm::vec3 lightPos = glm::vec3(4,4,4);
-  glUniform3f(_lightPositionID, lightPos.x, lightPos.y, lightPos.z);
-  glm::vec3 lightCol = glm::vec3(1,0.5,0.5);
-  glUniform3f(_lightColorID, lightCol.x, lightCol.y, lightCol.z);
+  GLfloat lightPos[6] = { 4,4,4,  4,4,4 };
+  glUniform3fv(_lightPositionID, 2, &lightPos[0]);
+  GLfloat lightCol[6] = { 1,1,1, 1,0.01,0.01 };
+  glUniform3fv(_lightColorID, 2, &lightCol[0]);
 
   // Bind our texture in Texture Unit 0
   glActiveTexture(GL_TEXTURE0);

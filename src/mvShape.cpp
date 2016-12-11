@@ -160,11 +160,6 @@ void mvShapeRect::load() {
   glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
                &_normals[0], GL_STATIC_DRAW);
 
-  // Get a handle for our "LightPosition" uniform.  We are not
-  // binding the attribute location, just asking politely for it.
-  glUseProgram(_programID);
-  _lightPositionID = glGetUniformLocation(_programID, "LightPosition_worldspace");
-  _lightColorID = glGetUniformLocation(_programID, "LightColor");
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
@@ -205,10 +200,6 @@ void mvShapeRect::draw(VRControl control) {
   glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-  GLfloat lightPos[6] = { 4,4,4,  4,4,4 };
-  glUniform3fv(_lightPositionID, 2, &lightPos[0]);
-  GLfloat lightCol[6] = { 1,1,1, 1,0.01,0.01 };
-  glUniform3fv(_lightColorID, 2, &lightCol[0]);
 
   // Bind our texture in Texture Unit 0
   glActiveTexture(GL_TEXTURE0);
@@ -302,9 +293,9 @@ void mvShapeObj::load() {
 
   // Get a handle for our "LightPosition" uniform.  We are not
   // binding the attribute location, just asking politely for it.
-  glUseProgram(_programID);
-  _lightPositionID = glGetUniformLocation(_programID, "LightPosition_worldspace");
-  _lightColorID = glGetUniformLocation(_programID, "LightColor");
+  // glUseProgram(_programID);
+  // _lightPositionID = glGetUniformLocation(_programID, "LightPosition_worldspace");
+  // _lightColorID = glGetUniformLocation(_programID, "LightColor");
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
@@ -335,11 +326,6 @@ void mvShapeObj::draw(VRControl control) {
   glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
   glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-
-  GLfloat lightPos[6] = { 4,4,4,  4,4,4 };
-  glUniform3fv(_lightPositionID, 2, &lightPos[0]);
-  GLfloat lightCol[6] = { 1,1,1, 1,0.01,0.01 };
-  glUniform3fv(_lightColorID, 2, &lightCol[0]);
 
   // Bind our texture in Texture Unit 0
   glActiveTexture(GL_TEXTURE0);

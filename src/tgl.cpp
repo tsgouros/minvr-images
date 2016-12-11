@@ -29,6 +29,9 @@ public:
   std::list<mvShaders> _shaderList;
 
   mvShapeFactory _shapeFactory;
+
+  GLuint _lightPositionID;
+  GLuint _lightColorID;
   
   // Put all the GLFW setup business here.
   void setupWin() {
@@ -134,6 +137,14 @@ public:
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) (*it)->load();
 
+    // Get a handle for our "LightPosition" uniform.  We are not
+    // binding the attribute location, just asking politely for it.
+    glUseProgram(shaders.getProgram());
+    _lightPositionID = glGetUniformLocation(shaders.getProgram(),
+                                            "LightPosition_worldspace");
+    _lightColorID = glGetUniformLocation(shaders.getProgram(), "LightColor");
+
+
   };
 
   ~VRApp() {
@@ -158,6 +169,12 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    glUseProgram(_shaderList.begin()->getProgram());
+    GLfloat lightPos[6] = { 4,4,4,  4,4,4 };
+    glUniform3fv(_lightPositionID, 2, &lightPos[0]);
+    GLfloat lightCol[6] = { 1,1,1, 1,0.01,0.01 };
+    glUniform3fv(_lightColorID, 2, &lightCol[0]);
+    
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) {
 

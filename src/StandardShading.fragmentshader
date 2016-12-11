@@ -23,15 +23,10 @@ uniform vec3 LightColor[NUM_LIGHTS];
 
 void main(){
 
-	// Light emission properties
-	// You probably want to put them as uniforms
-
-	float LightPower = 50.0f;
-	
 	// Material properties
-	vec3 MaterialDiffuseColor = texture( myTextureSampler, UV ).rgb;
-	vec3 MaterialAmbientColor = vec3(0.1,0.1,0.1) * MaterialDiffuseColor;
-	vec3 MaterialSpecularColor = vec3(0.3,0.3,0.3);
+	vec3 materialColor = texture( myTextureSampler, UV ).rgb;
+	float ambientCoefficient = 0.1;
+	vec3 materialSpecularColor = vec3(1,1,1);
 
   // Normal of the computed fragment, in camera space.
   vec3 normalDir = normalize( Normal_cameraspace );
@@ -39,9 +34,13 @@ void main(){
   vec3 color = vec3(0.0, 0.0, 0.0);
 
   for (int i = 0; i < NUM_LIGHTS; i++) {
-  
-    // DistanceToLight to the light
-    float distanceToLight = length( LightPosition_worldspace[i] - Position_worldspace );
+
+    // Ambient : simulates indirect lighting
+    vec3 ambient = ambientCoefficient * LightColor[i] * materialColor;
+    
+    // Distance to the light
+    float distanceToLight =
+      length( LightPosition_worldspace[i] - Position_worldspace );
 
     // Direction of the light (from the fragment to the light)
     vec3 lightDir = normalize( LightDirection_cameraspace[i] );
@@ -50,7 +49,10 @@ void main(){
     //  - light is at the vertical of the triangle -> 1
     //  - light is perpendicular to the triangle -> 0
     //  - light is behind the triangle -> 0
-    float cosTheta = clamp(dot(normalDir, lightDir), 0, 1);
+    float cosAngleFromNormal = clamp(dot(normalDir, lightDir), 0.0, 1.0);
+
+    // Diffuse : "color" of the object
+    vec3 diffuse = materialColor * LightColor[i] * cosAngleFromNormal;
 	
     // Eye vector (towards the camera)
     vec3 eyeDir = normalize(EyeDirection_cameraspace);
@@ -60,15 +62,14 @@ void main(){
     // clamped to 0
     //  - Looking into the reflection -> 1
     //  - Looking elsewhere -> < 1
-    float cosAlpha = clamp( dot(eyeDir, reflectDir), 0,1 );
-	
-    color += 
-      // Ambient : simulates indirect lighting
-      MaterialAmbientColor +
-      // Diffuse : "color" of the object
-      MaterialDiffuseColor * LightColor[i] * LightPower * cosTheta / (distanceToLight*distanceToLight) +
-      // Specular : reflective highlight, like a mirror
-      MaterialSpecularColor * LightColor[i] * LightPower * pow(cosAlpha,5) / (distanceToLight*distanceToLight);
+    float cosAlpha = clamp( dot(eyeDir, reflectDir), 0.0, 1.0);
+
+    // Specular : reflective highlight, like a mirror
+    vec3 specular = materialSpecularColor * LightColor[i] * pow(cosAlpha,5);
+
+    float attenuation = 1.0 / (1.0 + 0.01 * pow(distanceToLight, 2));
+
+    color += ambient + attenuation * (diffuse + specular);
   }
 
   finalColor = vec4(color, 1.0);

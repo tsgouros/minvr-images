@@ -124,7 +124,7 @@ protected:
   
 public:
   mvShape(mvShapeType type, mvShaders* shaders);
-  ~mvShape();
+  virtual ~mvShape();
   
   virtual void load() = 0;
   virtual void draw(VRControl control) = 0;

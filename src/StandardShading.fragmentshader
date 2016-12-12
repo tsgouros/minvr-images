@@ -1,7 +1,7 @@
 #version 330 core
 // We are *not* using the compatibility profile. 
 
-const int NUM_LIGHTS = 2;
+const int NUM_LIGHTS = XX;
 const float MAX_DIST = 50.0;
 const float MAX_DIST_SQUARED = MAX_DIST * MAX_DIST;
 

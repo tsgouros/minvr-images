@@ -31,30 +31,29 @@ class mvLights {
   GLuint _lightPositionID;
   GLuint _lightColorID;
 
-  GLfloat lightPos[6];
-  GLfloat lightCol[6];
-
  public:
+  mvLights() {};
   mvLights(glm::vec3 position, glm::vec3 color) {
-    lightPos[0] = 4.0; lightPos[1] = 4.0; lightPos[2] = 4.0;
-    lightPos[3] = 4.0; lightPos[4] = 4.0; lightPos[5] = 4.0;
+    addLight(position, color);
+  }
 
-    lightCol[0] = 1.0; lightCol[1] = 1.0; lightCol[2] = 1.0;
-    lightCol[3] = 0.0; lightCol[4] = 0.0; lightCol[5] = 1.0;
-  };
+  GLuint getPositionID() { return _lightPositionID; };
+  GLuint getColorID() { return _lightColorID; };
 
-  GLuint getPositionID() { return _lightPositionID; }
-  GLuint getColorID() { return _lightColorID; }
+  int getNumLights() { return _positions.size(); };
   
   std::vector<glm::vec3> getPositions() { return _positions; };
   void setPositions(std::vector<glm::vec3> positions) { _positions = positions; };
 
   std::vector<glm::vec3> getColors() { return _colors; };
-  void setColor(std::vector<glm::vec3> colors) { _colors = colors; };
+  void setColors(std::vector<glm::vec3> colors) { _colors = colors; };
 
   void setPosition(int i, glm::vec3 position) { _positions[i] = position; };
+  glm::vec3 getPosition(int i) { return _positions[i]; };
+  
   void setColor(int i, glm::vec3 color) { _colors[i] = color; };
-
+  glm::vec3 getColor(int i) { return _colors[i]; };
+  
   int addLight(glm::vec3 position, glm::vec3 color) {
     _positions.push_back(position);
     _colors.push_back(color);
@@ -91,6 +90,7 @@ class mvShader {
   // the shader.  Note that if you use the second method, the "#version"
   // line needs to be explicitly terminated with a \n.
   mvShader(mvShaderType type, const std::string fileName);
+  mvShader(mvShaderType type, const std::string fileName, int numLights);
   mvShader(mvShaderType type, const char** shaderLines);
   ~mvShader();
 
@@ -122,16 +122,13 @@ class mvShaders {
   mvShaders();
   mvShaders(const std::string vertShader,
             const std::string geomShader,
-            const std::string fragShader);
+            const std::string fragShader,
+            mvLights* lights);
 
   void load() { _lights->load(_programID); };
   void draw() { _lights->draw(_programID); };
   
   GLuint getProgramID() { return _programID; };
   std::string getLinkLog() { return _linkLog; };
-
-  uint addLight(glm::vec3 newLightPosition, glm::vec3 newLightColor);
-  bool modLight(uint lightIndex, glm::vec3 newLightPosition, glm::vec3 newLightColor);
-  
 };
 #endif

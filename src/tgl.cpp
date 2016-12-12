@@ -27,6 +27,7 @@ public:
 
   std::list<mvShape*> _shapeList;
   std::list<mvShaders*> _shaderList;
+  std::list<mvLights*> _lightList;
 
   mvShapeFactory _shapeFactory;
 
@@ -88,9 +89,19 @@ public:
 
 
     //////////////////////////////////////////////////////////
+    // Make some lights
+    mvLights* lights = new mvLights();
+
+    lights->addLight(glm::vec3(4.0, 4.0, 4.0), glm::vec3(1.0, 1.0, 1.0));
+    lights->addLight(glm::vec3(-4.0, 4.0, 4.0), glm::vec3(1.0, 1.0, 0.0));
+
+    _lightList.push_back(lights);
+      
+    //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
     mvShaders* shaders = new mvShaders("../src/StandardShading.vertexshader", "",
-                                  "../src/StandardShading.fragmentshader");
+                                       "../src/StandardShading.fragmentshader",
+                                       lights);
     _shaderList.push_back(shaders);
     
     // Switch to axes.  These use the default shader, which you get

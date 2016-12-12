@@ -26,8 +26,8 @@ void mvLights::load(GLuint programID) {
 
 void mvLights::draw(GLuint programID) {
     glUseProgram(programID);
-    glUniform3fv(_lightPositionID, 2, &lightPos[0]);
-    glUniform3fv(_lightColorID, 2, &lightCol[0]);
+    glUniform3fv(_lightPositionID, 2, &_positions[0].x);
+    glUniform3fv(_lightColorID, 2, &_colors[0].x);
 }
 
 GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
@@ -101,6 +101,30 @@ mvShader::mvShader(mvShaderType type, const std::string fileName) :
   _shaderID = init(_shaderType, &sourcePtr );
 }
 
+mvShader::mvShader(mvShaderType type, const std::string fileName, int numLights) :
+  _shaderType(type) {
+
+	// Read the shader code from the file
+	std::ifstream shaderStream(fileName, std::ios::in);
+	if (shaderStream.is_open()) {
+		std::string line = "";
+    
+		while(getline(shaderStream, line)) _shaderCode += "\n" + line;
+    
+		shaderStream.close();
+    
+	} else {
+    throw std::runtime_error("Cannot open: " + fileName);
+	}
+
+  // Edit the shader source to reflect the input number of lights.
+  _shaderCode.replace(_shaderCode.find("XX"), 2, to_string(numLights));
+  std::cout << "type: " << type << " code: " << _shaderCode << std::endl;
+
+	char const * sourcePtr = _shaderCode.c_str();
+  _shaderID = init(_shaderType, &sourcePtr );
+}
+
 mvShader::mvShader(mvShaderType type, const char** shaderLines) :
   _shaderType(type) {
 
@@ -138,6 +162,10 @@ mvShaders::mvShaders() {
     "}";
 
   static const char* defaultGeometryShader = NULL;
+
+  // These shaders don't use explicit lights, but we need a light
+  // object around to keep things from crashing.
+  _lights = new mvLights(glm::vec3(1,1,1), glm::vec3(1,1,1));
   
   _programID = glCreateProgram();
   _lights = new mvLights(glm::vec3(0,0,0), glm::vec3(1,1,1));
@@ -156,16 +184,17 @@ mvShaders::mvShaders() {
 
 mvShaders::mvShaders(const std::string vertShader,
                      const std::string geomShader,
-                     const std::string fragShader) {
+                     const std::string fragShader,
+                     mvLights* lights) : _lights(lights) {
 
   _programID = glCreateProgram();
-  _lights = new mvLights(glm::vec3(0,0,0), glm::vec3(1,1,1));
   
-  _vertShader = new mvShader(VERTEX, vertShader);
-  _fragShader = new mvShader(FRAGMENT, fragShader);
-  if (!geomShader.empty()) _geomShader = new mvShader(GEOMETRY, geomShader);
+  _vertShader = new mvShader(VERTEX, vertShader, _lights->getNumLights());
+  _fragShader = new mvShader(FRAGMENT, fragShader, _lights->getNumLights());
+  if (!geomShader.empty())
+    _geomShader = new mvShader(GEOMETRY, geomShader, _lights->getNumLights());
   else _geomShader = NULL;
-
+  
   attachAndLinkShaders();
 
 }

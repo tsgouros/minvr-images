@@ -93,7 +93,7 @@ public:
     mvLights* lights = new mvLights();
 
     lights->addLight(glm::vec3(4.0, 4.0, 4.0), glm::vec3(1.0, 1.0, 1.0));
-    lights->addLight(glm::vec3(-4.0, 4.0, 4.0), glm::vec3(1.0, 1.0, 0.0));
+    lights->addLight(glm::vec3(-4.0, 4.0, 4.0), glm::vec3(0.0, 0.1, 0.1));
 
     _lightList.push_back(lights);
       
@@ -109,6 +109,11 @@ public:
     mvShaders* axisShaders = new mvShaders();
     _shaderList.push_back(axisShaders);
     
+    //////////////////////////////////////////////////////////
+    // Create objects to display
+    mvShape* axes = _shapeFactory.createShape(shapeAXES, axisShaders);
+    _shapeList.push_back(axes);
+    
     mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, shaders);
 
     ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
@@ -117,7 +122,6 @@ public:
     GLuint textureBufferID = loadDDS("uvmap.DDS");
     suzanne->setTextureID(textureBufferID);
     
-    mvShape* axes = _shapeFactory.createShape(shapeAXES, axisShaders);
 
     mvShape* rect = _shapeFactory.createShape(shapeRECT, shaders);
     // Load the texture
@@ -136,7 +140,6 @@ public:
     rect2->setRotation(glm::vec3(.7,.5,.3));
 
     _shapeList.push_back(suzanne);
-    _shapeList.push_back(axes);
     _shapeList.push_back(rect);
     _shapeList.push_back(rect2);
 

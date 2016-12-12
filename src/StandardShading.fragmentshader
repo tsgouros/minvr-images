@@ -1,5 +1,5 @@
 #version 330 core
-// We are *not* using the compatibility profile. 
+// We are using the core, *not* the compatibility profile. 
 
 const int NUM_LIGHTS = XX;
 const float MAX_DIST = 50.0;
@@ -16,7 +16,7 @@ in vec3 LightDirection_cameraspace[NUM_LIGHTS];
 out vec4 finalColor;
 
 // Values that stay constant for the whole mesh.
-uniform sampler2D myTextureSampler;
+uniform sampler2D mvTextureSampler;
 uniform mat4 MV;
 uniform vec3 LightPosition_worldspace[NUM_LIGHTS];
 uniform vec3 LightColor[NUM_LIGHTS];
@@ -24,7 +24,7 @@ uniform vec3 LightColor[NUM_LIGHTS];
 void main(){
 
 	// Material properties
-	vec3 materialColor = texture( myTextureSampler, UV ).rgb;
+	vec3 materialColor = texture( mvTextureSampler, UV ).rgb;
 	float ambientCoefficient = 0.1;
 	vec3 materialSpecularColor = vec3(1,1,1);
 

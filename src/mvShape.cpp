@@ -20,7 +20,7 @@ void mvShape::setupDefaultNames() {
   _uvAttribName = std::string("vertexUV");
   _normalAttribName = std::string("vertexNormal_modelspace");
   _colorAttribName = std::string("vertexInputColor");
-  _textureAttribName = std::string("myTextureSampler");
+  _textureAttribName = std::string("mvTextureSampler");
   _mvpMatrixName = std::string("MVP");
   _projMatrixName = std::string("P");
   _viewMatrixName = std::string("V");
@@ -177,15 +177,6 @@ void mvShapeRect::draw(VRControl control) {
   // Use our shader
   glUseProgram(_shaders->getProgramID());
 
-  glm::vec3 p = getPosition();
-  p.x += 0.01;
-  setPosition(p);
-  // glm::quat q = getRotQuaternion();
-  // q.z = 1.0;
-  // q.w += 0.01;
-  // setRotation(q);
-
-  
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
   glm::mat4 ViewMatrix = control.getViewMatrix();

@@ -15,21 +15,25 @@ using namespace std;
 
 void mvLights::load(GLuint programID) {
 
-  // Get a handle for our "LightPosition" uniform.  We are not
-  // binding the attribute location, just asking politely for it.
+  // Get a handle for our lighting uniforms.  We are not binding the
+  // attribute to a known location, just asking politely for it.  Note
+  // that what is going on here is that OpenGL is actually matching
+  // the _lightPositionName string to a variable in the shader.
   glUseProgram(programID);
-  _lightPositionID = glGetUniformLocation(programID,
-                                          "LightPosition_worldspace");
-  _lightColorID = glGetUniformLocation(programID, "LightColor");
+  _lightPositionID = glGetUniformLocation(programID, _lightPositionName);
+  _lightColorID = glGetUniformLocation(programID, _lightColorName);
 
 }
 
+// Update any changes to the light's position and color.
 void mvLights::draw(GLuint programID) {
-    glUseProgram(programID);
-    glUniform3fv(_lightPositionID, 2, &_positions[0].x);
-    glUniform3fv(_lightColorID, 2, &_colors[0].x);
+
+  glUseProgram(programID);
+  glUniform3fv(_lightPositionID, 2, &_positions[0].x);
+  glUniform3fv(_lightColorID, 2, &_colors[0].x);
 }
 
+// Create a shader and compile it with the OpenGL tools.
 GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
 
   GLuint outID;
@@ -57,7 +61,6 @@ GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
   // Pick up the error log of the compilation, just in case.
   GLint result = GL_FALSE;
   GLint compilationLogLength;
-
   glGetShaderiv(outID, GL_COMPILE_STATUS, &result);
   glGetShaderiv(outID, GL_INFO_LOG_LENGTH, &compilationLogLength);
 
@@ -74,8 +77,6 @@ GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
       _compilationLog.push_back(*it);
 
     std::cout << "compile error: " << _compilationLog << std::endl;
-
-    //    std::cout << "shader code: " << _shaderCode << std::endl;
   }
 
   return outID; 
@@ -117,9 +118,10 @@ mvShader::mvShader(mvShaderType type, const std::string fileName, int numLights)
     throw std::runtime_error("Cannot open: " + fileName);
 	}
 
-  // Edit the shader source to reflect the input number of lights.
+  // Edit the shader source to reflect the input number of lights.  If
+  // there is no 'XX' in the shader code, this will cause an ugly
+  // error.
   _shaderCode.replace(_shaderCode.find("XX"), 2, to_string(numLights));
-  std::cout << "type: " << type << " code: " << _shaderCode << std::endl;
 
 	char const * sourcePtr = _shaderCode.c_str();
   _shaderID = init(_shaderType, &sourcePtr );
@@ -135,13 +137,12 @@ mvShader::~mvShader() {
   glDeleteShader(_shaderID);
 }
 
-
-
 mvShaders::mvShaders() {
 
-  // This is sort of hacky, but this is so that the default
-  // constructor for this class provides a trivial shader, so at least
-  // something will appear during the experimentation phase.
+  // This is sort of hacky, but these two variables are here so that
+  // the default constructor for this class provides a trivial shader,
+  // so at least something will appear during the experimentation
+  // phase of building a 3D application.
   static const char* defaultVertexShader = 
     "#version 330 core\n"
     "layout(location = 0) in vec3 vertexPosition_modelspace;"
@@ -168,7 +169,6 @@ mvShaders::mvShaders() {
   _lights = new mvLights(glm::vec3(1,1,1), glm::vec3(1,1,1));
   
   _programID = glCreateProgram();
-  _lights = new mvLights(glm::vec3(0,0,0), glm::vec3(1,1,1));
   
   _vertShader = new mvShader(VERTEX, &defaultVertexShader);
   _fragShader = new mvShader(FRAGMENT, &defaultFragmentShader);

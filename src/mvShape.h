@@ -34,14 +34,23 @@ typedef enum {
 // whatever else ready, and a draw() method for the frame updates.
 //
 // This is meant to work with modern OpenGL, that uses shaders, and
-// the constructor to the class requires an OpenGL ID number for a
-// compiled set of shaders that will work with this class.  The
-// mvShaders class is available for managing a collection of shaders.
+// there are accompanying mvShaders and mvLights classes to manage
+// those aspects of constructing a scene.  The mvShaders object is
+// linked from mvShape largely for access to the programID.
 //
 // The shaders themselves are not included in this object because many
 // objects will use the same shader.  The shader code will have to be
 // specifically referenced in the load() and draw() methods here.  I
-// have not come up with a clever way to avoid this.
+// have not come up with a clever way to avoid this, only clunky ones.
+// So the program that calls this should keep three separate lists:
+// the objects in the scenes, the shaders used to render them, and the
+// lights used by the shaders.
+//
+// This class imposes a small number of restrictions on the shader
+// code itself, mostly the names of things.  These are specified in
+// the setupDefaultName() method.  Setting things up for the number of
+// lights is also something that needs to be configured carefully.
+// See the shader.h file for more about that.
 //
 class mvShape {
 protected:

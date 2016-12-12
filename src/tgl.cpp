@@ -129,16 +129,13 @@ public:
     _shapeList.push_back(rect);
     _shapeList.push_back(rect2);
 
+    for (std::list<mvShaders*>::iterator it = _shaderList.begin();
+         it != _shaderList.end(); it++)         
+      (*it)->load();
+    
     // Load all the shapes.
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) (*it)->load();
-
-    // Get a handle for our "LightPosition" uniform.  We are not
-    // binding the attribute location, just asking politely for it.
-    glUseProgram(shaders->getProgramID());
-    _lightPositionID = glGetUniformLocation(shaders->getProgramID(),
-                                            "LightPosition_worldspace");
-    _lightColorID = glGetUniformLocation(shaders->getProgramID(), "LightColor");
 
   };
 
@@ -165,11 +162,9 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram((*_shaderList.begin())->getProgramID());
-    GLfloat lightPos[6] = { 4,4,4,  4,4,4 };
-    glUniform3fv(_lightPositionID, 2, &lightPos[0]);
-    GLfloat lightCol[6] = { 1,1,1, 1,0.01,0.01 };
-    glUniform3fv(_lightColorID, 2, &lightCol[0]);
+    for (std::list<mvShaders*>::iterator it = _shaderList.begin();
+         it != _shaderList.end(); it++)         
+      (*it)->draw();
     
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) {

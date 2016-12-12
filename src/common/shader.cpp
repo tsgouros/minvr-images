@@ -13,6 +13,23 @@ using namespace std;
 
 #include "shader.h"
 
+void mvLights::load(GLuint programID) {
+
+  // Get a handle for our "LightPosition" uniform.  We are not
+  // binding the attribute location, just asking politely for it.
+  glUseProgram(programID);
+  _lightPositionID = glGetUniformLocation(programID,
+                                          "LightPosition_worldspace");
+  _lightColorID = glGetUniformLocation(programID, "LightColor");
+
+}
+
+void mvLights::draw(GLuint programID) {
+    glUseProgram(programID);
+    glUniform3fv(_lightPositionID, 2, &lightPos[0]);
+    glUniform3fv(_lightColorID, 2, &lightCol[0]);
+}
+
 GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
 
   GLuint outID;
@@ -123,6 +140,7 @@ mvShaders::mvShaders() {
   static const char* defaultGeometryShader = NULL;
   
   _programID = glCreateProgram();
+  _lights = new mvLights(glm::vec3(0,0,0), glm::vec3(1,1,1));
   
   _vertShader = new mvShader(VERTEX, &defaultVertexShader);
   _fragShader = new mvShader(FRAGMENT, &defaultFragmentShader);
@@ -141,6 +159,7 @@ mvShaders::mvShaders(const std::string vertShader,
                      const std::string fragShader) {
 
   _programID = glCreateProgram();
+  _lights = new mvLights(glm::vec3(0,0,0), glm::vec3(1,1,1));
   
   _vertShader = new mvShader(VERTEX, vertShader);
   _fragShader = new mvShader(FRAGMENT, fragShader);

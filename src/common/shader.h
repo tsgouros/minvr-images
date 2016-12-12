@@ -8,14 +8,20 @@
 
 // A class for managing a list of lights to go with some shader.  The
 // lights are communicated with the shader in two big blocks of data,
-// one for the light positions and the other for the colors.
+// one for the light positions and the other for the light colors.
+// Since the shaders depend on the specific number of lights in the
+// list, we think of this list as an integral part of the shader's
+// data, even if a few different shaders might refer to the same list.
 //
 // We anticipate the load() and draw() methods of this class will be
 // invoked just before the load() and draw() methods of the shapes
-// that depend on them.
-
-
-// Multiple shader instances will depend on the same lights, so ther
+// that depend on (the shaders that depend on) them via the shader's
+// own load() and draw() methods.  We do not incorporate the load()
+// and draw() into the shape methods of the same name because many
+// shapes will use the same shaders and we don't really want to get
+// into trying to figure out if this shader has already been drawn on
+// this cycle or not.
+//
 class mvLights {
  private:
 
@@ -25,8 +31,17 @@ class mvLights {
   GLuint _lightPositionID;
   GLuint _lightColorID;
 
+  GLfloat lightPos[6];
+  GLfloat lightCol[6];
+
  public:
-  mvLights(glm::vec3 position, glm::vec3 color) {};
+  mvLights(glm::vec3 position, glm::vec3 color) {
+    lightPos[0] = 4.0; lightPos[1] = 4.0; lightPos[2] = 4.0;
+    lightPos[3] = 4.0; lightPos[4] = 4.0; lightPos[5] = 4.0;
+
+    lightCol[0] = 1.0; lightCol[1] = 1.0; lightCol[2] = 1.0;
+    lightCol[3] = 0.0; lightCol[4] = 0.0; lightCol[5] = 1.0;
+  };
 
   GLuint getPositionID() { return _lightPositionID; }
   GLuint getColorID() { return _lightColorID; }
@@ -46,12 +61,11 @@ class mvLights {
     return _positions.size();
   };
 
-  void load(GLuint programID) {
-    glUseProgram(programID);
-      };
+  // Load these lights for use with this program.
+  void load(GLuint programID);
 
-
-  
+  // Draw these lights
+  void draw(GLuint programID);  
 };
       
 
@@ -100,7 +114,7 @@ class mvShaders {
   GLuint _programID;
   std::string _linkLog;
 
-  std::vector<mvLights*> _lights;
+  mvLights* _lights;
 
   void attachAndLinkShaders();
   
@@ -110,6 +124,9 @@ class mvShaders {
             const std::string geomShader,
             const std::string fragShader);
 
+  void load() { _lights->load(_programID); };
+  void draw() { _lights->draw(_programID); };
+  
   GLuint getProgramID() { return _programID; };
   std::string getLinkLog() { return _linkLog; };
 

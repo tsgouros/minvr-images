@@ -151,6 +151,9 @@ public:
     _position = position;
     _modelMatrixNeedsReset = true;
   };
+  void setPosition(GLfloat x, GLfloat y, GLfloat z) {
+    setPosition(glm::vec3(x, y, z));
+  };
   void setScale(glm::vec3 scale) {
     _scale = scale;
     _modelMatrixNeedsReset = true;

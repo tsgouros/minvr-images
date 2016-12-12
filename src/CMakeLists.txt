@@ -46,6 +46,8 @@ add_executable(tgl
 	common/texture.h
 	common/objloader.cpp
 	common/objloader.h
+  tinyxml2.h
+  tinyxml2.cpp
 	
 	StandardShading.vertexshader
 	StandardShading.fragmentshader

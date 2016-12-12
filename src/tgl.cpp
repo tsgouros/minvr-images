@@ -118,7 +118,7 @@ public:
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
     mvShaders* shaders = new mvShaders("../src/StandardShading.vertexshader", "",
-                                       "../src/StandardShading.fragmentshader",
+                                       "../src/PlanktonShading.fragmentshader",
                                        lights);
     _shaderList.push_back(shaders);
     
@@ -140,7 +140,7 @@ public:
 
       _shapeList.back()->setTextureID(loadPNG((it->fileName).c_str(),
                                               &width, &height));
-      _shapeList.back()->setDimensions(it->width/10.0, it->height/10.0);
+      _shapeList.back()->setDimensions(it->width/100.0, it->height/100.0);
       _shapeList.back()->setPosition(it->x/100.0, it->y/100.0, it->z/5000.0);
     }
 

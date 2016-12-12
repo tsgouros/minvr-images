@@ -1,0 +1,82 @@
+#version 330 core
+// We are using the core, *not* the compatibility profile. 
+
+const int NUM_LIGHTS = XX;
+const float MAX_DIST = 50.0;
+const float MAX_DIST_SQUARED = MAX_DIST * MAX_DIST;
+
+// Interpolated values from the vertex shaders
+in vec2 UV;
+in vec3 Position_worldspace;
+in vec3 Normal_cameraspace;
+in vec3 EyeDirection_cameraspace;
+in vec3 LightDirection_cameraspace[NUM_LIGHTS];
+
+// Ouput data
+out vec4 finalColor;
+
+// Values that stay constant for the whole mesh.
+uniform sampler2D mvTextureSampler;
+uniform mat4 MV;
+uniform vec3 LightPosition_worldspace[NUM_LIGHTS];
+uniform vec3 LightColor[NUM_LIGHTS];
+
+void main(){
+
+	// Material properties
+	vec3 materialColor = texture( mvTextureSampler, UV ).rgb;
+	float ambientCoefficient = 0.1;
+	vec3 materialSpecularColor = vec3(1,1,1);
+
+  // Normal of the computed fragment, in camera space.
+  vec3 normalDir = normalize( Normal_cameraspace );
+
+  vec3 color = vec3(0.0, 0.0, 0.0);
+
+  for (int i = 0; i < NUM_LIGHTS; i++) {
+
+    // Ambient : simulates indirect lighting
+    vec3 ambient = ambientCoefficient * LightColor[i] * materialColor;
+    
+    // Distance to the light
+    float distanceToLight =
+      length( LightPosition_worldspace[i] - Position_worldspace );
+
+    // Direction of the light (from the fragment to the light)
+    vec3 lightDir = normalize( LightDirection_cameraspace[i] );
+    // Cosine of the angle between the normal and the light direction, 
+    // clamped above 0
+    //  - light is at the vertical of the triangle -> 1
+    //  - light is perpendicular to the triangle -> 0
+    //  - light is behind the triangle -> 0
+    float cosAngleFromNormal = clamp(dot(normalDir, lightDir), 0.0, 1.0);
+
+    // Diffuse : "color" of the object
+    vec3 diffuse = materialColor * LightColor[i] * cosAngleFromNormal;
+	
+    // Eye vector (towards the camera)
+    vec3 eyeDir = normalize(EyeDirection_cameraspace);
+    // Direction in which the triangle reflects the light
+    vec3 reflectDir = reflect(-lightDir, normalDir);
+    // Cosine of the angle between the Eye vector and the Reflect vector,
+    // clamped to 0
+    //  - Looking into the reflection -> 1
+    //  - Looking elsewhere -> < 1
+    float cosAlpha = clamp( dot(eyeDir, reflectDir), 0.0, 1.0);
+
+    // Specular : reflective highlight, like a mirror
+    vec3 specular = materialSpecularColor * LightColor[i] * pow(cosAlpha,5);
+
+    float attenuation = 1.0 / (1.0 + 0.01 * pow(distanceToLight, 2));
+
+    color += ambient + attenuation * (diffuse + specular);
+  }
+
+  if (materialColor.x != materialColor.y) {
+    finalColor = vec4(color , 0.0);
+
+  } else {
+  
+    finalColor = vec4(color, 1.0);
+  }
+}

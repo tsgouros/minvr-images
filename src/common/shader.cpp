@@ -20,8 +20,8 @@ void mvLights::load(GLuint programID) {
   // that what is going on here is that OpenGL is actually matching
   // the _lightPositionName string to a variable in the shader.
   glUseProgram(programID);
-  _lightPositionID = glGetUniformLocation(programID, _lightPositionName);
-  _lightColorID = glGetUniformLocation(programID, _lightColorName);
+  _lightPositionID = glGetUniformLocation(programID, _lightPositionName.c_str());
+  _lightColorID = glGetUniformLocation(programID, _lightColorName.c_str());
 
 }
 

@@ -52,6 +52,12 @@ public:
     if( _window == NULL ){
       throw std::runtime_error("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible." );
       glfwTerminate();
+    for (std::list<mvShaders*>::iterator it = _shaderList.begin();
+         it != _shaderList.end(); it++) {
+      glDeleteProgram((*it)->getProgramID());
+      delete *it;
+    }
+
     }
     glfwMakeContextCurrent(_window);
 
@@ -143,11 +149,16 @@ public:
     _shapeList.push_back(rect);
     _shapeList.push_back(rect2);
 
+
+    // Execute "load()" for all the shaders.  This basically registers
+    // them, registers their lighting data, and gets them ready to
+    // operate.
     for (std::list<mvShaders*>::iterator it = _shaderList.begin();
          it != _shaderList.end(); it++)         
       (*it)->load();
     
-    // Load all the shapes.
+    // Load all the shapes.  Initializes whatever needs to be
+    // initialized, etc.    
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) (*it)->load();
 
@@ -155,9 +166,19 @@ public:
 
   ~VRApp() {
 
+    for (std::list<mvLights*>::iterator it = _lightList.begin();
+         it != _lightList.end(); it++) {
+      delete *it;
+    }
+
     for (std::list<mvShaders*>::iterator it = _shaderList.begin();
          it != _shaderList.end(); it++) {
       glDeleteProgram((*it)->getProgramID());
+      delete *it;
+    }
+
+    for (std::list<mvShape*>::iterator it = _shapeList.begin();
+         it != _shapeList.end(); it++) {
       delete *it;
     }
 
@@ -176,15 +197,15 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Have any lights moved or changed color?  They get adjusted inside
+    // this draw call if they have.
     for (std::list<mvShaders*>::iterator it = _shaderList.begin();
          it != _shaderList.end(); it++)         
       (*it)->draw();
-    
+
+    // Now draw the objects.
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) {
-
-      //      if ((*it)->getType() == shapeRECT) 
-          
       (*it)->draw(control);
     }
     

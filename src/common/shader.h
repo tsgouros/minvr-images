@@ -6,23 +6,52 @@
 
 #include <glm/glm.hpp>
 
-class mvLight {
+// A class for managing a list of lights to go with some shader.  The
+// lights are communicated with the shader in two big blocks of data,
+// one for the light positions and the other for the colors.
+//
+// We anticipate the load() and draw() methods of this class will be
+// invoked just before the load() and draw() methods of the shapes
+// that depend on them.
+
+
+// Multiple shader instances will depend on the same lights, so ther
+class mvLights {
  private:
 
-  glm::vec3 _position;
-  glm::vec3 _color;
-  GLuint _lightID;
+  std::vector<glm::vec3> _positions;
+  std::vector<glm::vec3> _colors;
+
+  GLuint _lightPositionID;
+  GLuint _lightColorID;
 
  public:
-  mvLight(glm::vec3 position, glm::vec3 color) {};
+  mvLights(glm::vec3 position, glm::vec3 color) {};
 
-  GLuint getID() { return _lightID; }
+  GLuint getPositionID() { return _lightPositionID; }
+  GLuint getColorID() { return _lightColorID; }
   
-  glm::vec3 getPosition() { return _position; };
-  void setPosition(glm::vec3 position) { _position = position; };
+  std::vector<glm::vec3> getPositions() { return _positions; };
+  void setPositions(std::vector<glm::vec3> positions) { _positions = positions; };
 
-  glm::vec3 getColor() { return _color; };
-  void setColor(glm::vec3 color) { _color = color; };  
+  std::vector<glm::vec3> getColors() { return _colors; };
+  void setColor(std::vector<glm::vec3> colors) { _colors = colors; };
+
+  void setPosition(int i, glm::vec3 position) { _positions[i] = position; };
+  void setColor(int i, glm::vec3 color) { _colors[i] = color; };
+
+  int addLight(glm::vec3 position, glm::vec3 color) {
+    _positions.push_back(position);
+    _colors.push_back(color);
+    return _positions.size();
+  };
+
+  void load(GLuint programID) {
+    glUseProgram(programID);
+      };
+
+
+  
 };
       
 
@@ -71,7 +100,7 @@ class mvShaders {
   GLuint _programID;
   std::string _linkLog;
 
-  std::vector<mvLight*> _lights;
+  std::vector<mvLights*> _lights;
 
   void attachAndLinkShaders();
   

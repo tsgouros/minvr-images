@@ -128,15 +128,18 @@ void mvShapeRect::load() {
 
   // Set up the vertex and other arrays.
   initVertices();
+
+  std::cout << "_programID: " << _programID << " but: " << _shaders->getProgram() << std::endl;
   
   // Arrange the data for the shaders to work on.  "Uniforms" first.
   // Get a handle for our "MVP" uniform
-  _mvpMatrixID = glGetUniformLocation(_programID, _mvpMatrixName.c_str());
-  _viewMatrixID = glGetUniformLocation(_programID, _viewMatrixName.c_str());
-  _modelMatrixID = glGetUniformLocation(_programID, _modelMatrixName.c_str());
+  GLuint programID = _shaders->getProgram();
+  _mvpMatrixID = glGetUniformLocation(programID, _mvpMatrixName.c_str());
+  _viewMatrixID = glGetUniformLocation(programID, _viewMatrixName.c_str());
+  _modelMatrixID = glGetUniformLocation(programID, _modelMatrixName.c_str());
 
   // Get a handle for our "myTextureSampler" uniform
-  _textureAttribID  = glGetUniformLocation(_programID, _textureAttribName.c_str());
+  _textureAttribID  = glGetUniformLocation(programID, _textureAttribName.c_str());
 
   //std::cout << "loading mvShapeObj" << std::endl;
   // Read our .obj file
@@ -165,15 +168,17 @@ void mvShapeRect::load() {
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
-    glGetAttribLocation(_programID, _vertexAttribName.c_str());
-  _uvAttribID = glGetAttribLocation(_programID, _uvAttribName.c_str());
+    glGetAttribLocation(programID, _vertexAttribName.c_str());
+  _uvAttribID = glGetAttribLocation(programID, _uvAttribName.c_str());
   _normalAttribID = 
-    glGetAttribLocation(_programID, _normalAttribName.c_str());
+    glGetAttribLocation(programID, _normalAttribName.c_str());
 
 }
 
 void mvShapeRect::draw(VRControl control) {
 
+  std::cout << "_programID: " << _programID << " but: " << _shaders->getProgram() << std::endl;
+  
   // Use our shader
   glUseProgram(_programID);
 

@@ -110,7 +110,7 @@ class mvShaders {
             const std::string geomShader,
             const std::string fragShader);
 
-  GLuint getProgram() { return _programID; };
+  GLuint getProgramID() { return _programID; };
   std::string getLinkLog() { return _linkLog; };
 
   uint addLight(glm::vec3 newLightPosition, glm::vec3 newLightColor);

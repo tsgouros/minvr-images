@@ -26,7 +26,7 @@ public:
   VRControl control;
 
   std::list<mvShape*> _shapeList;
-  std::list<mvShaders> _shaderList;
+  std::list<mvShaders*> _shaderList;
 
   mvShapeFactory _shapeFactory;
 
@@ -89,16 +89,16 @@ public:
 
     //////////////////////////////////////////////////////////
     // Create and compile our GLSL program from the shaders
-    mvShaders shaders = mvShaders("../src/StandardShading.vertexshader", "",
+    mvShaders* shaders = new mvShaders("../src/StandardShading.vertexshader", "",
                                   "../src/StandardShading.fragmentshader");
     _shaderList.push_back(shaders);
     
     // Switch to axes.  These use the default shader, which you get
     // by initializing the shader object with no args.
-    mvShaders axisShaders = mvShaders();
+    mvShaders* axisShaders = new mvShaders();
     _shaderList.push_back(axisShaders);
     
-    mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, &shaders);
+    mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, shaders);
 
     ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
     
@@ -106,9 +106,9 @@ public:
     GLuint textureBufferID = loadDDS("uvmap.DDS");
     suzanne->setTextureID(textureBufferID);
     
-    mvShape* axes = _shapeFactory.createShape(shapeAXES, &axisShaders);
+    mvShape* axes = _shapeFactory.createShape(shapeAXES, axisShaders);
 
-    mvShape* rect = _shapeFactory.createShape(shapeRECT, &shaders);
+    mvShape* rect = _shapeFactory.createShape(shapeRECT, shaders);
     // Load the texture
     int width, height;
     textureBufferID = loadPNG("/Users/tomfool/Desktop/on-the-roof.png",
@@ -116,7 +116,7 @@ public:
     rect->setTextureID(textureBufferID);
     rect->setDimensions(2.5, 2.5 * ((float)height / (float)width));
 
-    mvShape* rect2 = _shapeFactory.createShape(shapeRECT, &shaders);
+    mvShape* rect2 = _shapeFactory.createShape(shapeRECT, shaders);
     // Load the texture
     textureBufferID = loadPNG("e.png", &width, &height);
     rect2->setTextureID(textureBufferID);
@@ -135,19 +135,19 @@ public:
 
     // Get a handle for our "LightPosition" uniform.  We are not
     // binding the attribute location, just asking politely for it.
-    glUseProgram(shaders.getProgram());
-    _lightPositionID = glGetUniformLocation(shaders.getProgram(),
+    glUseProgram(shaders->getProgramID());
+    _lightPositionID = glGetUniformLocation(shaders->getProgramID(),
                                             "LightPosition_worldspace");
-    _lightColorID = glGetUniformLocation(shaders.getProgram(), "LightColor");
-
+    _lightColorID = glGetUniformLocation(shaders->getProgramID(), "LightColor");
 
   };
 
   ~VRApp() {
 
-    for (std::list<mvShaders>::iterator it = _shaderList.begin();
+    for (std::list<mvShaders*>::iterator it = _shaderList.begin();
          it != _shaderList.end(); it++) {
-      glDeleteProgram((*it).getProgram());
+      glDeleteProgram((*it)->getProgramID());
+      delete *it;
     }
 
     // Close OpenGL window and terminate GLFW
@@ -165,7 +165,7 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(_shaderList.begin()->getProgram());
+    glUseProgram((*_shaderList.begin())->getProgramID());
     GLfloat lightPos[6] = { 4,4,4,  4,4,4 };
     glUniform3fv(_lightPositionID, 2, &lightPos[0]);
     GLfloat lightCol[6] = { 1,1,1, 1,0.01,0.01 };

@@ -48,8 +48,7 @@ protected:
 
   mvShapeType _type;
 
-  // The program ID for the shaders to be used by this shape.
-  GLuint _programID;
+  // The shaders to be used by this shape.
   mvShaders* _shaders;
   
   GLuint _arrayID;
@@ -126,8 +125,7 @@ public:
   virtual void setDimensions(GLfloat a, GLfloat b) {};
   virtual void setDimensions(GLfloat a, GLfloat b, GLfloat c) {};
   
-  void setProgramID(GLuint programID) { _programID = programID; };
-  GLuint getProgramID() { return _programID; };
+  GLuint getProgramID() { return _shaders->getProgramID(); };
 
   void setTextureID(GLuint textureID) { _textureBufferID = textureID; };
   GLuint getTextureID() { return _textureBufferID; };

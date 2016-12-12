@@ -30,7 +30,7 @@ void mvShape::setupDefaultNames() {
 mvShape::mvShape(mvShapeType type, mvShaders* shaders) :
   _type(type), _shaders(shaders) {
 
-  _programID = shaders->getProgram();
+  ///_programID = shaders->getProgramID();
 
   setupDefaultNames();
   
@@ -129,11 +129,9 @@ void mvShapeRect::load() {
   // Set up the vertex and other arrays.
   initVertices();
 
-  std::cout << "_programID: " << _programID << " but: " << _shaders->getProgram() << std::endl;
-  
   // Arrange the data for the shaders to work on.  "Uniforms" first.
   // Get a handle for our "MVP" uniform
-  GLuint programID = _shaders->getProgram();
+  GLuint programID = _shaders->getProgramID();
   _mvpMatrixID = glGetUniformLocation(programID, _mvpMatrixName.c_str());
   _viewMatrixID = glGetUniformLocation(programID, _viewMatrixName.c_str());
   _modelMatrixID = glGetUniformLocation(programID, _modelMatrixName.c_str());
@@ -165,7 +163,6 @@ void mvShapeRect::load() {
   glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
                &_normals[0], GL_STATIC_DRAW);
 
-
   // Get handles for the various shader inputs.
   _vertexAttribID =
     glGetAttribLocation(programID, _vertexAttribName.c_str());
@@ -177,10 +174,8 @@ void mvShapeRect::load() {
 
 void mvShapeRect::draw(VRControl control) {
 
-  std::cout << "_programID: " << _programID << " but: " << _shaders->getProgram() << std::endl;
-  
   // Use our shader
-  glUseProgram(_programID);
+  glUseProgram(_shaders->getProgramID());
 
   glm::vec3 p = getPosition();
   p.x += 0.01;
@@ -215,7 +210,7 @@ void mvShapeRect::draw(VRControl control) {
   glUniform1i(_textureAttribID, 0);
 
   // GLint countt;
-  // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
+  // glGetProgramiv(_shaders->getProgramID(), GL_ACTIVE_UNIFORMS, &countt);
   // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;
 
   // 1rst attribute buffer : vertices
@@ -267,12 +262,12 @@ void mvShapeObj::load() {
 
   // Arrange the data for the shaders to work on.  "Uniforms" first.
   // Get a handle for our "MVP" uniform
-  _mvpMatrixID = glGetUniformLocation(_programID, _mvpMatrixName.c_str());
-  _viewMatrixID = glGetUniformLocation(_programID, _viewMatrixName.c_str());
-  _modelMatrixID = glGetUniformLocation(_programID, _modelMatrixName.c_str());
+  _mvpMatrixID = glGetUniformLocation(_shaders->getProgramID(), _mvpMatrixName.c_str());
+  _viewMatrixID = glGetUniformLocation(_shaders->getProgramID(), _viewMatrixName.c_str());
+  _modelMatrixID = glGetUniformLocation(_shaders->getProgramID(), _modelMatrixName.c_str());
 
   // Get a handle for our "myTextureSampler" uniform
-  _textureAttribID  = glGetUniformLocation(_programID, _textureAttribName.c_str());
+  _textureAttribID  = glGetUniformLocation(_shaders->getProgramID(), _textureAttribName.c_str());
 
   //std::cout << "loading mvShapeObj" << std::endl;
   // Read our .obj file
@@ -300,23 +295,23 @@ void mvShapeObj::load() {
 
   // Get a handle for our "LightPosition" uniform.  We are not
   // binding the attribute location, just asking politely for it.
-  // glUseProgram(_programID);
-  // _lightPositionID = glGetUniformLocation(_programID, "LightPosition_worldspace");
-  // _lightColorID = glGetUniformLocation(_programID, "LightColor");
+  // glUseProgram(_shaders->getProgramID());
+  // _lightPositionID = glGetUniformLocation(_shaders->getProgramID(), "LightPosition_worldspace");
+  // _lightColorID = glGetUniformLocation(_shaders->getProgramID(), "LightColor");
 
   // Get handles for the various shader inputs.
   _vertexAttribID =
-    glGetAttribLocation(_programID, _vertexAttribName.c_str());
-  _uvAttribID = glGetAttribLocation(_programID, _uvAttribName.c_str());
+    glGetAttribLocation(_shaders->getProgramID(), _vertexAttribName.c_str());
+  _uvAttribID = glGetAttribLocation(_shaders->getProgramID(), _uvAttribName.c_str());
   _normalAttribID = 
-    glGetAttribLocation(_programID, _normalAttribName.c_str());
+    glGetAttribLocation(_shaders->getProgramID(), _normalAttribName.c_str());
 
 }
 
 void mvShapeObj::draw(VRControl control) {
 
   // Use our shader
-  glUseProgram(_programID);
+  glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
@@ -341,7 +336,7 @@ void mvShapeObj::draw(VRControl control) {
   glUniform1i(_textureAttribID, 0);
 
   // GLint countt;
-  // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &countt);
+  // glGetProgramiv(_shaders->getProgramID(), GL_ACTIVE_UNIFORMS, &countt);
   // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;
 
   // 1rst attribute buffer : vertices
@@ -425,7 +420,7 @@ void mvShapeAxes::expandAxesColors() {
 
 void mvShapeAxes::load() {
 
-  _mvpMatrixID = glGetUniformLocation(_programID, _mvpMatrixName.c_str());
+  _mvpMatrixID = glGetUniformLocation(_shaders->getProgramID(), _mvpMatrixName.c_str());
 
   glGenVertexArrays(1, &_arrayID);
   glBindVertexArray(_arrayID);
@@ -445,10 +440,10 @@ void mvShapeAxes::load() {
 void mvShapeAxes::draw(VRControl control) {
 
   // We have to ask where these attributes are located.
-  _vertexAttribID = glGetAttribLocation(_programID, _vertexAttribName.c_str());
-  _colorAttribID = glGetAttribLocation(_programID, _colorAttribName.c_str());
+  _vertexAttribID = glGetAttribLocation(_shaders->getProgramID(), _vertexAttribName.c_str());
+  _colorAttribID = glGetAttribLocation(_shaders->getProgramID(), _colorAttribName.c_str());
 
-  glUseProgram(_programID);
+  glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
   glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
@@ -459,7 +454,7 @@ void mvShapeAxes::draw(VRControl control) {
     
   // Just checking...
   // GLint count;
-  // glGetProgramiv(_programID, GL_ACTIVE_UNIFORMS, &count);
+  // glGetProgramiv(_shaders->getProgramID(), GL_ACTIVE_UNIFORMS, &count);
   // std::cout << "**Active (in use by a shader) Uniforms: " << count << std::endl;
 
   // Enable VAO to set axes data
@@ -509,7 +504,7 @@ std::string mvShape::print() const {
   out << "SHAPE data:" << std::endl;
 
   out << "_type:            " << _type << " (" << map[_type] << ")" << std::endl;
-  out << "_programID:       " << _programID << std::endl;
+  out << "_programID:       " << _shaders->getProgramID() << std::endl;
   out << "_arrayID:         " << _arrayID << std::endl;
   out << "_vertexAttribID:  " << _vertexAttribID;
   out << " (" << _vertexAttribName << ")" << std::endl;

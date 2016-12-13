@@ -1,6 +1,8 @@
 #ifndef SHADER_HPP
 #define SHADER_HPP
 
+#include "vecTypes.h"
+
 #include <iostream>
 #include <string>
 
@@ -66,8 +68,8 @@
 class mvLights {
  private:
 
-  std::vector<glm::vec3> _positions;
-  std::vector<glm::vec3> _colors;
+  std::vector<MVec3> _positions;
+  std::vector<MVec3> _colors;
 
   GLuint _lightPositionID;
   std::string _lightPositionName;
@@ -87,7 +89,7 @@ class mvLights {
   
  public:
   mvLights() { setupDefaultNames(); };
-  mvLights(glm::vec3 position, glm::vec3 color) {
+  mvLights(MVec3 position, MVec3 color) {
     setupDefaultNames();
     addLight(position, color);
   }
@@ -98,25 +100,25 @@ class mvLights {
   int getNumLights() { return _positions.size(); };
 
   // We have mutators and accessors for the whole shebang...
-  std::vector<glm::vec3> getPositions() { return _positions; };
-  void setPositions(std::vector<glm::vec3> positions) { _positions = positions; };
+  std::vector<MVec3> getPositions() { return _positions; };
+  void setPositions(std::vector<MVec3> positions) { _positions = positions; };
 
-  std::vector<glm::vec3> getColors() { return _colors; };
-  void setColors(std::vector<glm::vec3> colors) { _colors = colors; };
+  std::vector<MVec3> getColors() { return _colors; };
+  void setColors(std::vector<MVec3> colors) { _colors = colors; };
 
   // ... and also for individual lights.
-  void setPosition(int i, glm::vec3 position) { _positions[i] = position; };
-  glm::vec3 getPosition(int i) { return _positions[i]; };
+  void setPosition(int i, MVec3 position) { _positions[i] = position; };
+  MVec3 getPosition(int i) { return _positions[i]; };
   
-  void setColor(int i, glm::vec3 color) { _colors[i] = color; };
-  glm::vec3 getColor(int i) { return _colors[i]; };
+  void setColor(int i, MVec3 color) { _colors[i] = color; };
+  MVec3 getColor(int i) { return _colors[i]; };
 
   // Use this to add lights.  Since the shaders are compiled and
   // linked after the number of lights is set, this is pretty much a
   // one-way street.  Add lights, but don't subtract them.  If you
   // want to extinguish one, just move it far away, or dial its
   // intensity way down.
-  int addLight(glm::vec3 position, glm::vec3 color) {
+  int addLight(MVec3 position, MVec3 color) {
     _positions.push_back(position);
     _colors.push_back(color);
     return _positions.size();

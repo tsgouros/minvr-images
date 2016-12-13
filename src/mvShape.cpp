@@ -1,7 +1,7 @@
 #include "mvShape.h"
 
 
-void mvShape::printMat(std::string name, glm::mat4 mat) {
+void mvShape::printMat(std::string name, MMat4 mat) {
   std::cout << name << std::endl;
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
@@ -35,9 +35,9 @@ mvShape::mvShape(mvShapeType type, mvShaders* shaders) :
   setupDefaultNames();
   
   // Set all the translations and rotations to zero.
-  _scale = glm::vec3(1.0f, 1.0f, 1.0f);
+  _scale = MVec3(1.0f, 1.0f, 1.0f);
   // _rotQuaternion is initialized to zero rotation by default.
-  _position = glm::vec3(0.0f, 0.0f, 0.0f);
+  _position = MVec3(0.0f, 0.0f, 0.0f);
 
   // Calculate the model matrix.  It should come out as an identity
   // matrix, so this is not really necessary.
@@ -55,12 +55,12 @@ mvShape::~mvShape() {
   if (glIsVertexArray(_arrayID)) glDeleteVertexArrays(1, &_arrayID);
 }
 
-glm::mat4 mvShape::getModelMatrix() {
+MMat4 mvShape::getModelMatrix() {
 
   if (_modelMatrixNeedsReset) {
-    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), _position);
-    glm::mat4 rotationMatrix = glm::mat4_cast(_rotQuaternion);
-    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), _scale);
+    MMat4 translationMatrix = glm::translate(MMat4(1.0f), _position);
+    MMat4 rotationMatrix = glm::mat4_cast(_rotQuaternion);
+    MMat4 scaleMatrix = glm::scale(MMat4(1.0f), _scale);
 
     _modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
     _modelMatrixNeedsReset = false;
@@ -77,51 +77,51 @@ glm::mat4 mvShape::getModelMatrix() {
 void mvShapeRect::initVertices() {
 
   // Front side of rectangle.
-  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3(-_width/2.0f,  _height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3( _width/2.0f, -_height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(MVec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(MVec3( _width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(MVec3(-_width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(MVec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(MVec3( _width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(MVec3( _width/2.0f,  _height/2.0f, 0.0f));
 
   // Back side.
-  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3(-_width/2.0f,  _height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3(-_width/2.0f, -_height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3( _width/2.0f,  _height/2.0f, 0.0f));
-  _vertices.push_back(glm::vec3( _width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(MVec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(MVec3(-_width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(MVec3( _width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(MVec3(-_width/2.0f, -_height/2.0f, 0.0f));
+  _vertices.push_back(MVec3( _width/2.0f,  _height/2.0f, 0.0f));
+  _vertices.push_back(MVec3( _width/2.0f, -_height/2.0f, 0.0f));
 
   // Front side texture coordinates.
-  _uvs.push_back(glm::vec2(0.0f, 0.0f));
-  _uvs.push_back(glm::vec2(1.0f, 1.0f));
-  _uvs.push_back(glm::vec2(0.0f, 1.0f));
-  _uvs.push_back(glm::vec2(0.0f, 0.0f));
-  _uvs.push_back(glm::vec2(1.0f, 0.0f));
-  _uvs.push_back(glm::vec2(1.0f, 1.0f));
+  _uvs.push_back(MVec2(0.0f, 0.0f));
+  _uvs.push_back(MVec2(1.0f, 1.0f));
+  _uvs.push_back(MVec2(0.0f, 1.0f));
+  _uvs.push_back(MVec2(0.0f, 0.0f));
+  _uvs.push_back(MVec2(1.0f, 0.0f));
+  _uvs.push_back(MVec2(1.0f, 1.0f));
 
   // Back side.
-  _uvs.push_back(glm::vec2(0.0f, 0.0f));
-  _uvs.push_back(glm::vec2(0.0f, 1.0f));
-  _uvs.push_back(glm::vec2(1.0f, 1.0f));
-  _uvs.push_back(glm::vec2(0.0f, 0.0f));
-  _uvs.push_back(glm::vec2(1.0f, 1.0f));
-  _uvs.push_back(glm::vec2(1.0f, 0.0f));
+  _uvs.push_back(MVec2(0.0f, 0.0f));
+  _uvs.push_back(MVec2(0.0f, 1.0f));
+  _uvs.push_back(MVec2(1.0f, 1.0f));
+  _uvs.push_back(MVec2(0.0f, 0.0f));
+  _uvs.push_back(MVec2(1.0f, 1.0f));
+  _uvs.push_back(MVec2(1.0f, 0.0f));
 
   // The normals all point in the same direction.
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
   
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
-  _normals.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
+  _normals.push_back(MVec3(0.0f, 0.0f, 1.0f));
 }
 
 void mvShapeRect::load() {
@@ -150,17 +150,17 @@ void mvShapeRect::load() {
   // Load it into a VBO
   glGenBuffers(1, &_vertexBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
-  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(MVec3),
                &_vertices[0], GL_STATIC_DRAW);
 
   glGenBuffers(1, &_uvBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
-  glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(glm::vec2),
+  glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(MVec2),
                &_uvs[0], GL_STATIC_DRAW);
 
   glGenBuffers(1, &_normalBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
-  glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(MVec3),
                &_normals[0], GL_STATIC_DRAW);
 
   // Get handles for the various shader inputs.
@@ -178,9 +178,9 @@ void mvShapeRect::draw(VRControl control) {
   glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
-  glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
-  glm::mat4 ViewMatrix = control.getViewMatrix();
-  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
+  MMat4 ProjectionMatrix = control.getProjectionMatrix();
+  MMat4 ViewMatrix = control.getViewMatrix();
+  MMat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
 
   // printMat("proj", ProjectionMatrix);
   // printMat("view", ViewMatrix);
@@ -271,17 +271,17 @@ void mvShapeObj::load() {
   // Load it into a VBO
   glGenBuffers(1, &_vertexBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
-  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(MVec3),
                &_vertices[0], GL_STATIC_DRAW);
 
   glGenBuffers(1, &_uvBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
-  glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(glm::vec2),
+  glBufferData(GL_ARRAY_BUFFER, _uvs.size() * sizeof(MVec2),
                &_uvs[0], GL_STATIC_DRAW);
 
   glGenBuffers(1, &_normalBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
-  glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, _normals.size() * sizeof(MVec3),
                &_normals[0], GL_STATIC_DRAW);
 
   // Get a handle for our "LightPosition" uniform.  We are not
@@ -305,9 +305,9 @@ void mvShapeObj::draw(VRControl control) {
   glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
-  glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
-  glm::mat4 ViewMatrix = control.getViewMatrix();
-  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
+  MMat4 ProjectionMatrix = control.getProjectionMatrix();
+  MMat4 ViewMatrix = control.getViewMatrix();
+  MMat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
 
   // printMat("proj", ProjectionMatrix);
   // printMat("view", ViewMatrix);
@@ -386,7 +386,7 @@ void mvShapeAxes::expandAxesVertices() {
                      0, 3 };
 
   for (int i=0; i<6; i++) {
-    _vertices.push_back(glm::vec3(av[avi[i]*3+0],
+    _vertices.push_back(MVec3(av[avi[i]*3+0],
                                   av[avi[i]*3+1],
                                   av[avi[i]*3+2]));
   }
@@ -403,7 +403,7 @@ void mvShapeAxes::expandAxesColors() {
                      2, 2 };
 
   for (int i=0; i<6; i++) {
-    _colors.push_back(glm::vec3(ac[aci[i]*3+0],
+    _colors.push_back(MVec3(ac[aci[i]*3+0],
                                 ac[aci[i]*3+1],
                                 ac[aci[i]*3+2]));
   }
@@ -418,12 +418,12 @@ void mvShapeAxes::load() {
 
   glGenBuffers(1, &_vertexBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);  // coordinates
-  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(MVec3),
                &_vertices[0], GL_STATIC_DRAW);
 
   glGenBuffers(1, &_colorBufferID);
   glBindBuffer(GL_ARRAY_BUFFER, _colorBufferID);  // color
-  glBufferData(GL_ARRAY_BUFFER, _colors.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, _colors.size() * sizeof(MVec3),
                &_colors[0], GL_STATIC_DRAW);
 
 }
@@ -437,9 +437,9 @@ void mvShapeAxes::draw(VRControl control) {
   glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
-  glm::mat4 ProjectionMatrix = control.getProjectionMatrix();
-  glm::mat4 ViewMatrix = control.getViewMatrix();
-  glm::mat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
+  MMat4 ProjectionMatrix = control.getProjectionMatrix();
+  MMat4 ViewMatrix = control.getViewMatrix();
+  MMat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
     
   glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
     

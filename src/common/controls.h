@@ -10,19 +10,20 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "vecTypes.h"
 
 class VRControl {
  protected:
-  glm::mat4 _ViewMatrix;
-  glm::mat4 _ProjectionMatrix;
+  MMat4 _ViewMatrix;
+  MMat4 _ProjectionMatrix;
 
  public:
   VRControl();
   
   // Initial position : on +Z
-  glm::vec3 _position;
-  glm::vec3 _direction;
-	glm::vec3 _right;
+  MVec3 _position;
+  MVec3 _direction;
+	MVec3 _right;
   float _horizontalAngle;
   float _verticalAngle;
     
@@ -35,9 +36,9 @@ class VRControl {
   
   void handleEvents(GLFWwindow* window);
   void computeMatricesFromInputs(GLFWwindow* window);
-  glm::mat4 getViewMatrix();
-  glm::mat4 getProjectionMatrix();
+  MMat4 getViewMatrix();
+  MMat4 getProjectionMatrix();
 
-  glm::vec3 up() { return glm::cross( _right, _direction ); };
+  MVec3 up() { return glm::cross( _right, _direction ); };
 };
 #endif

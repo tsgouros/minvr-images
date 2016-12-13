@@ -38,6 +38,7 @@ add_executable(tgl
 	tgl.cpp
   mvShape.cpp
   mvShape.h
+  vecTypes.h
 	common/shader.cpp
 	common/shader.h
 	common/controls.cpp
@@ -53,6 +54,34 @@ add_executable(tgl
 	StandardShading.fragmentshader
 )
 target_link_libraries(tgl MinVR
+  ${OPENGL_LIBRARY}
+  ${PNG_LIBRARIES}
+  glfw
+  GLEW_1130
+  ${ALL_LIBS}
+)
+                     
+# tgm
+add_executable(tgm
+	tgm.cpp
+  mvShape.cpp
+  mvShape.h
+  vecTypes.h
+	common/shader.cpp
+	common/shader.h
+	common/controls.cpp
+	common/controls.h
+	common/texture.cpp
+	common/texture.h
+	common/objloader.cpp
+	common/objloader.h
+  tinyxml2.h
+  tinyxml2.cpp
+	
+	StandardShading.vertexshader
+	StandardShading.fragmentshader
+)
+target_link_libraries(tgm MinVR
   ${OPENGL_LIBRARY}
   ${PNG_LIBRARIES}
   glfw

@@ -166,7 +166,7 @@ mvShaders::mvShaders() {
 
   // These shaders don't use explicit lights, but we need a light
   // object around to keep things from crashing.
-  _lights = new mvLights(glm::vec3(1,1,1), glm::vec3(1,1,1));
+  _lights = new mvLights(MVec3(1,1,1), MVec3(1,1,1));
   
   _programID = glCreateProgram();
   

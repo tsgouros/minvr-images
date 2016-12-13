@@ -13,6 +13,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "vecTypes.h"
 #include <common/shader.h>
 #include <common/texture.h>
 #include <common/controls.h>
@@ -98,8 +99,12 @@ public:
     // Dark blue background
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
-    // Enable depth test
-    glEnable(GL_DEPTH_TEST);
+    // Enable depth test for opaque figures
+    //glEnable(GL_DEPTH_TEST);
+    // Disable depth test and enable blend if there is transparency.
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS); 
     // Cull triangles whose normal is not towards the camera.
@@ -110,8 +115,8 @@ public:
     // Make some lights
     mvLights* lights = new mvLights();
 
-    lights->addLight(glm::vec3(14.0, 14.0, 14.0), glm::vec3(1.0, 1.0, 1.0));
-    lights->addLight(glm::vec3(-4.0, 4.0, 4.0), glm::vec3(0.0, 0.1, 0.1));
+    lights->addLight(MVec3(14.0, 14.0, 14.0), MVec3(1.0, 1.0, 1.0));
+    lights->addLight(MVec3(-4.0, 4.0, 4.0), MVec3(0.0, 0.1, 0.1));
 
     _lightList.push_back(lights);
       
@@ -216,7 +221,9 @@ int main( int argc, char **argv )
   std::list<ImageToDisplay> images;
   
   tinyxml2::XMLDocument doc;
-	std::string reportName = std::string(argv[1]);
+  std::string reportName =
+    std::string("../EN_581_cast_7__15-Jun-2016_01-07-21-715.bmp/report.xml");
+	//std::string reportName = std::string(argv[1]);
   std::string pathName = reportName.substr(0, reportName.find_last_of("/"));
   std::cout << "opening: " << reportName << std::endl;
   std::cout << "found in:" << pathName << std::endl;

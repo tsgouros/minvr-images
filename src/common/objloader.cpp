@@ -19,16 +19,16 @@
 
 bool loadOBJ(
 	const char * path, 
-	std::vector<glm::vec3> & out_vertices, 
-	std::vector<glm::vec2> & out_uvs,
-	std::vector<glm::vec3> & out_normals
+	std::vector<MVec3> & out_vertices, 
+	std::vector<MVec2> & out_uvs,
+	std::vector<MVec3> & out_normals
 ){
 	printf("Loading OBJ file %s...\n", path);
 
 	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-	std::vector<glm::vec3> temp_vertices; 
-	std::vector<glm::vec2> temp_uvs;
-	std::vector<glm::vec3> temp_normals;
+	std::vector<MVec3> temp_vertices; 
+	std::vector<MVec2> temp_uvs;
+	std::vector<MVec3> temp_normals;
 
 
 	FILE * file = fopen(path, "r");
@@ -49,16 +49,16 @@ bool loadOBJ(
 		// else : parse lineHeader
 		
 		if ( strcmp( lineHeader, "v" ) == 0 ){
-			glm::vec3 vertex;
+			MVec3 vertex;
 			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
 			temp_vertices.push_back(vertex);
 		}else if ( strcmp( lineHeader, "vt" ) == 0 ){
-			glm::vec2 uv;
+			MVec2 uv;
 			fscanf(file, "%f %f\n", &uv.x, &uv.y );
 			uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
 			temp_uvs.push_back(uv);
 		}else if ( strcmp( lineHeader, "vn" ) == 0 ){
-			glm::vec3 normal;
+			MVec3 normal;
 			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z );
 			temp_normals.push_back(normal);
 		}else if ( strcmp( lineHeader, "f" ) == 0 ){
@@ -96,9 +96,9 @@ bool loadOBJ(
 		unsigned int normalIndex = normalIndices[i];
 		
 		// Get the attributes thanks to the index
-		glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
-		glm::vec2 uv = temp_uvs[ uvIndex-1 ];
-		glm::vec3 normal = temp_normals[ normalIndex-1 ];
+		MVec3 vertex = temp_vertices[ vertexIndex-1 ];
+		MVec2 uv = temp_uvs[ uvIndex-1 ];
+		MVec3 normal = temp_normals[ normalIndex-1 ];
 		
 		// Put the attributes in buffers
 		out_vertices.push_back(vertex);

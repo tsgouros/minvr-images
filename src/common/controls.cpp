@@ -1,7 +1,7 @@
 #include "controls.h"
 
 VRControl::VRControl() {
-  _position = glm::vec3( 0, 0, 5 ); 
+  _position = MVec3( 0, 0, 5 ); 
   _horizontalAngle = 3.14f;  // Initial horizontal angle : toward -Z
   _verticalAngle = 0.0f;     // Initial vertical angle : none
   _initialFoV = 45.0f;
@@ -11,7 +11,7 @@ VRControl::VRControl() {
   
 // Camera matrix, at _position, looking in _direction, head
 // up. (0,-1,0) is upside-down.
-glm::mat4 VRControl::getViewMatrix(){
+MMat4 VRControl::getViewMatrix(){
 
   // int i, j;
   // std::cout << "pos: ";
@@ -19,10 +19,10 @@ glm::mat4 VRControl::getViewMatrix(){
   // std::cout << std::endl << "dir: ";
   // for (i = 0; i < 3; i++) printf("%6.2f ", _direction[i]);
   // std::cout << std::endl << "up : ";
-  // glm::vec3 u = up();
+  // MVec3 u = up();
   // for (i = 0; i < 3; i++) printf("%6.2f ", u[i]);
 
-  // glm::mat4 out = glm::lookAt(_position,
+  // MMat4 out = glm::lookAt(_position,
   //                             _position + _direction,
   //                             up());
   
@@ -42,7 +42,7 @@ glm::mat4 VRControl::getViewMatrix(){
 
 // Projection matrix : 45° Field of View, 4:3 ratio, display range :
 // 0.1 unit <-> 100 units
-glm::mat4 VRControl::getProjectionMatrix(){
+MMat4 VRControl::getProjectionMatrix(){
 	return glm::perspective(glm::radians(_initialFoV), 4.0f / 3.0f, 0.1f, 100.0f);
 }
 
@@ -70,14 +70,14 @@ void VRControl::handleEvents(GLFWwindow* window) {
   //std::cout << " ha: " << _horizontalAngle << " va: " << _verticalAngle << std::endl;
 
 	// Direction : Spherical coordinates to Cartesian coordinates conversion
-	_direction = glm::vec3(
+	_direction = MVec3(
 		cos(_verticalAngle) * sin(_horizontalAngle), 
 		sin(_verticalAngle),
 		cos(_verticalAngle) * cos(_horizontalAngle)
 	);
 
 	// Right vector
-	_right = glm::vec3(
+	_right = MVec3(
 		sin(_horizontalAngle - 3.14f/2.0f), 
 		0,
 		cos(_horizontalAngle - 3.14f/2.0f)

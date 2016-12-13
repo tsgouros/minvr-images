@@ -60,7 +60,7 @@ target_link_libraries(tgl MinVR
   GLEW_1130
   ${ALL_LIBS}
 )
-                     
+
 # tgm
 add_executable(tgm
 	tgm.cpp
@@ -88,4 +88,30 @@ target_link_libraries(tgm MinVR
   GLEW_1130
   ${ALL_LIBS}
 )
-                     
+
+# tgp
+add_executable(tgp
+	tgp.cpp
+  mvShape.cpp
+  mvShape.h
+  vecTypes.h
+	common/shader.cpp
+	common/shader.h
+	common/controls.cpp
+	common/controls.h
+	common/texture.cpp
+	common/texture.h
+	common/objloader.cpp
+	common/objloader.h
+	
+	StandardShading.vertexshader
+	StandardShading.fragmentshader
+)
+target_link_libraries(tgp MinVR
+  ${OPENGL_LIBRARY}
+  ${PNG_LIBRARIES}
+  glfw
+  GLEW_1130
+  ${ALL_LIBS}
+)
+

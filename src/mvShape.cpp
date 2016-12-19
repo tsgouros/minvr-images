@@ -172,14 +172,12 @@ void mvShapeRect::load() {
 
 }
 
-void mvShapeRect::draw(VRControl control) {
+void mvShapeRect::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
 
   // Use our shader
   glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
-  MMat4 ProjectionMatrix = control.getProjectionMatrix();
-  MMat4 ViewMatrix = control.getViewMatrix();
   MMat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
 
   // printMat("proj", ProjectionMatrix);
@@ -299,14 +297,12 @@ void mvShapeObj::load() {
 
 }
 
-void mvShapeObj::draw(VRControl control) {
+void mvShapeObj::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
 
   // Use our shader
   glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
-  MMat4 ProjectionMatrix = control.getProjectionMatrix();
-  MMat4 ViewMatrix = control.getViewMatrix();
   MMat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
 
   // printMat("proj", ProjectionMatrix);
@@ -428,7 +424,7 @@ void mvShapeAxes::load() {
 
 }
 
-void mvShapeAxes::draw(VRControl control) {
+void mvShapeAxes::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
 
   // We have to ask where these attributes are located.
   _vertexAttribID = glGetAttribLocation(_shaders->getProgramID(), _vertexAttribName.c_str());
@@ -437,8 +433,6 @@ void mvShapeAxes::draw(VRControl control) {
   glUseProgram(_shaders->getProgramID());
 
   // Compute the MVP matrix from keyboard and mouse input
-  MMat4 ProjectionMatrix = control.getProjectionMatrix();
-  MMat4 ViewMatrix = control.getViewMatrix();
   MMat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
     
   glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);

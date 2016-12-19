@@ -128,7 +128,7 @@ public:
   virtual ~mvShape();
   
   virtual void load() = 0;
-  virtual void draw(VRControl control) = 0;
+  virtual void draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) = 0;
 
   // These are here to specialize in the subclasses.
   virtual void setDimensions(GLfloat a) {};
@@ -208,7 +208,7 @@ public:
   GLfloat getHeight() { return _height; };
   
   void load();
-  void draw(VRControl control);
+  void draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix);
 };
 
 class mvShapeObj : public mvShape {
@@ -227,7 +227,7 @@ public:
  mvShapeObj(mvShaders* shaders) : mvShape(shapeOBJ, shaders) {};
 
   void load();
-  void draw(VRControl control);
+  void draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix);
 
   std::string getObjFile() { return _objFileName; };
   void setObjFile(std::string objFileName) { _objFileName = objFileName; };
@@ -256,7 +256,7 @@ class mvShapeAxes : public mvShape {
   }    
   
   void load();
-  void draw(VRControl control);
+  void draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix);
 
 };  
 

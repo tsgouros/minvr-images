@@ -197,6 +197,9 @@ public:
     // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    MMat4 ViewMatrix = control.getViewMatrix();
+    MMat4 ProjectionMatrix = control.getProjectionMatrix();
+
     // Have any lights moved or changed color?  They get adjusted inside
     // this draw call if they have.
     for (std::list<mvShaders*>::iterator it = _shaderList.begin();
@@ -206,7 +209,7 @@ public:
     // Now draw the objects.
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) {
-      (*it)->draw(control);
+      (*it)->draw(ViewMatrix, ProjectionMatrix);
     }
     
 		// Swap buffers

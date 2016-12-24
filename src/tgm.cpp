@@ -148,7 +148,7 @@ public:
         // There is a 1280 (bad enum) error that is apparently triggered by
         // glewInit(). It seems not to be a problem.
         std::cout << "OpenGL Error: " << error << std::endl;
-      } else std::cout << "no problem, Jack" << std::endl;
+      } else std::cout << "No OpenGL problem." << std::endl;
       
       // Dark blue background
       glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -249,55 +249,78 @@ public:
   virtual void onVRRenderScene(MinVR::VRDataIndex *renderState,
                                MinVR::VRDisplayNode *callingNode) {
 
-    if (renderState->exists("IsConsole", "/")) {
-      MinVR::VRConsoleNode *console =
-        dynamic_cast<MinVR::VRConsoleNode*>(callingNode);
-			console->println("Console output...");
+    MMat4 ProjectionMatrix;
+    MMat4 ViewMatrix;
 
-		} else {
+    MinVR::VRDoubleArray p = renderState->getValue("ProjectionMatrix", "/");
+    ProjectionMatrix = MMat4(p[0]);
+    MinVR::VRDoubleArray v = renderState->getValue("ViewMatrix", "/");
+    ViewMatrix = MMat4(v[0]);
+    MinVR::VRDoubleArray l = renderState->getValue("LookAtMatrix", "/");
+    MMat4 LookAtMatrix = MMat4(l[0]);
 
-      MMat4 ProjectionMatrix;
-      MMat4 ViewMatrix;
+    mvShape::printMat("projection", ProjectionMatrix);
 
-      if (renderState->exists("ProjectionMatrix", "/")) {
-        MinVR::VRDoubleArray p = renderState->getValue("ProjectionMatrix", "/");
-        ProjectionMatrix = MMat4(p[0]);
-        MinVR::VRDoubleArray v = renderState->getValue("ViewMatrix", "/");
-        ViewMatrix = MMat4(v[0]);
+    mvShape::printMat("view", ViewMatrix);
 
-        // Combine that with an ad hoc model matrix.
-        ViewMatrix = ViewMatrix *
-          glm::translate(MMat4(1.0f), MVec3(0.0, 0.0, -_radius)) *
-          glm::rotate(MMat4(1.0f), _vertAngle, MVec3(1.0, 0.0, 0.0)) *
-          glm::rotate(MMat4(1.0f), _horizAngle, MVec3(0.0, 1.0, 0.0));
+    mvShape::printMat("lookat", LookAtMatrix);
 
-      } else {
-        ProjectionMatrix = MMat4(1.0);
+    throw std::runtime_error("stop here");
 
-        MVec3 pos = MVec3(_radius * cos(_horizAngle) * cos(_vertAngle),
-                          -_radius * sin(_vertAngle),
-                          _radius * sin(_horizAngle) * cos(_vertAngle));
-        MVec3 up = MVec3(cos(_horizAngle) * sin(_vertAngle),
-                         cos(_vertAngle),
-                         sin(_horizAngle) * sin(_vertAngle));
-        MVec3 target = MVec3(0.0f, 0.0f, 0.0f);
+
+
+
+      
+    // Combine that with an ad hoc model matrix.
+    // ViewMatrix = ViewMatrix *
+    //   glm::translate(MMat4(1.0f), MVec3(0.0, 0.0, _radius));
+    // glm::rotate(MMat4(1.0f), _vertAngle, MVec3(1.0, 0.0, 0.0)) *
+    // glm::rotate(MMat4(1.0f), _horizAngle, MVec3(0.0, 1.0, 0.0));
+
+    ProjectionMatrix = MMat4(1.0);
+    ProjectionMatrix[0][0] = 1.81;
+    ProjectionMatrix[1][1] = 2.41;
+    ProjectionMatrix[2][2] = -1.0;
+    ProjectionMatrix[2][3] = -1.0;
+    ProjectionMatrix[3][2] = -0.2;
+
         
-        ViewMatrix = glm::lookAt(pos, target, up);
+    MVec3 pos = MVec3(_radius * cos(_horizAngle) * cos(_vertAngle),
+                      -_radius * sin(_vertAngle),
+                      _radius * sin(_horizAngle) * cos(_vertAngle));
+    MVec3 up = MVec3(cos(_horizAngle) * sin(_vertAngle),
+                     cos(_vertAngle),
+                     sin(_horizAngle) * sin(_vertAngle));
+    MVec3 dir = MVec3(cos(_vertAngle) * sin(_horizAngle), 
+                      sin(_vertAngle),
+                      cos(_vertAngle) * cos(_horizAngle));
+      
+    ViewMatrix = glm::lookAt(pos, pos + dir, up);
+    
 
-        std::cout << "view:" << std::endl;
-        for (int i = 0; i < 4; i++) {
-          for (int j = 0; j < 4; j++) {
-            printf("%6.2f ", ViewMatrix[j][i]);
-          }
-          std::cout << std::endl;
-        }
+    ViewMatrix[0][0] = 0.96;
+    ViewMatrix[1][0] = 0.0;
+    ViewMatrix[2][0] = 0.28;
+    ViewMatrix[3][0] = -1.41;
+    
+    ViewMatrix[0][1] = 0.09;
+    ViewMatrix[1][1] = 0.95;
+    ViewMatrix[2][1] = -0.30;
+    ViewMatrix[3][1] = 1.51;
 
+    ViewMatrix[0][2] = -0.27;
+    ViewMatrix[1][2] = 0.31;
+    ViewMatrix[2][2] = 0.91;
+    ViewMatrix[3][2] = -4.55;
 
-      }
+    ViewMatrix[0][3] = 0.0;
+    ViewMatrix[1][3] = 0.0;
+    ViewMatrix[2][3] = 0.0;
+    ViewMatrix[3][3] = 1.0;
 
-      draw(ViewMatrix, ProjectionMatrix);
-    }
+    draw(ViewMatrix, ProjectionMatrix);
   }
+
 
   void run() {
 
@@ -376,11 +399,27 @@ int main( int argc, char **argv )
 
 // TODO:
 //
-// 1. Fix so the image is visible.
+// 1. Fix so the image is visible.  This is an issue with the
+// projection and view matrices, for which there are no sensible
+// default values established. There should be a way for a desktop
+// user to manipulate the view around to scan the entire 3D space.
+// This should be the default.  It seems like the "LookAtNode" is some
+// kind of stab at establishing this, but it doesn't seem to do
+// anything except sit there and be confusing.
 //
-// 2. Isolate shader and other OpenGL issues into a shader class.
+// 2. Isolate shader and other OpenGL issues into a shader class.  The
+// issue here is that GLFW does not support stereo in the yurt, so we
+// need FreeGLUT, which doesn't seem to support the GLSL (shader
+// language) version 330.  So probably we need to be able to specify a
+// lower level of shader sometime.  Probably if the shader and all the
+// vertex buffer manipulation were in the shader class, that would
+// work out.  So the mvShape class would establish the vertices,
+// normals, textures, and colors using std C++ types, and this other
+// shader class would take all that and stuff it into the appropriate
+// OpenGL buffers and invoke the shader necessary.
 //
-// 3. Write an alternate shader class that uses an earlier shader syntax.
+// 3. Write an alternate shader class that uses an earlier shader
+// syntax.  See above.
 //
 // 4. Test with FreeGLUT plugin.
 //

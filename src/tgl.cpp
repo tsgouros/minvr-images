@@ -205,6 +205,23 @@ public:
          it != _shaderList.end(); it++)         
       (*it)->draw();
 
+      std::cout << "proj:" << std::endl;
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          printf("%6.2f ", ProjectionMatrix[j][i]);
+        }
+        std::cout << std::endl;
+      }
+
+      std::cout << "view:" << std::endl;
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          printf("%6.2f ", ViewMatrix[j][i]);
+        }
+        std::cout << std::endl;
+      }
+
+    
     // Now draw the objects.
     for (std::list<mvShape*>::iterator it = _shapeList.begin();
          it != _shapeList.end(); it++) {

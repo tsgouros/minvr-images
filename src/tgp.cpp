@@ -122,12 +122,16 @@ public:
     
     mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, shaders);
 
-    ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
+    //    ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
+    ((mvShapeObj*)suzanne)->setObjFile("../data/office-test.obj");
     
     // Load the texture
-    GLuint textureBufferID = loadDDS("uvmap.DDS");
+    int w, h;
+    GLuint textureBufferID = loadPNG("../data/office-test.png", &w, &h);
+    //    GLuint textureBufferID = loadDDS("uvmap.DDS");
     suzanne->setTextureID(textureBufferID);
-    
+
+    suzanne->setPosition(MVec3(0.0, 0.0, -18.0));
 
     mvShape* rect = _shapeFactory.createShape(shapeRECT, shaders);
     // Load the texture

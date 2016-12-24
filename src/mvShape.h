@@ -114,7 +114,6 @@ protected:
   MMat4 _modelMatrix;
   bool _modelMatrixNeedsReset;
 
-  static void printMat(std::string name, MMat4 mat);
   virtual std::string print() const;
   friend std::ostream & operator<<(std::ostream &os, const mvShape& iShape);
 
@@ -126,6 +125,8 @@ public:
   mvShape(mvShapeType type, mvShaders* shaders);
   virtual ~mvShape();
   
+  static void printMat(std::string name, MMat4 mat);
+
   virtual void load() = 0;
   virtual void draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) = 0;
 

@@ -73,7 +73,7 @@ void main(){
   }
 
   if (materialColor.x != materialColor.y) {
-    finalColor = vec4(color.x, color.y, color.z, 0.0);
+    finalColor = vec4(color.x, color.y, color.z, 1.0);
 
   } else {
   

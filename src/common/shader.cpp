@@ -105,8 +105,10 @@ mvShader::mvShader(mvShaderType type, const std::string fileName) :
 mvShader::mvShader(mvShaderType type, const std::string fileName, int numLights) :
   _shaderType(type) {
 
+#ifdef DEBUG
   std::cout << "shader file: " << fileName << " n: " << numLights << std::endl;
-
+#endif
+  
 	// Read the shader code from the file
 	std::ifstream shaderStream(fileName, std::ios::in);
 	if (shaderStream.is_open()) {
@@ -189,9 +191,12 @@ mvShaders::mvShaders(const std::string vertShader,
                      const std::string fragShader,
                      mvLights* lights) : _lights(lights) {
 
+  // Clear OpenGL errors
+  glGetError();
 
   _programID = glCreateProgram();
 
+#ifdef DEBUG  
   GLint maj, min;
   glGetIntegerv(GL_MAJOR_VERSION, &maj);
   glGetIntegerv(GL_MINOR_VERSION, &min);
@@ -201,6 +206,7 @@ mvShaders::mvShaders(const std::string vertShader,
   if (!geomShader.empty()) {std::cout << "geomShader:" << geomShader << std::endl;}
   std::cout << "fragShader:" << fragShader << std::endl;
   std::cout << "lights: " << lights->getNumLights() << std::endl;
+#endif
   
   _vertShader = new mvShader(VERTEX, vertShader, _lights->getNumLights());
   _fragShader = new mvShader(FRAGMENT, fragShader, _lights->getNumLights());
@@ -210,6 +216,10 @@ mvShaders::mvShaders(const std::string vertShader,
   
   attachAndLinkShaders();
 
+  GLenum error = glGetError();
+  if (error != GL_NO_ERROR) {
+    std::cout << "OpenGL error in shader compile: " << error << std::endl;
+  }  
 }
 
 void mvShaders::attachAndLinkShaders() {

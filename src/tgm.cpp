@@ -13,7 +13,6 @@
 #include "vecTypes.h"
 #include <common/shader.h>
 #include <common/texture.h>
-#include <common/controls.h>
 #include <common/objloader.h>
 
 #include "mvShape.h"
@@ -119,6 +118,8 @@ public:
       
     if (_vertAngle > 6.283185) _vertAngle -= 6.283185;
     if (_vertAngle < 0.0) _vertAngle += 6.283185;
+
+    //    std::cout << "radius: " << _radius << " horizAngle: " << _horizAngle << " vertAngle: " << _vertAngle << " eventName: " << eventName << std::endl;
 	}
 
   // void checkEvents() {
@@ -130,12 +131,24 @@ public:
   void onVRRenderContext(MinVR::VRDataIndex *renderState,
                          MinVR::VRDisplayNode *callingNode) {
 
-    if (!_initialized) {
+    if ((int)renderState->getValue("/InitRender") == 1) {
 
-      std::cout << "renderContext is here" << std::endl;
-      //std::cout << "renderState->.." << (int)renderState->getValue("InitRender") << std::endl;
-      std::cout << "renderState->.." << std::endl << renderState->printStructure() << std::endl;
+      // Initialize GLEW
+      glewExperimental = true; // Needed for core profile
+      GLenum err = glewInit();
+      if (err != GLEW_OK) {
+        /* Problem: glewInit failed, something is seriously wrong. */
+        throw std::runtime_error( "Error: " +
+                                  std::string((char*)glewGetErrorString(err)));
+      }      
 
+      GLenum error = glGetError();
+
+      if (error != GL_NO_ERROR) {
+        // There is a 1280 (bad enum) error that is apparently triggered by
+        // glewInit(). It seems not to be a problem.
+        std::cout << "OpenGL Error: " << error << std::endl;
+      } else std::cout << "no problem, Jack" << std::endl;
       
       // Dark blue background
       glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -151,7 +164,13 @@ public:
       // Cull triangles whose normal is not towards the camera.
       glEnable(GL_CULL_FACE);
 
+      error = glGetError();
 
+      if (error != GL_NO_ERROR) {
+        std::cout << "OpenGL Error: " << error << std::endl;
+      } //else std::cout << "all clear on the OpenGL front" << std::endl;
+      
+     
       //////////////////////////////////////////////////////////
       // Make some lights
       mvLights* lights = new mvLights();
@@ -239,7 +258,7 @@ public:
 
       MMat4 ProjectionMatrix;
       MMat4 ViewMatrix;
-      
+
       if (renderState->exists("ProjectionMatrix", "/")) {
         MinVR::VRDoubleArray p = renderState->getValue("ProjectionMatrix", "/");
         ProjectionMatrix = MMat4(p[0]);
@@ -248,10 +267,10 @@ public:
 
         // Combine that with an ad hoc model matrix.
         ViewMatrix = ViewMatrix *
-          glm::translate(MMat4(1.0f), MVec3(0.0,0.0,-_radius)) *
+          glm::translate(MMat4(1.0f), MVec3(0.0, 0.0, -_radius)) *
           glm::rotate(MMat4(1.0f), _vertAngle, MVec3(1.0, 0.0, 0.0)) *
           glm::rotate(MMat4(1.0f), _horizAngle, MVec3(0.0, 1.0, 0.0));
-        
+
       } else {
         ProjectionMatrix = MMat4(1.0);
 
@@ -264,6 +283,15 @@ public:
         MVec3 target = MVec3(0.0f, 0.0f, 0.0f);
         
         ViewMatrix = glm::lookAt(pos, target, up);
+
+        std::cout << "view:" << std::endl;
+        for (int i = 0; i < 4; i++) {
+          for (int j = 0; j < 4; j++) {
+            printf("%6.2f ", ViewMatrix[j][i]);
+          }
+          std::cout << std::endl;
+        }
+
 
       }
 
@@ -343,3 +371,16 @@ int main( int argc, char **argv )
 
 	// return 0;
 }
+
+
+
+// TODO:
+//
+// 1. Fix so the image is visible.
+//
+// 2. Isolate shader and other OpenGL issues into a shader class.
+//
+// 3. Write an alternate shader class that uses an earlier shader syntax.
+//
+// 4. Test with FreeGLUT plugin.
+//

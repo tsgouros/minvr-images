@@ -19,7 +19,6 @@
 #include "vecTypes.h"
 #include <common/shader.h>
 #include <common/texture.h>
-#include <common/controls.h>
 #include <common/objloader.h>
 
 typedef enum {

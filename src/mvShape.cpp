@@ -21,7 +21,6 @@ void mvShape::setupDefaultNames() {
   _normalAttribName = std::string("vertexNormal_modelspace");
   _colorAttribName = std::string("vertexInputColor");
   _textureAttribName = std::string("mvTextureSampler");
-  _mvpMatrixName = std::string("MVP");
   _projMatrixName = std::string("P");
   _viewMatrixName = std::string("V");
   _modelMatrixName = std::string("M");
@@ -130,9 +129,8 @@ void mvShapeRect::load() {
   initVertices();
 
   // Arrange the data for the shaders to work on.  "Uniforms" first.
-  // Get a handle for our "MVP" uniform
   GLuint programID = _shaders->getProgramID();
-  _mvpMatrixID = glGetUniformLocation(programID, _mvpMatrixName.c_str());
+  _projMatrixID = glGetUniformLocation(programID, _projMatrixName.c_str());
   _viewMatrixID = glGetUniformLocation(programID, _viewMatrixName.c_str());
   _modelMatrixID = glGetUniformLocation(programID, _modelMatrixName.c_str());
 
@@ -177,9 +175,6 @@ void mvShapeRect::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
   // Use our shader
   glUseProgram(_shaders->getProgramID());
 
-  // Compute the MVP matrix from keyboard and mouse input
-  MMat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
-
   // printMat("proj", ProjectionMatrix);
   // printMat("view", ViewMatrix);
   // printMat("model", _modelMatrix);
@@ -187,8 +182,8 @@ void mvShapeRect::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
     
   // Send our transformation to the currently bound shader, 
   // in the "MVP" uniform
-  glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
-  glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
+  glUniformMatrix4fv(_projMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+  glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &getModelMatrix()[0][0]);
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
 
@@ -250,8 +245,7 @@ void mvShapeRect::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
 void mvShapeObj::load() {
 
   // Arrange the data for the shaders to work on.  "Uniforms" first.
-  // Get a handle for our "MVP" uniform
-  _mvpMatrixID = glGetUniformLocation(_shaders->getProgramID(), _mvpMatrixName.c_str());
+  _projMatrixID = glGetUniformLocation(_shaders->getProgramID(), _projMatrixName.c_str());
   _viewMatrixID = glGetUniformLocation(_shaders->getProgramID(), _viewMatrixName.c_str());
   _modelMatrixID = glGetUniformLocation(_shaders->getProgramID(), _modelMatrixName.c_str());
 
@@ -302,18 +296,13 @@ void mvShapeObj::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
   // Use our shader
   glUseProgram(_shaders->getProgramID());
 
-  // Compute the MVP matrix from keyboard and mouse input
-  MMat4 MVP = ProjectionMatrix * ViewMatrix * getModelMatrix();
-
   // printMat("proj", ProjectionMatrix);
   // printMat("view", ViewMatrix);
   // printMat("model", _modelMatrix);
-  // printMat("MVP", MVP);
     
-  // Send our transformation to the currently bound shader, 
-  // in the "MVP" uniform
-  glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
-  glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &_modelMatrix[0][0]);
+  // Send our transformation to the currently bound shader.
+  glUniformMatrix4fv(_projMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
+  glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &getModelMatrix()[0][0]);
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
   // Bind our texture in Texture Unit 0
@@ -407,7 +396,7 @@ void mvShapeAxes::expandAxesColors() {
 
 void mvShapeAxes::load() {
 
-  _mvpMatrixID = glGetUniformLocation(_shaders->getProgramID(), _mvpMatrixName.c_str());
+  _projMatrixID = glGetUniformLocation(_shaders->getProgramID(), _projMatrixName.c_str());
 
   glGenVertexArrays(1, &_arrayID);
   glBindVertexArray(_arrayID);
@@ -427,15 +416,14 @@ void mvShapeAxes::load() {
 void mvShapeAxes::draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) {
 
   // We have to ask where these attributes are located.
-  _vertexAttribID = glGetAttribLocation(_shaders->getProgramID(), _vertexAttribName.c_str());
-  _colorAttribID = glGetAttribLocation(_shaders->getProgramID(), _colorAttribName.c_str());
+  _vertexAttribID = glGetAttribLocation(_shaders->getProgramID(),
+                                        _vertexAttribName.c_str());
+  _colorAttribID = glGetAttribLocation(_shaders->getProgramID(),
+                                       _colorAttribName.c_str());
 
   glUseProgram(_shaders->getProgramID());
 
-  // Compute the MVP matrix from keyboard and mouse input
-  MMat4 MVP = ProjectionMatrix * ViewMatrix * _modelMatrix;
-    
-  glUniformMatrix4fv(_mvpMatrixID, 1, GL_FALSE, &MVP[0][0]);
+  glUniformMatrix4fv(_projMatrixID, 1, GL_FALSE, &ProjectionMatrix[0][0]);
     
   // Just checking...
   // GLint count;
@@ -514,8 +502,6 @@ std::string mvShape::print() const {
   out << "_colors:      N = " << _colors.size() << std::endl;
 
   // These matrices may appear in the shaders.
-  out << "_mvpMatrixID:     " << _mvpMatrixID;
-  out << " (" << _mvpMatrixName << ")" << std::endl;
   out << "_projMatrixID:    " << _projMatrixID;
   out << " (" << _projMatrixName << ")" << std::endl;
   out << "_viewMatrixID:    " << _viewMatrixID;

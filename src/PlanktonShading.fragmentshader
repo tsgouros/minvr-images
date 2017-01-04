@@ -1,6 +1,7 @@
 #version 330 core
 // We are using the core, *not* the compatibility profile. 
 
+// This gets filled in by the shader compiler in mvShape.
 const int NUM_LIGHTS = XX;
 const float MAX_DIST = 50.0;
 const float MAX_DIST_SQUARED = MAX_DIST * MAX_DIST;
@@ -72,6 +73,7 @@ void main(){
     color += ambient + attenuation * (diffuse + specular);
   }
 
+  // This checks to see if the image is gray scale.  If not, change alpha.
   if (materialColor.x != materialColor.y) {
     finalColor = vec4(color.x, color.y, color.z, 1.0);
 

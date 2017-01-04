@@ -247,9 +247,6 @@ public:
          it != _shapeList.end(); it++) {
       (*it)->draw(ViewMatrix, ProjectionMatrix);
     }
-    
-		// Swap buffers
-		//glfwSwapBuffers(_window);
   };
 
   virtual void onVRRenderScene(MinVR::VRDataIndex *renderState,
@@ -258,7 +255,11 @@ public:
     MMat4 ProjectionMatrix;
     MMat4 ViewMatrix;
 
+    // MinVR matrices are stored in row-major order so they will be
+    // easy to read as text.  OpenGL uses column-major order, so these
+    // must be transposed before sending them to OpenGL.
     MinVR::VRDoubleArray p = renderState->getValue("ProjectionMatrix", "/");
+    // ProjectionMatrix = glm::transpose(MMat4(p[0])); 
     ProjectionMatrix = MMat4(p[0],p[4],p[8],p[12],p[1],p[5],p[9],p[13],
                              p[2],p[6],p[10],p[14],p[3],p[7],p[11],p[15]);
 
@@ -270,38 +271,20 @@ public:
     MMat4 LookAtMatrix = MMat4(l[0],l[4],l[8],l[12],l[1],l[5],l[9],l[13],
                        l[2],l[6],l[10],l[14],l[3],l[7],l[11],l[15]);
 
-    mvShape::printMat("projection", ProjectionMatrix);
-
-    // mvShape::printMat("view", ViewMatrix);
-
-    // mvShape::printMat("lookat", LookAtMatrix);
-
-    // throw std::runtime_error("stop here");
-
-    // Combine that with an ad hoc model matrix.
-    // ViewMatrix = ViewMatrix *
-    //   glm::translate(MMat4(1.0f), MVec3(0.0, 0.0, _radius));
-    // glm::rotate(MMat4(1.0f), _vertAngle, MVec3(1.0, 0.0, 0.0)) *
-    // glm::rotate(MMat4(1.0f), _horizAngle, MVec3(0.0, 1.0, 0.0));
-
-    // Combine that with an ad hoc model matrix.
-    
-    //mvShape::printMat("projection", ProjectionMatrix);
-        
-    MVec3 pos = MVec3(_radius * cos(_horizAngle) * cos(_vertAngle),
-                      -_radius * sin(_vertAngle),
-                      _radius * sin(_horizAngle) * cos(_vertAngle));
-    MVec3 up = MVec3(cos(_horizAngle) * sin(_vertAngle),
-                     cos(_vertAngle),
-                     sin(_horizAngle) * sin(_vertAngle));
-    MVec3 dir = MVec3(cos(_vertAngle) * sin(_horizAngle), 
-                      sin(_vertAngle),
-                      cos(_vertAngle) * cos(_horizAngle));
-      
+    // MVec3 pos = MVec3(_radius * cos(_horizAngle) * cos(_vertAngle),
+    //                   -_radius * sin(_vertAngle),
+    //                   _radius * sin(_horizAngle) * cos(_vertAngle));
+    // MVec3 up = MVec3(cos(_horizAngle) * sin(_vertAngle),
+    //                  cos(_vertAngle),
+    //                  sin(_horizAngle) * sin(_vertAngle));
+    // MVec3 dir = MVec3(cos(_vertAngle) * sin(_horizAngle), 
+    //                   sin(_vertAngle),
+    //                   cos(_vertAngle) * cos(_horizAngle));
     // ViewMatrix = glm::lookAt(pos, pos + dir, up);
     
     // mvShape::printMat("view", ViewMatrix);
-
+    // mvShape::printMat("projection", ProjectionMatrix);
+    // mvShape::printMat("lookat", LookAtMatrix);
 
     draw(ViewMatrix, ProjectionMatrix);
   }

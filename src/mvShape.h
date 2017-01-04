@@ -93,9 +93,6 @@ protected:
 	std::vector<MVec3> _colors;
 
   // These matrices may appear in the shaders.
-  GLuint _mvpMatrixID;
-  std::string  _mvpMatrixName;
-
   GLuint _projMatrixID;
   std::string  _projMatrixName;
 

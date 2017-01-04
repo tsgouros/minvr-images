@@ -91,6 +91,12 @@ public:
     delete _vrMain;
   };
 
+
+  // Maybe what this should do is to accept the keyboard commands and
+  // issue another event with Transform in it?  This would be
+  // irrelevant during cave runs, wouldn't it?
+
+  
   virtual void onVREvent(const std::string &eventName,
                          MinVR::VRDataIndex *eventData) {
 		if (eventName == "/KbdEsc_Down") {
@@ -253,37 +259,34 @@ public:
     MMat4 ViewMatrix;
 
     MinVR::VRDoubleArray p = renderState->getValue("ProjectionMatrix", "/");
-    ProjectionMatrix = MMat4(p[0]);
+    ProjectionMatrix = MMat4(p[0],p[4],p[8],p[12],p[1],p[5],p[9],p[13],
+                             p[2],p[6],p[10],p[14],p[3],p[7],p[11],p[15]);
+
     MinVR::VRDoubleArray v = renderState->getValue("ViewMatrix", "/");
-    ViewMatrix = MMat4(v[0]);
+    ViewMatrix = MMat4(v[0],v[4],v[8],v[12],v[1],v[5],v[9],v[13],
+                       v[2],v[6],v[10],v[14],v[3],v[7],v[11],v[15]);
+    
     MinVR::VRDoubleArray l = renderState->getValue("LookAtMatrix", "/");
-    MMat4 LookAtMatrix = MMat4(l[0]);
+    MMat4 LookAtMatrix = MMat4(l[0],l[4],l[8],l[12],l[1],l[5],l[9],l[13],
+                       l[2],l[6],l[10],l[14],l[3],l[7],l[11],l[15]);
 
     mvShape::printMat("projection", ProjectionMatrix);
 
-    mvShape::printMat("view", ViewMatrix);
+    // mvShape::printMat("view", ViewMatrix);
 
-    mvShape::printMat("lookat", LookAtMatrix);
+    // mvShape::printMat("lookat", LookAtMatrix);
 
-    throw std::runtime_error("stop here");
+    // throw std::runtime_error("stop here");
 
-
-
-
-      
     // Combine that with an ad hoc model matrix.
     // ViewMatrix = ViewMatrix *
     //   glm::translate(MMat4(1.0f), MVec3(0.0, 0.0, _radius));
     // glm::rotate(MMat4(1.0f), _vertAngle, MVec3(1.0, 0.0, 0.0)) *
     // glm::rotate(MMat4(1.0f), _horizAngle, MVec3(0.0, 1.0, 0.0));
 
-    ProjectionMatrix = MMat4(1.0);
-    ProjectionMatrix[0][0] = 1.81;
-    ProjectionMatrix[1][1] = 2.41;
-    ProjectionMatrix[2][2] = -1.0;
-    ProjectionMatrix[2][3] = -1.0;
-    ProjectionMatrix[3][2] = -0.2;
-
+    // Combine that with an ad hoc model matrix.
+    
+    //mvShape::printMat("projection", ProjectionMatrix);
         
     MVec3 pos = MVec3(_radius * cos(_horizAngle) * cos(_vertAngle),
                       -_radius * sin(_vertAngle),
@@ -295,28 +298,10 @@ public:
                       sin(_vertAngle),
                       cos(_vertAngle) * cos(_horizAngle));
       
-    ViewMatrix = glm::lookAt(pos, pos + dir, up);
+    // ViewMatrix = glm::lookAt(pos, pos + dir, up);
     
+    // mvShape::printMat("view", ViewMatrix);
 
-    ViewMatrix[0][0] = 0.96;
-    ViewMatrix[1][0] = 0.0;
-    ViewMatrix[2][0] = 0.28;
-    ViewMatrix[3][0] = -1.41;
-    
-    ViewMatrix[0][1] = 0.09;
-    ViewMatrix[1][1] = 0.95;
-    ViewMatrix[2][1] = -0.30;
-    ViewMatrix[3][1] = 1.51;
-
-    ViewMatrix[0][2] = -0.27;
-    ViewMatrix[1][2] = 0.31;
-    ViewMatrix[2][2] = 0.91;
-    ViewMatrix[3][2] = -4.55;
-
-    ViewMatrix[0][3] = 0.0;
-    ViewMatrix[1][3] = 0.0;
-    ViewMatrix[2][3] = 0.0;
-    ViewMatrix[3][3] = 1.0;
 
     draw(ViewMatrix, ProjectionMatrix);
   }

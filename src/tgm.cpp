@@ -33,7 +33,8 @@ class VRApp : public MinVR::VREventHandler, public MinVR::VRRenderHandler {
 private:
   MinVR::VRMain* _vrMain;
   bool _quit;
-  float _horizAngle, _vertAngle, _radius, _incAngle;
+  float _horizAngle, _vertAngle, _stepAngle;
+  float _xpos, _ypos, _zpos, _stepDist;
   bool _initialized;
 
   std::list<ImageToDisplay> _images;
@@ -60,10 +61,16 @@ public:
 
     _vrMain->addEventHandler(this);
     _vrMain->addRenderHandler(this);
-    _horizAngle = 0.0;
-    _vertAngle = 0.0;
-		_radius =  15.0;
-    _incAngle = -0.1f;
+
+    _horizAngle = 0.0; _vertAngle = 0.0; _stepAngle = -0.1f;
+    _xpos = 15.0; _ypos = 0.0; _zpos = 0.0; _stepDist = 0.1f;
+
+
+    _vrMain->getConfig()->addData("/HeadLocation/PosX", _xpos);
+    _vrMain->getConfig()->addData("/HeadLocation/PosY", _ypos);
+    _vrMain->getConfig()->addData("/HeadLocation/PosZ", _zpos);
+    _vrMain->getConfig()->addData("/HeadLocation/HorizAngle", _horizAngle);
+    _vrMain->getConfig()->addData("/HeadLocation/VertAngle", _vertAngle);
 
   };
 
@@ -99,24 +106,52 @@ public:
   
   virtual void onVREvent(const std::string &eventName,
                          MinVR::VRDataIndex *eventData) {
+    // std::cout << "event data" << std::endl << eventData->printStructure() << std::endl;
 		if (eventName == "/KbdEsc_Down") {
 			_quit = true;
 		} else if (eventName == "/MouseBtnLeft_Down") {
-      _radius += 5.0 * _incAngle;
+      _xpos += _stepDist;
     } else if (eventName == "/MouseBtnRight_Down") {
-      _radius -= 5.0 * _incAngle;
+      _xpos -= _stepDist;
     } else if ((eventName == "/KbdLeft_Down") ||
                (eventName == "/KbdLeft_Repeat")) {
-      _horizAngle -= _incAngle;
+      _horizAngle -= _stepAngle;
     } else if ((eventName == "/KbdRight_Down") ||
                (eventName == "/KbdRight_Repeat")) {
-      _horizAngle += _incAngle;
+      _horizAngle += _stepAngle;
     } else if ((eventName == "/KbdUp_Down") ||
                (eventName == "/KbdUp_Repeat")) {
-      _vertAngle -= _incAngle;
+      _vertAngle -= _stepAngle;
     } else if ((eventName == "/KbdDown_Down") ||
                (eventName == "/KbdDown_Repeat")) {
-      _vertAngle += _incAngle;
+      _vertAngle += _stepAngle;
+    } else if ((eventName == "/KbdA_Down") ||
+               (eventName == "/KbdA_Repeat")) {
+
+      // Just a jump to the left.
+      _xpos += _stepDist * cos(_horizAngle);
+      _zpos += _stepDist * sin(_horizAngle);
+
+    } else if ((eventName == "/KbdD_Down") ||
+               (eventName == "/KbdD_Repeat")) {
+      // Then a step to the right.
+      _xpos -= _stepDist * cos(_horizAngle);
+      _zpos -= _stepDist * sin(_horizAngle);
+      // (Then pull your knees in tight.)
+    } else if ((eventName == "/KbdW_Down") ||
+               (eventName == "/KbdW_Repeat")) {
+      // Move a step forward.
+      _xpos += _stepDist * sin(_horizAngle) * cos(_vertAngle);
+      _ypos += _stepDist * sin(_vertAngle);
+      _zpos += _stepDist * cos(_horizAngle) * cos(_vertAngle);
+
+    } else if ((eventName == "/KbdS_Down") ||
+               (eventName == "/KbdS_Repeat")) {
+      // Move a step backward.
+      _xpos -= _stepDist * sin(_horizAngle) * cos(_vertAngle);
+      _ypos -= _stepDist * sin(_vertAngle);
+      _zpos -= _stepDist * cos(_horizAngle) * cos(_vertAngle);
+
     }
       
     if (_horizAngle > 6.283185) _horizAngle -= 6.283185;
@@ -125,7 +160,12 @@ public:
     if (_vertAngle > 6.283185) _vertAngle -= 6.283185;
     if (_vertAngle < 0.0) _vertAngle += 6.283185;
 
-    //    std::cout << "radius: " << _radius << " horizAngle: " << _horizAngle << " vertAngle: " << _vertAngle << " eventName: " << eventName << std::endl;
+    eventData->addData("/HeadLocation/PosX", _xpos);
+    eventData->addData("/HeadLocation/PosY", _ypos);
+    eventData->addData("/HeadLocation/PosZ", _zpos);
+    eventData->addData("/HeadLocation/HorizAngle", _horizAngle);
+    eventData->addData("/HeadLocation/VertAngle", _vertAngle);
+    
 	}
 
   // void checkEvents() {
@@ -256,8 +296,10 @@ public:
     MMat4 ViewMatrix;
 
     // MinVR matrices are stored in row-major order so they will be
-    // easy to read as text.  OpenGL uses column-major order, so these
-    // must be transposed before sending them to OpenGL.
+    // easy to read as text (which is dumb).  OpenGL uses column-major
+    // order, so these must be transposed before sending them to
+    // OpenGL.
+    // std::cout << renderState->printStructure() << std::endl;
     MinVR::VRDoubleArray p = renderState->getValue("ProjectionMatrix", "/");
     // ProjectionMatrix = glm::transpose(MMat4(p[0])); 
     ProjectionMatrix = MMat4(p[0],p[4],p[8],p[12],p[1],p[5],p[9],p[13],
@@ -266,21 +308,26 @@ public:
     MinVR::VRDoubleArray v = renderState->getValue("ViewMatrix", "/");
     ViewMatrix = MMat4(v[0],v[4],v[8],v[12],v[1],v[5],v[9],v[13],
                        v[2],v[6],v[10],v[14],v[3],v[7],v[11],v[15]);
+
+    double xpos = _vrMain->getConfig()->getValue("/HeadLocation/PosX");
+    double ypos = _vrMain->getConfig()->getValue("/HeadLocation/PosY");
+    double zpos = _vrMain->getConfig()->getValue("/HeadLocation/PosZ");
+    double hangle = _vrMain->getConfig()->getValue("/HeadLocation/HorizAngle");
+    double vangle = _vrMain->getConfig()->getValue("/HeadLocation/VertAngle");
+
     
     MinVR::VRDoubleArray l = renderState->getValue("LookAtMatrix", "/");
     MMat4 LookAtMatrix = MMat4(l[0],l[4],l[8],l[12],l[1],l[5],l[9],l[13],
                        l[2],l[6],l[10],l[14],l[3],l[7],l[11],l[15]);
 
-    // MVec3 pos = MVec3(_radius * cos(_horizAngle) * cos(_vertAngle),
-    //                   -_radius * sin(_vertAngle),
-    //                   _radius * sin(_horizAngle) * cos(_vertAngle));
-    // MVec3 up = MVec3(cos(_horizAngle) * sin(_vertAngle),
-    //                  cos(_vertAngle),
-    //                  sin(_horizAngle) * sin(_vertAngle));
-    // MVec3 dir = MVec3(cos(_vertAngle) * sin(_horizAngle), 
-    //                   sin(_vertAngle),
-    //                   cos(_vertAngle) * cos(_horizAngle));
-    // ViewMatrix = glm::lookAt(pos, pos + dir, up);
+    MVec3 pos = MVec3(xpos, ypos, zpos);
+    MVec3 up = MVec3(cos(hangle) * sin(vangle),
+                     cos(vangle),
+                     sin(hangle) * sin(vangle));
+    MVec3 dir = MVec3(cos(vangle) * sin(hangle), 
+                      sin(vangle),
+                      cos(vangle) * cos(hangle));
+    ViewMatrix = glm::lookAt(pos, pos + dir, up);
     
     // mvShape::printMat("view", ViewMatrix);
     // mvShape::printMat("projection", ProjectionMatrix);
@@ -292,6 +339,13 @@ public:
 
   void run() {
 
+    // Print what values get added by whom to the render state.
+    // std::list<std::string> values = _vrMain->auditValuesFromAllDisplays();
+    // std::cout << "VALUES ADDED:" << std::endl;
+    // for (std::list<std::string>::iterator it = values.begin();
+    //      it != values.end(); it++)
+    //   std::cout << *it << std::endl;
+    
     while (!_quit) {
       _vrMain->mainloop();
     }

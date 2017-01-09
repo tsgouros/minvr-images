@@ -2,26 +2,53 @@
 #define TEXTURE_HPP
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
+#include <iostream>
 
 #include <GL/glew.h>
 
 
 #include <png.h>
 
+typedef enum {
+  texturePNG = 0,
+  textureDDS = 1,
+  textureBMP = 2
+} mvTextureType;
 
-// Load a .BMP file using our custom loader
-GLuint loadBMP_custom(const char * imagepath);
+class mvTexture {
+ private:
+  GLfloat _width, _height;
 
-//// Since GLFW 3, glfwLoadTexture2D() has been removed. You have to use another texture loading library, 
-//// or do it yourself (just like loadBMP_custom and loadDDS)
-//// Load a .TGA file using GLFW's own loader
-//GLuint loadTGA_glfw(const char * imagepath);
+  GLuint _textureAttribID;
+  std::string _textureAttribName;
 
-// Load a .DDS file using GLFW's own loader
-GLuint loadDDS(const char * imagepath);
+  void setupDefaultNames() {
+    _textureAttribName = std::string("mvTextureSampler");
+  };
 
-GLuint loadPNG(const char * imagePath, int * width, int * height);
+  GLuint _textureBufferID;
 
+  GLuint loadBMP(const std::string imagepath);
+  GLuint loadDDS(const std::string imagepath);
+  GLuint loadPNG(const std::string imagePath);
+  
+ public:
+  mvTexture(const mvTextureType t, const std::string fileName);
+  ~mvTexture() {};
+
+  void load(GLuint programID);
+  void draw(GLuint programID);
+
+  void setTextureID(GLuint textureID) { _textureBufferID = textureID; };
+  GLuint getTextureID() { return _textureBufferID; };
+
+  GLfloat getWidth() { return _width; };
+  GLfloat getHeight() { return _height; };
+
+};
+  
+
+  
 
 #endif

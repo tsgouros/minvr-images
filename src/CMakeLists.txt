@@ -34,59 +34,58 @@ include_directories(
 )
 
 # tgl
-add_executable(tgl
-	tgl.cpp
-  mvShape.cpp
-  mvShape.h
-  vecTypes.h
-	common/shader.cpp
-	common/shader.h
-	common/controls.cpp
-	common/controls.h
-	common/texture.cpp
-	common/texture.h
-	common/objloader.cpp
-	common/objloader.h
-  tinyxml2.h
-  tinyxml2.cpp
+# add_executable(tgl
+# 	tgl.cpp
+#   mvShape.cpp
+#   mvShape.h
+#   vecTypes.h
+# 	common/shader.cpp
+# 	common/shader.h
+# 	common/controls.cpp
+# 	common/controls.h
+# 	common/texture.cpp
+# 	common/texture.h
+# 	common/objloader.cpp
+# 	common/objloader.h
+#   tinyxml2.h
+#   tinyxml2.cpp
 	
-	StandardShading.vertexshader
-	StandardShading.fragmentshader
-)
-target_link_libraries(tgl MinVR
-  ${OPENGL_LIBRARY}
-  ${PNG_LIBRARIES}
-  glfw
-  GLEW_1130
-  ${ALL_LIBS}
-)
+# 	StandardShading.vertexshader
+# 	StandardShading.fragmentshader
+# )
+# target_link_libraries(tgl MinVR
+#   ${OPENGL_LIBRARY}
+#   ${PNG_LIBRARIES}
+#   glfw
+#   GLEW_1130
+#   ${ALL_LIBS}
+# )
 
-# tgp
-add_executable(tgp
-	tgp.cpp
-  mvShape.cpp
-  mvShape.h
-  vecTypes.h
-	common/shader.cpp
-	common/shader.h
-	common/controls.cpp
-	common/controls.h
-	common/texture.cpp
-	common/texture.h
-	common/objloader.cpp
-	common/objloader.h
+# # tgp
+# add_executable(tgp
+# 	tgp.cpp
+#   mvShape.cpp
+#   mvShape.h
+#   vecTypes.h
+# 	common/shader.cpp
+# 	common/shader.h
+# 	common/controls.cpp
+# 	common/controls.h
+# 	common/texture.cpp
+# 	common/texture.h
+# 	common/objloader.cpp
+# 	common/objloader.h
 	
-	StandardShading.vertexshader
-	StandardShading.fragmentshader
-)
-target_link_libraries(tgp MinVR
-  ${OPENGL_LIBRARY}
-  ${PNG_LIBRARIES}
-  glfw
-  GLEW_1130
-  ${ALL_LIBS}
-)
-
+# 	StandardShading.vertexshader
+# 	StandardShading.fragmentshader
+# )
+# target_link_libraries(tgp MinVR
+#   ${OPENGL_LIBRARY}
+#   ${PNG_LIBRARIES}
+#   glfw
+#   GLEW_1130
+#   ${ALL_LIBS}
+# )
 
 # tgm
 add_executable(tgm
@@ -113,11 +112,3 @@ target_link_libraries(tgm
   GLEW_1130
   ${ALL_LIBS}
 )
-
-add_executable(main main.cpp)
-target_link_libraries(main
-  MinVR
-  ${OPENGL_gl_LIBRARY}
-  ${ALL_LIBS})
-
-

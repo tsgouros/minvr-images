@@ -31,8 +31,8 @@ set(CMAKE_RELWITHDEBINFO_POSTFIX "rd")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMinVR_DEBUG")
 
-#set(MINVR_DIR /Users/tomfool/tech/16/yurt/MinVR2-master/build/install)
-set(MINVR_DIR /Users/tomfool/tech/16/yurt/MinVR2/build/install)
+set(MINVR_DIR /Users/tomfool/tech/17/yurt/MinVR/build/install)
+#set(MINVR_DIR /Users/tomfool/tech/16/yurt/MinVR2/build/install)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${MINVR_DIR}/include")
 message(${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -I${MINVR_DIR}/include")

@@ -2,6 +2,7 @@
 #define SHADER_HPP
 
 #include "vecTypes.h"
+#include "texture.h"
 
 #include <iostream>
 #include <string>
@@ -18,9 +19,9 @@
 // orientation.
 //
 // To use them, concoct a list of lights with the mvLight object, and
-// create a mvShaders object with the vertex, fragment, and geometry
+// create a mvShaderSet object with the vertex, fragment, and geometry
 // (if any) shaders to go with them.  If your shaders depend on the
-// number of lights, there is a constructor for the mvShaders object
+// number of lights, there is a constructor for the mvShaderSet object
 // that will edit the shader accordingly, see below for instructions.
 //
 // The shaders that work with these lights have three requirements:
@@ -39,7 +40,7 @@
 // those comments for more information.
 //
 //
-// A properly initialized mvShaders object, attached to some lights,
+// A properly initialized mvShaderSet object, attached to some lights,
 // is ready to go, and can be given to the mvShape object for use.
 // Note that multiple shaders might depend on the same lights and
 // multiple objects will likely use the same set of shaders.
@@ -77,12 +78,12 @@ class mvLights {
   GLuint _lightColorID;
   std::string _lightColorName;
 
-  // The default names of things in the shaders, put here for easy
-  // comparison or editing.  If you're mucking around with the
-  // shaders, don't forget that these are names of arrays inside the
-  // shader, and that the size of the arrays is set with 'XX', see the
-  // shader constructors below.
   void setupDefaultNames() {
+    // The default names of things in the shaders, put here for easy
+    // comparison or editing.  If you're mucking around with the
+    // shaders, don't forget that these are names of arrays inside the
+    // shader, and that the size of the arrays is set with 'XX', see
+    // the shader constructors below.
     _lightPositionName = std::string("LightPosition_worldspace");
     _lightColorName = std::string("LightColor");
   }
@@ -171,12 +172,12 @@ class mvShader {
   std::string getCompileLog() { return _compilationLog; };  
 };
 
-// mvShaders is a class to manage the collection of two or three
+// mvShaderSet is a class to manage the collection of two or three
 // shaders that make up an OpenGL "program".  The geometry shader is
 // optional.  The compiling and linking of the shaders is done during
 // the object construction, so you can't swap the shaders in and out
 // after creation.
-class mvShaders {
+class mvShaderSet {
  private:
   mvShader* _vertShader;
   mvShader* _geomShader;
@@ -186,20 +187,190 @@ class mvShaders {
   std::string _linkLog;
 
   mvLights* _lights;
+  bool _lightsLoaded;
 
   void attachAndLinkShaders();
   
  public:
-  mvShaders();
-  mvShaders(const std::string vertShader,
-            const std::string geomShader,
-            const std::string fragShader,
-            mvLights* lights);
+  mvShaderSet();
+  mvShaderSet(const std::string vertShader,
+              const std::string geomShader,
+              const std::string fragShader,
+              mvLights* lights);
 
-  void load() { _lights->load(_programID); };
-  void draw() { _lights->draw(_programID); };
+  ~mvShaderSet();
   
   GLuint getProgramID() { return _programID; };
   std::string getLinkLog() { return _linkLog; };
+
+  // These are for making sure that anything that has changed in the
+  // shader set will be properly accounted for at the next render.
+  // Mostly this would be changes in location for one or more of the
+  // lights, but anything else could be changed, too.
+  void load();
+  void draw();
 };
+
+
+// This class packages all the buffers and array objects that make a
+// shader work, and provides the object with a relatively simple and
+// well-labeled interface.  Basically the object just has to provide a
+// vertex array, normals, texture coordinates, and colors on the
+// load(), and model, view, and projection matrices on the draw().
+// The shaders (and their accompanying lights) can be shared among a
+// large number of shader contexts, though the calling program must
+// keep track of creating and destroying those objects when necessary.
+//
+// In a management sense, this class is closely linked with some
+// specific shaders object.  It uses the same names in shader, for
+// example.  But there is one shaderContext for each mvShape object in
+// the scene, and a much smaller number of mvShaderSet objects, possibly
+// just one.
+class mvShaderContext {
+private:
+  mvShaderSet* _shaderSet;
+  mvTexture* _texture;
+
+  // One of GL_POINTS, GL_LINES, GL_LINE_STRIP, GL_LINE_LOOP,
+  // GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_QUADS,
+  // GL_QUAD_STRIP, and GL_POLYGON.  See below.
+  GLenum _mode;
+  
+  // The IDs refer to the OpenGL attribute "names" and the strings
+  // that accompany them are the actual names used in the shaders.
+  GLuint _vertexAttribID;
+  std::string _vertexAttribName;
+  
+  GLuint _uvAttribID;
+  std::string _uvAttribName;
+  
+  GLuint _normalAttribID;
+  std::string _normalAttribName;
+  
+  GLuint _colorAttribID;
+  std::string _colorAttribName;
+
+  // Is this the VAO?
+  GLuint _arrayID;
+  
+  // These IDs point to actual data.
+  GLuint _vertexBufferID;
+	GLuint _uvBufferID;
+	GLuint _normalBufferID;
+  GLuint _colorBufferID;
+  int _vertexBufferSize;
+  
+  // These matrices may appear in the shaders.
+  GLuint _projMatrixID;
+  std::string  _projMatrixName;
+
+	GLuint _viewMatrixID;
+  std::string  _viewMatrixName;
+
+	GLuint _modelMatrixID;
+  std::string  _modelMatrixName;
+
+  // These are the default names of variables in the shaders.  Placed
+  // here so they're all in one place, for easy comparison to the shader
+  // you'll use.
+  void setupDefaultNames() {
+    _vertexAttribName = std::string("vertexPosition_modelspace");
+    _uvAttribName = std::string("vertexUV");
+    _normalAttribName = std::string("vertexNormal_modelspace");
+    _colorAttribName = std::string("vertexInputColor");
+    _projMatrixName = std::string("P");
+    _viewMatrixName = std::string("V");
+    _modelMatrixName = std::string("M");
+  }
+
+public:
+  mvShaderContext(mvShaderSet* shaderSet) {
+    _mode = GL_TRIANGLES; // this is the default
+    _shaderSet = shaderSet;
+    _texture = NULL;
+    setupDefaultNames();
+  }
+  mvShaderContext(mvShaderSet* shaderSet, mvTexture* texture) {
+    _mode = GL_TRIANGLES; // this is the default
+    _shaderSet = shaderSet;
+    _texture = texture;
+    setupDefaultNames();
+  }    
+  
+  // Should we delete the texture here?
+  ~mvShaderContext() {
+    if (_texture) delete _texture;
+    // Cleanup VBO and shader
+    if (glIsBuffer(_vertexBufferID)) glDeleteBuffers(1, &_vertexBufferID);
+    if (glIsBuffer(_uvBufferID))     glDeleteBuffers(1, &_uvBufferID);
+    if (glIsBuffer(_normalBufferID)) glDeleteBuffers(1, &_normalBufferID);
+    if (glIsBuffer(_colorBufferID))  glDeleteBuffers(1, &_colorBufferID);
+    if (glIsVertexArray(_arrayID))   glDeleteVertexArrays(1, &_arrayID);
+  };
+  
+  void load(const std::vector<MVec3> &vertices,
+            const std::vector<MVec2> &uvs,
+            const std::vector<MVec3> &normals,
+            const std::vector<MVec3> &colors);
+  void draw(const MMat4 &modelMatrix,
+            const MMat4 &viewMatrix,
+            const MMat4 &projectionMatrix);
+
+  // A description of all the OpenGL drawing modes.
+  //
+  // GL_POINTS -- Treats each vertex as a single point. Vertex n
+  //           defines point n. N points are drawn.
+  //
+  // GL_LINES -- Treats each pair of vertices as an independent line
+  //           segment. Vertices 2 ⁢ n - 1 and 2 ⁢ n define line n. N 2
+  //           lines are drawn.
+  //
+  // GL_LINE_STRIP -- Draws a connected group of line segments from
+  //           the first vertex to the last. Vertices n and n + 1
+  //           define line n. N - 1 lines are drawn.
+  //
+  // GL_LINE_LOOP -- Draws a connected group of line segments from the
+  //           first vertex to the last, then back to the
+  //           first. Vertices n and n + 1 define line n. The last
+  //           line, however, is defined by vertices N and 1. N lines
+  //           are drawn.
+  //
+  // GL_TRIANGLES -- Treats each triplet of vertices as an independent
+  //           triangle. Vertices 3 ⁢ n - 2 , 3 ⁢ n - 1 , and 3 ⁢ n
+  //           define triangle n. N 3 triangles are drawn.
+  //
+  // GL_TRIANGLE_STRIP -- Draws a connected group of triangles. One
+  //           triangle is defined for each vertex presented after the
+  //           first two vertices. For odd n, vertices n, n + 1 , and
+  //           n + 2 define triangle n. For even n, vertices n + 1 ,
+  //           n, and n + 2 define triangle n. N - 2 triangles are
+  //           drawn.
+  //
+  // GL_TRIANGLE_FAN -- Draws a connected group of triangles. One
+  //           triangle is defined for each vertex presented after the
+  //           first two vertices. Vertices 1 , n + 1 , and n + 2
+  //           define triangle n. N - 2 triangles are drawn.
+  // 
+  // GL_QUADS -- Treats each group of four vertices as an independent
+  //           quadrilateral. Vertices 4 ⁢ n - 3 , 4 ⁢ n - 2 , 4 ⁢ n - 1,
+  //           and 4 ⁢ n define quadrilateral n. N 4 quadrilaterals are
+  //           drawn.
+  //
+  // GL_QUAD_STRIP -- Draws a connected group of quadrilaterals. One
+  //           quadrilateral is defined for each pair of vertices
+  //           presented after the first pair. Vertices 2 ⁢ n - 1 , 2 ⁢
+  //           n , 2 ⁢ n + 2 , and 2 ⁢ n + 1 define quadrilateral n. N 2
+  //           - 1 quadrilaterals are drawn. Note that the order in
+  //           which vertices are used to construct a quadrilateral
+  //           from strip data is different from that used with
+  //           independent data.
+  //
+  // GL_POLYGON -- Draws a single, convex polygon. Vertices 1 through
+  //           N define this polygon.
+
+
+
+};
+
+  
 #endif

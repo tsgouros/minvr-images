@@ -34,8 +34,8 @@ typedef enum {
 // whatever else ready, and a draw() method for the frame updates.
 //
 // This is meant to work with modern OpenGL, that uses shaders, and
-// there are accompanying mvShaders and mvLights classes to manage
-// those aspects of constructing a scene.  The mvShaders object is
+// there are accompanying mvShaderSet and mvLights classes to manage
+// those aspects of constructing a scene.  The mvShaderSet object is
 // linked from mvShape largely for access to the programID.
 //
 // The shaders themselves are not included in this object because many
@@ -57,50 +57,17 @@ protected:
 
   mvShapeType _type;
 
-  // The shaders to be used by this shape.
-  mvShaders* _shaders;
-  
+  // This contains a pointer to the shader to be used and also keeps track of
+  // all the OpenGL flibbertygib that corresponds to that shader.
+  mvShaderContext _shaderContext;
+
   GLuint _arrayID;
-
-  // The IDs refer to the OpenGL attribute "names" and the strings
-  // that accompany them are the actual names used in the shaders.
-  GLuint _vertexAttribID;
-  std::string _vertexAttribName;
-  
-  GLuint _uvAttribID;
-  std::string _uvAttribName;
-  
-  GLuint _normalAttribID;
-  std::string _normalAttribName;
-  
-  GLuint _colorAttribID;
-  std::string _colorAttribName;
-  
-  GLuint _textureAttribID;
-  std::string _textureAttribName;
-
-  // These IDs point to actual data.
-  GLuint _vertexBufferID;
-	GLuint _uvBufferID;
-	GLuint _normalBufferID;
-  GLuint _colorBufferID;
-  GLuint _textureBufferID;
 
   // The actual shape data is stored here.
   std::vector<MVec3> _vertices;
 	std::vector<MVec2> _uvs;
 	std::vector<MVec3> _normals;
 	std::vector<MVec3> _colors;
-
-  // These matrices may appear in the shaders.
-  GLuint _projMatrixID;
-  std::string  _projMatrixName;
-
-	GLuint _viewMatrixID;
-  std::string  _viewMatrixName;
-
-	GLuint _modelMatrixID;
-  std::string  _modelMatrixName;
 
   MVec3 _position;
   MVec3 _scale;
@@ -119,29 +86,27 @@ protected:
   void setupDefaultNames();
   
 public:
-  mvShape(mvShapeType type, mvShaders* shaders);
+  mvShape(mvShapeType type, mvShaderSet* shaders, mvTexture* texture);
   virtual ~mvShape();
+
+  void setShaderContext(mvShaderContext shaderContext) {
+    _shaderContext = shaderContext;
+  };
   
   static void printMat(std::string name, MMat4 mat);
 
   virtual void load() = 0;
   virtual void draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix) = 0;
 
-  // These are here to specialize in the subclasses.
+  // These are here to specialize in the subclasses.  There are three, so you
+  // can specialize depending on whether the subclass represents a 1D, 2D, or
+  // 3D shape.  Just ignore the two that don't fit.
   virtual void setDimensions(GLfloat a) {};
   virtual void setDimensions(GLfloat a, GLfloat b) {};
   virtual void setDimensions(GLfloat a, GLfloat b, GLfloat c) {};
-  
-  GLuint getProgramID() { return _shaders->getProgramID(); };
 
-  void setTextureID(GLuint textureID) { _textureBufferID = textureID; };
-  GLuint getTextureID() { return _textureBufferID; };
+  mvShaderContext getShaderContext() { return _shaderContext; };
   
-  // These are here so there is some default shader behavior beside
-  // the default blackness.
-  const char** defaultVertexShader;
-  const char** defaultFragmentShader;
-
   mvShapeType getType() { return _type; };
 
   // Position, rotation, scale control mutators.
@@ -172,7 +137,6 @@ public:
   
   MMat4 getModelMatrix();
 
-
 };
 
 class mvShapeRect : public mvShape {
@@ -191,7 +155,8 @@ protected:
 
   
 public:
- mvShapeRect(mvShaders* shaders) : mvShape(shapeRECT, shaders) {
+ mvShapeRect(mvShaderSet* shaders, mvTexture* texture) :
+  mvShape(shapeRECT, shaders, texture) {
     // Set default rectangle dimensions.
     _width = 1.0f;  _height = 1.0f;
   };
@@ -221,7 +186,8 @@ private:
   friend std::ostream & operator<<(std::ostream &os, const mvShapeObj& iShape);
   
 public:
- mvShapeObj(mvShaders* shaders) : mvShape(shapeOBJ, shaders) {};
+ mvShapeObj(mvShaderSet* shaders, mvTexture* texture) :
+  mvShape(shapeOBJ, shaders, texture) {};
 
   void load();
   void draw(MMat4 ViewMatrix, MMat4 ProjectionMatrix);
@@ -247,7 +213,8 @@ class mvShapeAxes : public mvShape {
   friend std::ostream & operator<<(std::ostream &os, const mvShapeAxes& iShape);
   
  public:
- mvShapeAxes(mvShaders* shaders) : mvShape(shapeAXES, shaders) {
+ mvShapeAxes(mvShaderSet* shaders, mvTexture* dummy) :
+  mvShape(shapeAXES, shaders, NULL) {
     expandAxesVertices();
     expandAxesColors();
   }    
@@ -260,14 +227,17 @@ class mvShapeAxes : public mvShape {
 class mvShapeFactory {
  public:
   template<typename T>
-    static mvShape* create(mvShaders* shaders) {
-    T* out = new T(shaders);
+    static mvShape* create(mvShaderSet* shaderSet, mvTexture* texture) {
+    T* out = new T(shaderSet, texture);
     return (mvShape*)out;
   }
 
-  typedef mvShape* (*createMvShapeCallback)(mvShaders* shaders);
+  typedef mvShape* (*createMvShapeCallback)(mvShaderSet* shaders,
+                                            mvTexture* texture);
 
-  mvShape* createShape(mvShapeType type, mvShaders* shaders);
+  mvShape* createShape(mvShapeType type,
+                       mvShaderSet* shaders,
+                       mvTexture* texture);
 
   bool registerShape(mvShapeType type, createMvShapeCallback creator);
 

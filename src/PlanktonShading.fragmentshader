@@ -26,7 +26,7 @@ void main(){
 
 	// Material properties
 	vec3 materialColor = texture( mvTextureSampler, UV ).rgb;
-	float ambientCoefficient = 0.1;
+	float ambientCoefficient = 0.6;
 	vec3 materialSpecularColor = vec3(1,1,1);
 
   // Normal of the computed fragment, in camera space.

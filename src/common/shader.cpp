@@ -141,7 +141,7 @@ mvShader::~mvShader() {
   glDeleteShader(_shaderID);
 }
 
-mvShaders::mvShaders() {
+mvShaderSet::mvShaderSet() : _lightsLoaded(false) {
 
   // This is sort of hacky, but these two variables are here so that
   // the default constructor for this class provides a trivial shader,
@@ -186,10 +186,11 @@ mvShaders::mvShaders() {
 
 }
 
-mvShaders::mvShaders(const std::string vertShader,
-                     const std::string geomShader,
-                     const std::string fragShader,
-                     mvLights* lights) : _lights(lights) {
+mvShaderSet::mvShaderSet(const std::string vertShader,
+                         const std::string geomShader,
+                         const std::string fragShader,
+                         mvLights* lights) :
+  _lights(lights), _lightsLoaded(false)  {
 
   // Clear OpenGL errors
   glGetError();
@@ -222,7 +223,9 @@ mvShaders::mvShaders(const std::string vertShader,
   }  
 }
 
-void mvShaders::attachAndLinkShaders() {
+mvShaderSet::~mvShaderSet() {}
+
+void mvShaderSet::attachAndLinkShaders() {
   
   glAttachShader(_programID, _vertShader->getShaderID());
   glAttachShader(_programID, _fragShader->getShaderID());
@@ -268,4 +271,123 @@ void mvShaders::attachAndLinkShaders() {
 
 }
 
+void mvShaderSet::load() {
+  if (!_lightsLoaded) {
+    _lights->load(_programID);
+    _lightsLoaded = true;
+  }
+}
 
+void mvShaderSet::draw() {
+  _lights->draw(_programID);
+}
+
+void mvShaderContext::load(const std::vector<MVec3> &vertices,
+                           const std::vector<MVec2> &uvs,
+                           const std::vector<MVec3> &normals,
+                           const std::vector<MVec3> &colors) {
+
+  _vertexBufferSize = vertices.size();
+
+  GLuint programID = _shaderSet->getProgramID();
+
+  _texture->load(programID);
+  _shaderSet->load();
+  
+    // Arrange the data for the shaders to work on.  "Uniforms" first.
+  _projMatrixID = glGetUniformLocation(programID, _projMatrixName.c_str());
+  _viewMatrixID = glGetUniformLocation(programID, _viewMatrixName.c_str());
+  _modelMatrixID = glGetUniformLocation(programID, _modelMatrixName.c_str());
+
+  // Now the vertex data.
+  glGenVertexArrays(1, &_arrayID);
+  glBindVertexArray(_arrayID);
+
+  // Load it into a VBO
+  glGenBuffers(1, &_vertexBufferID);
+  glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(MVec3),
+               &vertices[0], GL_STATIC_DRAW);
+
+  glGenBuffers(1, &_uvBufferID);
+  glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
+  glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(MVec2),
+               &uvs[0], GL_STATIC_DRAW);
+
+  glGenBuffers(1, &_normalBufferID);
+  glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
+  glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(MVec3),
+               &normals[0], GL_STATIC_DRAW);
+
+  // Get handles for the various shader inputs.
+  _vertexAttribID = glGetAttribLocation(programID, _vertexAttribName.c_str());
+  _uvAttribID = glGetAttribLocation(programID, _uvAttribName.c_str());
+  _normalAttribID = glGetAttribLocation(programID, _normalAttribName.c_str());
+
+};
+
+void mvShaderContext::draw(const MMat4 &modelMatrix,
+                           const MMat4 &viewMatrix,
+                           const MMat4 &projectionMatrix) {
+
+  GLuint programID = _shaderSet->getProgramID();
+
+  // Use our shader set.
+  glUseProgram(programID);
+
+  _texture->draw(programID);
+  _shaderSet->draw();
+  
+  // Send our transformation to the currently bound shader.
+  glUniformMatrix4fv(_projMatrixID, 1, GL_FALSE, &projectionMatrix[0][0]);
+  glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &viewMatrix[0][0]);
+  glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &modelMatrix[0][0]);
+
+  // GLint countt;
+  // glGetProgramiv(_shaders->getProgramID(), GL_ACTIVE_UNIFORMS, &countt);
+  // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;
+
+  // 1rst attribute buffer : vertices
+  glEnableVertexAttribArray(_vertexAttribID);
+  glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferID);
+  glVertexAttribPointer(
+                        _vertexAttribID,    // attribute
+                        3,                  // size
+                        GL_FLOAT,           // type
+                        GL_FALSE,           // normalized?
+                        0,                  // stride
+                        (void*)0            // array buffer offset
+                        );
+
+  // 2nd attribute buffer : UVs
+  glEnableVertexAttribArray(_uvAttribID);
+  glBindBuffer(GL_ARRAY_BUFFER, _uvBufferID);
+  glVertexAttribPointer(
+                        _uvAttribID,        // attribute
+                        2,                  // size
+                        GL_FLOAT,           // type
+                        GL_FALSE,           // normalized?
+                        0,                  // stride
+                        (void*)0            // array buffer offset
+                        );
+
+  // 3rd attribute buffer : normals
+  glEnableVertexAttribArray(_normalAttribID);
+  glBindBuffer(GL_ARRAY_BUFFER, _normalBufferID);
+  glVertexAttribPointer(
+                        _normalAttribID,    // attribute
+                        3,                  // size
+                        GL_FLOAT,           // type
+                        GL_FALSE,           // normalized?
+                        0,                  // stride
+                        (void*)0            // array buffer offset
+                        );
+
+  // Draw the triangles !
+  glDrawArrays(GL_TRIANGLES, 0, _vertexBufferSize );
+
+  glDisableVertexAttribArray(_vertexAttribID);
+  glDisableVertexAttribArray(_uvAttribID);
+  glDisableVertexAttribArray(_normalAttribID);
+
+};

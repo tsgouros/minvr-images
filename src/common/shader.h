@@ -35,10 +35,6 @@
 // edits.  See the setupDefaultNames() method if you want different
 // names.
 //
-// There are other shader requirements, specifically about the names
-// of the matrices, that are imposed by the mvShape classes.  See
-// those comments for more information.
-//
 //
 // A properly initialized mvShaderSet object, attached to some lights,
 // is ready to go, and can be given to the mvShape object for use.
@@ -50,21 +46,19 @@
 //
 //
 // mvLights is a class for managing a list of lights to go with some
-// shader.  The lights are communicated with the shader in two big
-// blocks of data, one for the light positions and the other for the
-// light colors.  Since the shaders depend on the specific number of
-// lights in the list, we think of this list as an integral part of
-// the shader's data, even if a few different shaders might refer to
-// the same list.
+// shader.  The lights are communicated with the shader in two blocks
+// of data, one for the light positions and the other for the light
+// colors.  Since the shaders depend on the specific number of lights
+// in the list, we think of this list as an integral part of the
+// shader's data, even if a few different shaders might refer to the
+// same list.
 //
 // We anticipate the load() and draw() methods of this class will be
-// invoked just before the load() and draw() methods of the shapes
-// that depend on (the shaders that depend on) them via the shader's
-// own load() and draw() methods.  We do not incorporate the load()
-// and draw() into the shape methods of the same name because many
-// shapes will use the same shaders and we don't really want to get
-// into trying to figure out if this shader has already been drawn on
-// this cycle or not.
+// invoked in the load() and draw() methods of the shaders that depend
+// on them.  There may be several shaders that use the same lights, so
+// this may result in multiple loads of the same data.  Optimizing
+// that redundancy out of the system is an exercise left for the
+// reader.
 //
 class mvLights {
  private:
@@ -100,7 +94,7 @@ class mvLights {
 
   int getNumLights() { return _positions.size(); };
 
-  // We have mutators and accessors for the whole shebang...
+  // We have mutators and accessors for all the pieces...
   std::vector<MVec3> getPositions() { return _positions; };
   void setPositions(std::vector<MVec3> positions) { _positions = positions; };
 
@@ -126,11 +120,11 @@ class mvLights {
   };
 
   // Load these lights for use with this program.  This should be
-  // called before the load() method of the shape object.
+  // called inside the shader that uses it.
   void load(GLuint programID);
 
-  // Draw these lights.  This is for updating the position and color
-  // if they have changed since the last scene render.
+  // Draw these lights.  This is mostly just for updating the position
+  // and color if they have changed since the last scene render.
   void draw(GLuint programID);  
 };
 
@@ -149,6 +143,8 @@ class mvShader {
   std::string _shaderCode;
   std::string _compilationLog;
 
+  // This is the guts of the constructor, separated out for the
+  // convenience of multiple constructors.
   GLuint init(mvShaderType type, const char** shaderLines);
   
  public:
@@ -156,9 +152,13 @@ class mvShader {
   // file that the shader code is in, or just hand it an array of
   // strings containing the shader.  
   mvShader(mvShaderType type, const std::string fileName);
+
   // This is a variant of the first constructor, where the shaders
-  // need to know the number of lights.
+  // need to know the number of lights.  It expects the shader code to
+  // use 'XX' wherever the number of lights appears, and will edit on
+  // the fly, accordingly.
   mvShader(mvShaderType type, const std::string fileName, int numLights);
+  
   // This constructor just takes the shader code as a collection of
   // C-style strings.  If you use this method, the "#version" line
   // needs to be explicitly terminated with a \n.

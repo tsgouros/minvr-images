@@ -33,7 +33,8 @@ void mvLights::draw(GLuint programID) {
   glUniform3fv(_lightColorID, 2, &_colors[0].x);
 }
 
-// Create a shader and compile it with the OpenGL tools.
+// Create a shader and compile it with the OpenGL tools.  This is the
+// guts of the mvShader constructor.
 GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
 
   GLuint outID;
@@ -81,7 +82,8 @@ GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
 
   return outID; 
 }
-  
+
+// Read a shader from a given file.
 mvShader::mvShader(mvShaderType type, const std::string fileName) :
   _shaderType(type) {
 
@@ -102,6 +104,9 @@ mvShader::mvShader(mvShaderType type, const std::string fileName) :
   _shaderID = init(_shaderType, &sourcePtr );
 }
 
+// Read a shader from a file, and edit it to reflect the number of
+// lights we will be using.  The shader code should use 'XX' wherever
+// it needs the number of lights.
 mvShader::mvShader(mvShaderType type, const std::string fileName, int numLights) :
   _shaderType(type) {
 
@@ -109,7 +114,7 @@ mvShader::mvShader(mvShaderType type, const std::string fileName, int numLights)
   std::cout << "shader file: " << fileName << " n: " << numLights << std::endl;
 #endif
   
-	// Read the shader code from the file
+ 	// Read the shader code from the file
 	std::ifstream shaderStream(fileName, std::ios::in);
 	if (shaderStream.is_open()) {
 		std::string line = "";
@@ -131,6 +136,7 @@ mvShader::mvShader(mvShaderType type, const std::string fileName, int numLights)
   _shaderID = init(_shaderType, &sourcePtr );
 }
 
+// Just an alternate constructor for an older style input.
 mvShader::mvShader(mvShaderType type, const char** shaderLines) :
   _shaderType(type) {
 
@@ -148,7 +154,7 @@ mvShaderSet::mvShaderSet() : _lightsLoaded(false) {
   // so at least something will appear during the experimentation
   // phase of building a 3D application.
   static const char* defaultVertexShader = 
-    "#version 330 core\n"
+    "#version 330 core\n"  // Probably we shouldn't be using 330 for a default.
     "layout(location = 0) in vec3 vertexPosition_modelspace;"
     "layout(location = 1) in vec3 vertexInputColor;"
     "uniform mat4 MVP;"
@@ -384,7 +390,7 @@ void mvShaderContext::draw(const MMat4 &modelMatrix,
                         );
 
   // Draw the triangles !
-  glDrawArrays(GL_TRIANGLES, 0, _vertexBufferSize );
+  glDrawArrays(_mode, 0, _vertexBufferSize );
 
   glDisableVertexAttribArray(_vertexAttribID);
   glDisableVertexAttribArray(_uvAttribID);

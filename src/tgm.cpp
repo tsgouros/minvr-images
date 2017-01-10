@@ -279,6 +279,15 @@ public:
         _shapeList.back()->setPosition(it->x/100.0, it->y/100.0, it->z/5000.0);
       }
 
+      mvTexture* officeTex = new mvTexture(texturePNG, "../data/office-test.png");
+      
+      mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, shaders, officeTex);
+      ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
+      //((mvShapeObj*)suzanne)->setObjFile("../data/office-test.obj");
+      suzanne->setPosition(MVec3(0.0, 0.0, -18.0));
+      _shapeList.push_back(suzanne);
+
+      
       // Load all the shapes.  Initializes whatever needs to be
       // initialized, etc.    
       for (std::list<mvShape*>::iterator it = _shapeList.begin();
@@ -465,9 +474,11 @@ int main( int argc, char **argv )
 //
 // 4.5 Test in yurt!
 //
-// 5. What happened to the axes?
+// 5. Object loader doesn't work
 //
-// 6. Put spheres at the lights, so we can focus them?
+// 5.5 What happened to the axes?
+//
+// 6. Put spheres at the lights, so we can locate them better them?
 //
 // 7. Obj viewer.
 //

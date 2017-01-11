@@ -1,5 +1,4 @@
-#version 330 core
-// We are using the core, *not* the compatibility profile. 
+#version 120
 
 // This gets filled in by the shader compiler in mvShape.
 const int NUM_LIGHTS = XX;
@@ -7,25 +6,21 @@ const float MAX_DIST = 50.0;
 const float MAX_DIST_SQUARED = MAX_DIST * MAX_DIST;
 
 // Interpolated values from the vertex shaders
-in vec2 UV;
-in vec3 Position_worldspace;
-in vec3 Normal_cameraspace;
-in vec3 EyeDirection_cameraspace;
-in vec3 LightDirection_cameraspace[NUM_LIGHTS];
-
-// Ouput data
-out vec4 finalColor;
+varying vec2 UV;
+varying vec3 Position_worldspace;
+varying vec3 Normal_cameraspace;
+varying vec3 EyeDirection_cameraspace;
+varying vec3 LightDirection_cameraspace[NUM_LIGHTS];
 
 // Values that stay constant for the whole mesh.
 uniform sampler2D mvTextureSampler;
-uniform mat4 MV;
 uniform vec3 LightPosition_worldspace[NUM_LIGHTS];
 uniform vec3 LightColor[NUM_LIGHTS];
 
 void main(){
 
 	// Material properties
-	vec3 materialColor = texture( mvTextureSampler, UV ).rgb;
+	vec4 materialColor = texture2D( mvTextureSampler, gl_TexCoord[0].st );
 	float ambientCoefficient = 0.6;
 	vec3 materialSpecularColor = vec3(1,1,1);
 
@@ -37,7 +32,7 @@ void main(){
   for (int i = 0; i < NUM_LIGHTS; i++) {
 
     // Ambient : simulates indirect lighting
-    vec3 ambient = ambientCoefficient * LightColor[i] * materialColor;
+    vec3 ambient = ambientCoefficient * LightColor[i] * materialColor.rgb;
     
     // Distance to the light
     float distanceToLight =
@@ -53,7 +48,7 @@ void main(){
     float cosAngleFromNormal = clamp(dot(normalDir, lightDir), 0.0, 1.0);
 
     // Diffuse : "color" of the object
-    vec3 diffuse = materialColor * LightColor[i] * cosAngleFromNormal;
+    vec3 diffuse = materialColor.rgb * LightColor[i] * cosAngleFromNormal;
 	
     // Eye vector (towards the camera)
     vec3 eyeDir = normalize(EyeDirection_cameraspace);
@@ -75,10 +70,10 @@ void main(){
 
   // This checks to see if the image is gray scale.  If not, change alpha.
   if (materialColor.x != materialColor.y) {
-    finalColor = vec4(color.x, color.y, color.z, 1.0);
+    gl_FragColor = vec4(color.x, color.y, color.z, 1.0);
 
   } else {
   
-    finalColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, 1.0);
   }
 }

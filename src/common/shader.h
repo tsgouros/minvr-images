@@ -270,6 +270,9 @@ private:
 	GLuint _modelMatrixID;
   std::string  _modelMatrixName;
 
+	GLuint _inverseModelMatrixID;
+  std::string  _inverseModelMatrixName;
+
   // These are the default names of variables in the shaders.  Placed
   // here so they're all in one place, for easy comparison to the shader
   // you'll use.
@@ -281,6 +284,7 @@ private:
     _projMatrixName = std::string("P");
     _viewMatrixName = std::string("V");
     _modelMatrixName = std::string("M");
+    _inverseModelMatrixName = std::string("invM");
   }
 
 public:

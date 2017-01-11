@@ -1,25 +1,26 @@
-#version 330 core
+#version 120
 
 // This will be edited on the fly by the shader compile code.
 const int NUM_LIGHTS = XX;
 
 // Input vertex data, different for all executions of this shader.
-layout(location = 0) in vec3 vertexPosition_modelspace;
-layout(location = 1) in vec2 vertexUV;
-layout(location = 2) in vec3 vertexNormal_modelspace;
+attribute vec3 vertexPosition_modelspace;
+attribute vec2 vertexUV;
+attribute vec3 vertexNormal_modelspace;
 
 // Output data ; will be interpolated for each fragment.
-out vec2 UV;
-out vec3 Position_worldspace;
-out vec3 Normal_cameraspace;
-out vec3 EyeDirection_cameraspace;
-out vec3 LightDirection_cameraspace[NUM_LIGHTS];
+varying vec2 UV;
+varying vec3 Position_worldspace;
+varying vec3 Normal_cameraspace;
+varying vec3 EyeDirection_cameraspace;
+varying vec3 LightDirection_cameraspace[NUM_LIGHTS];
 vec3 LightPosition_cameraspace[NUM_LIGHTS];
 
 // Values that stay constant for the whole mesh.
 uniform mat4 P;
 uniform mat4 V;
 uniform mat4 M;
+uniform mat4 invM; // inverse transpose of M
 uniform vec3 LightPosition_worldspace[NUM_LIGHTS];
 
 void main(){
@@ -36,19 +37,20 @@ void main(){
     (V * M * vec4(vertexPosition_modelspace,1)).xyz;
 	EyeDirection_cameraspace = vec3(0,0,0) - vertexPosition_cameraspace;
 
-	// Vector that goes from the vertex to the light, in camera space. M
-	// is not necessary because it's identity.
+	// Vector that goes from the vertex to the light, in camera space.
   for (int i = 0; i < NUM_LIGHTS; i++) { 
     LightPosition_cameraspace[i] = ( V * vec4(LightPosition_worldspace[i],1)).xyz;
-    LightDirection_cameraspace[i] =
-      LightPosition_cameraspace[i] + EyeDirection_cameraspace;
+    LightDirection_cameraspace[i] = LightPosition_cameraspace[i] +
+      EyeDirection_cameraspace;
   }
 	
 	// Normal of the the vertex, in camera space
-	Normal_cameraspace =
-    (V * transpose(inverse(M)) * vec4(vertexNormal_modelspace,0)).xyz; 
+	Normal_cameraspace = (V * invM * vec4(vertexNormal_modelspace,0)).xyz; 
 	
 	// UV of the vertex. No special space for this one.
 	UV = vertexUV;
+
+  // Something about preparing the texture...
+  gl_TexCoord[0] = gl_MultiTexCoord0;
 }
 

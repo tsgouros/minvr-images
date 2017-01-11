@@ -154,22 +154,21 @@ mvShaderSet::mvShaderSet() : _lightsLoaded(false) {
   // so at least something will appear during the experimentation
   // phase of building a 3D application.
   static const char* defaultVertexShader = 
-    "#version 330 core\n"  // Probably we shouldn't be using 330 for a default.
-    "layout(location = 0) in vec3 vertexPosition_modelspace;"
-    "layout(location = 1) in vec3 vertexInputColor;"
+    "#version 120\n"
+    "attribute vec3 vertexPosition_modelspace;"
+    "attribute vec3 vertexInputColor;"
     "uniform mat4 MVP;"
-    "out vec3 vertexColor;"
+    "varying vec3 vertexColor;"
     "void main () {"
     "gl_Position = MVP * vec4(vertexPosition_modelspace, 1.0);"
     "vertexColor = vertexInputColor;"
     "}";
 
   static const char* defaultFragmentShader =
-    "#version 330 core\n"
-    "in vec3 vertexColor;"
-    "out vec4 fragmentColor;"
+    "#version 120\n"
+    "varying vec3 vertexColor;"
     "void main () {"
-    "fragmentColor = vec4(vertexColor, 1.0);"
+    "gl_FragColor = vec4(vertexColor, 1.0);"
     "}";
 
   static const char* defaultGeometryShader = NULL;
@@ -304,6 +303,8 @@ void mvShaderContext::load(const std::vector<MVec3> &vertices,
   _projMatrixID = glGetUniformLocation(programID, _projMatrixName.c_str());
   _viewMatrixID = glGetUniformLocation(programID, _viewMatrixName.c_str());
   _modelMatrixID = glGetUniformLocation(programID, _modelMatrixName.c_str());
+  _inverseModelMatrixID = glGetUniformLocation(programID,
+                                               _inverseModelMatrixName.c_str());
 
   // Now the vertex data.
   glGenVertexArrays(1, &_arrayID);
@@ -348,7 +349,9 @@ void mvShaderContext::draw(const MMat4 &modelMatrix,
   glUniformMatrix4fv(_projMatrixID, 1, GL_FALSE, &projectionMatrix[0][0]);
   glUniformMatrix4fv(_viewMatrixID, 1, GL_FALSE, &viewMatrix[0][0]);
   glUniformMatrix4fv(_modelMatrixID, 1, GL_FALSE, &modelMatrix[0][0]);
-
+  MMat4 invM = glm::transpose(glm::inverse(modelMatrix));
+  glUniformMatrix4fv(_inverseModelMatrixID, 1, GL_FALSE, &invM[0][0]);
+  
   // GLint countt;
   // glGetProgramiv(_shaders->getProgramID(), GL_ACTIVE_UNIFORMS, &countt);
   // std::cout << "**Active (in use by a shader) Uniforms: " << countt << std::endl;

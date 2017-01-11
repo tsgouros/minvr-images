@@ -112,6 +112,8 @@ public:
     // These are here to manipulate the view matrix in the event that
     // we're running this on the desktop.  When running in real VR,
     // the view matrix should be provided in the render state.
+
+    std::cout << "event name: " << eventName << std::endl;
     
 		if (eventName == "/KbdEsc_Down") {
 			_quit = true;

@@ -20,7 +20,7 @@ uniform vec3 LightColor[NUM_LIGHTS];
 void main(){
 
 	// Material properties
-	vec4 materialColor = texture2D( mvTextureSampler, gl_TexCoord[0].st );
+	vec4 materialColor = texture2D( mvTextureSampler, UV); //gl_TexCoord[0].st );
 	float ambientCoefficient = 0.6;
 	vec3 materialSpecularColor = vec3(1,1,1);
 

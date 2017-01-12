@@ -51,6 +51,6 @@ void main(){
 	UV = vertexUV;
 
   // Something about preparing the texture...
-  gl_TexCoord[0] = gl_MultiTexCoord0;
+  // gl_TexCoord[0] = gl_MultiTexCoord0; 
 }
 

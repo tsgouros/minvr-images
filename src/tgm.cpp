@@ -113,7 +113,7 @@ public:
     // we're running this on the desktop.  When running in real VR,
     // the view matrix should be provided in the render state.
 
-    std::cout << "event name: " << eventName << std::endl;
+    //std::cout << "event name: " << eventName << std::endl;
     
 		if (eventName == "/KbdEsc_Down") {
 			_quit = true;
@@ -133,38 +133,38 @@ public:
     } else if ((eventName == "/KbdDown_Down") ||
                (eventName == "/KbdDown_Repeat")) {
       _vertAngle += _stepAngle;
-    } else if ((eventName == "/KbdA_Down") ||
+    } else if ((eventName == "/KbdA_Down") || (eventName == "/Kbda_Down") ||
                (eventName == "/KbdA_Repeat")) {
 
       // Just a jump to the left.
       _xpos += _stepDist * cos(_horizAngle);
       _zpos += _stepDist * sin(_horizAngle);
 
-    } else if ((eventName == "/KbdD_Down") ||
+    } else if ((eventName == "/KbdD_Down") || (eventName == "/Kbdd_Down") ||
                (eventName == "/KbdD_Repeat")) {
       // Then a step to the right.
       _xpos -= _stepDist * cos(_horizAngle);
       _zpos -= _stepDist * sin(_horizAngle);
       // (Then pull your knees in tight.)
-    } else if ((eventName == "/KbdW_Down") ||
+    } else if ((eventName == "/KbdW_Down") || (eventName == "/Kbdw_Down") ||
                (eventName == "/KbdW_Repeat")) {
       // Move a step forward.
       _xpos += _stepDist * sin(_horizAngle) * cos(_vertAngle);
       _ypos += _stepDist * sin(_vertAngle);
       _zpos += _stepDist * cos(_horizAngle) * cos(_vertAngle);
 
-    } else if ((eventName == "/KbdS_Down") ||
+    } else if ((eventName == "/KbdS_Down") || (eventName == "/Kbds_Down") ||
                (eventName == "/KbdS_Repeat")) {
       // Move a step backward.
       _xpos -= _stepDist * sin(_horizAngle) * cos(_vertAngle);
       _ypos -= _stepDist * sin(_vertAngle);
       _zpos -= _stepDist * cos(_horizAngle) * cos(_vertAngle);
 
-    } else if ((eventName == "/KbdZ_Down") ||
+    } else if ((eventName == "/KbdZ_Down") || (eventName == "/Kbdz_Down") ||
                (eventName == "/KbdZ_Repeat")) {
       _ypos += _stepDist;
 
-    } else if ((eventName == "/KbdX_Down") ||
+    } else if ((eventName == "/KbdX_Down") || (eventName == "/Kbdx_Down") ||
                (eventName == "/KbdX_Repeat")) {
       _ypos -= _stepDist;
     }

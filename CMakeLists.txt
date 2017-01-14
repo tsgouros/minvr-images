@@ -1,9 +1,5 @@
 project(minvr-images)
 
-# CMakeLists files in this project can refer to the root source directory of the 
-# project as ${MINVR_SOURCE_DIR} and to the root binary directory of the project 
-# as ${MINVR_BINARY_DIR}.
-
 cmake_minimum_required (VERSION 2.8.2) 
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -19,8 +15,9 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
       "default install path" 
       FORCE)
 endif()
+message("-- Make install goes to: " ${CMAKE_INSTALL_PREFIX})
 
-# To distingusih between debugging, release, and other builds, we'll
+# To distinguish between debugging, release, and other builds, we'll
 # add a postfix to the name of the lib or exe that we generate.
 
 if(NOT CMAKE_DEBUG_POSTFIX)
@@ -29,13 +26,36 @@ endif()
 set(CMAKE_RELEASE_POSTFIX "")
 set(CMAKE_RELWITHDEBINFO_POSTFIX "rd")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMinVR_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-lsvml -lirc ${CMAKE_CXX_FLAGS_DEBUG} -DMinVR_DEBUG")
 
-set(MINVR_DIR /Users/tomfool/tech/17/yurt/MinVR/build/install)
-#set(MINVR_DIR /Users/tomfool/tech/16/yurt/MinVR2/build/install)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${MINVR_DIR}/include")
-message(${CMAKE_CXX_FLAGS})
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -I${MINVR_DIR}/include")
+### Look for MinVR
+set(MINVR_INSTALL_DIR "$ENV{HOME}/projects/MinVR-cmake-test/build/install" 
+  CACHE PATH "The path of the MinVR *install* directory.")
+
+find_path(MINVR_INCLUDE_DIR
+          NAME plugin
+	  HINTS ${MINVR_INSTALL_DIR}/include)
+
+find_library(MINVR_LIBRARY
+          NAME MinVR
+	  HINTS ${MINVR_INSTALL_DIR}/lib)
+######### Found it and set a couple of variables.
+#### Trust but verify
+if(MINVR_INCLUDE_DIR)
+  message("-- Found MinVR include files: " ${MINVR_INCLUDE_DIR})
+else(MINVR_INCLUDE_DIR)
+  message("Couldn't find MinVR include files.")
+endif(MINVR_INCLUDE_DIR)
+
+if(MINVR_LIBRARY)
+  message("-- Found the MinVR library: " ${MINVR_LIBRARY})
+else(MINVR_LIBRARY)
+  message("Couldn't find the MinVR library.")
+endif(MINVR_LIBRARY)
+#### Done verification
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${MINVR_INCLUDE_DIR}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -I${MINVR_INCLUDE_DIR}")
 
 # Build output directories.
 make_directory(${CMAKE_BINARY_DIR}/bin)
@@ -57,7 +77,7 @@ endif (WIN32)
 
 #enable_testing()
 
-add_subdirectory(external)
+#add_subdirectory(external)
 
 set(img_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(src)

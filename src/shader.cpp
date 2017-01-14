@@ -1,16 +1,3 @@
-#include <stdio.h>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-using namespace std;
-
-#include <stdlib.h>
-#include <string.h>
-
-#include <GL/glew.h>
-
 #include "shader.h"
 
 void mvLights::load(GLuint programID) {
@@ -88,19 +75,19 @@ mvShader::mvShader(mvShaderType type, const std::string fileName) :
   _shaderType(type) {
 
 	// Read the shader code from the file
-	std::ifstream shaderStream(fileName, std::ios::in);
-	if (shaderStream.is_open()) {
-		std::string line = "";
+  std::ifstream shaderStream(fileName.c_str(), std::ios::in);
+  if (shaderStream.is_open()) {
+    std::string line = "";
     
-		while(getline(shaderStream, line)) _shaderCode += "\n" + line;
+    while(getline(shaderStream, line)) _shaderCode += "\n" + line;
     
-		shaderStream.close();
+    shaderStream.close();
     
-	} else {
+  } else {
     throw std::runtime_error("Cannot open: " + fileName);
-	}
+  }
 
-	char const * sourcePtr = _shaderCode.c_str();
+  char const * sourcePtr = _shaderCode.c_str();
   _shaderID = init(_shaderType, &sourcePtr );
 }
 
@@ -115,24 +102,26 @@ mvShader::mvShader(mvShaderType type, const std::string fileName, int numLights)
 #endif
   
  	// Read the shader code from the file
-	std::ifstream shaderStream(fileName, std::ios::in);
-	if (shaderStream.is_open()) {
-		std::string line = "";
+  std::ifstream shaderStream(fileName.c_str(), std::ios::in);
+  if (shaderStream.is_open()) {
+    std::string line = "";
     
-		while(getline(shaderStream, line)) _shaderCode += "\n" + line;
+    while(getline(shaderStream, line)) _shaderCode += "\n" + line;
     
-		shaderStream.close();
+    shaderStream.close();
     
-	} else {
+  } else {
     throw std::runtime_error("Cannot open: " + fileName);
-	}
+  }
 
   // Edit the shader source to reflect the input number of lights.  If
   // there is no 'XX' in the shader code, this will cause an ugly
   // error.
-  _shaderCode.replace(_shaderCode.find("XX"), 2, to_string(numLights));
+  char numLightsAsString[5];
+  sprintf(numLightsAsString, "%d", numLights);
+  _shaderCode.replace(_shaderCode.find("XX"), 2, numLightsAsString);
 
-	char const * sourcePtr = _shaderCode.c_str();
+  char const * sourcePtr = _shaderCode.c_str();
   _shaderID = init(_shaderType, &sourcePtr );
 }
 

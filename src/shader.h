@@ -4,9 +4,16 @@
 #include "vecTypes.h"
 #include "texture.h"
 
-#include <iostream>
+#include <stdio.h>
 #include <string>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <stdlib.h>
+#include <string.h>
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 // HOW TO USE THESE SHADERS AND LIGHTS:

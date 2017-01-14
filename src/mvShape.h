@@ -14,9 +14,9 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "vecTypes.h"
-#include <common/shader.h>
-#include <common/texture.h>
-#include <common/objloader.h>
+#include "shader.h"
+#include "texture.h"
+#include "objloader.h"
 
 typedef enum {
   shapeOBJ = 0,

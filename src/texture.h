@@ -3,7 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <cstring>
 #include <iostream>
+#include <stdexcept>
+
 
 #include <GL/glew.h>
 

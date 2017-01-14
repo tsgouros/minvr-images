@@ -1,5 +1,7 @@
 #ifndef VECTYPES_H
 #define VECTYPES_H
+#include <stdexcept>
+#include <fstream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

@@ -11,9 +11,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "vecTypes.h"
-#include <common/shader.h>
-#include <common/texture.h>
-#include <common/objloader.h>
+#include "shader.h"
+#include "texture.h"
+#include "objloader.h"
 
 #include "mvShape.h"
 #include "tinyxml2.h"

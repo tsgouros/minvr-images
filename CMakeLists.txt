@@ -26,12 +26,24 @@ endif()
 set(CMAKE_RELEASE_POSTFIX "")
 set(CMAKE_RELWITHDEBINFO_POSTFIX "rd")
 
-set(CMAKE_CXX_FLAGS_DEBUG "-lsvml -lirc ${CMAKE_CXX_FLAGS_DEBUG} -DMinVR_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMinVR_DEBUG")
 
+##
+## You can set the MinVR location with
+## -DMINVR_INSTALL_DIR=/my/location/of/MinVR/install
+## Remember, you're looking for the install location, not the repo
+## location.  The default install is at MINVR_REPO/build/install.
+##
 ### Look for MinVR
-set(MINVR_INSTALL_DIR "$ENV{HOME}/projects/MinVR-cmake-test/build/install" 
-  CACHE PATH "The path of the MinVR *install* directory.")
-
+if(MINVR_INSTALL_DIR)
+  message("-- Using MinVR: " ${MINVR_INSTALL_DIR})
+else(MINVR_INSTALL_DIR)
+  message("MinVR install location not specified.  Using a default that is likely to be incorrect.")
+  message("Use  -DMINVR_INSTALL_DIR=/my/location/of/MinVR/install to specify it.")
+  set(MINVR_INSTALL_DIR "$ENV{HOME}/projects/MinVR-cmake-test/build/install" 
+    CACHE PATH "The path of the MinVR *install* directory.")
+endif(MINVR_INSTALL_DIR)
+  
 find_path(MINVR_INCLUDE_DIR
           NAME plugin
 	  HINTS ${MINVR_INSTALL_DIR}/include)
@@ -63,7 +75,8 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # Linux specific code
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  set(CMAKE_CXX_FLAGS_DEBUG "-lsvml -lirc ${CMAKE_CXX_FLAGS_DEBUG}")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

@@ -388,14 +388,21 @@ int main( int argc, char **argv )
 
   std::list<ImageToDisplay> images;
   
-  tinyxml2::XMLDocument doc;
-  std::string reportName =
-    std::string("../EN_581_cast_7__15-Jun-2016_01-07-21-715.bmp/report.xml");
-	//std::string reportName = std::string(argv[1]);
+  // std::cout << "argc: " << argc << std::endl;
+  // for (int i = 0; i < argc; i++) {
+  //   std::cout << "    [" << i << "]: " << std::string(argv[i]) << std::endl;
+  // }
+
+  if (argc < 3) 
+    throw std::runtime_error(std::string("need a config file and a report: ") +
+			     std::string("tgm config.xml report.xml"));
+
+  std::string reportName = std::string(argv[2]);
   std::string pathName = reportName.substr(0, reportName.find_last_of("/"));
   std::cout << "opening: " << reportName << std::endl;
   std::cout << "found in:" << pathName << std::endl;
 
+  tinyxml2::XMLDocument doc;
   int d = doc.LoadFile(reportName.c_str()); 
 	if (d != tinyxml2::XML_SUCCESS) {
     std::cout << "ouch:" << doc.ErrorName() << std::endl;

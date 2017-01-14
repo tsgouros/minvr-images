@@ -7,13 +7,14 @@ find_package(OpenGL REQUIRED)
 find_package(PNG 1.4 REQUIRED MODULE)
 find_package(GLEW REQUIRED)
 
-set(GLM_INCLUDE_DIR /users/tsgouros/projects/glew-and-friends/glm-0.9.7.1)
+set(GLM_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/glm-0.9.7.1)
 
 # set(GLEW_INCLUDE_DIR    
 #   /users/tsgouros/projects/glew-and-friends/glew-1.13.0/include)
 # set(GLEW_LIB_1130 
 #   /users/tsgouros/projects/glew-and-friends/glew-1.13.0/lib/libGLEW.a)
 
+message("-- GLM includes: " ${GLM_INCLUDE_DIR})
 message("-- OpenGL includes: " ${OPENGL_INCLUDE_DIR})
 message("-- OpenGL library: " ${OPENGL_LIBRARY})
 message("-- GLEW library: " ${GLEW_LIBRARY})

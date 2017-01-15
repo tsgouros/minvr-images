@@ -54,7 +54,7 @@ public:
   std::list<mvLights*> _lightList;
   
   VRApp(int argc, char** argv, std::list<ImageToDisplay> images) :
-    _initialized(false), _images(images) {
+    _initialized(false), _quit(false), _images(images) {
 
     _vrMain = new MinVR::VRMain();
     std::string configFile = argv[1];
@@ -201,7 +201,7 @@ public:
         /* Problem: glewInit failed, something is seriously wrong. */
         throw std::runtime_error( "Error: " +
                                   std::string((char*)glewGetErrorString(err)));
-      }      
+      }
 
       GLenum error = glGetError();
 
@@ -281,13 +281,13 @@ public:
         _shapeList.back()->setPosition(it->x/100.0, it->y/100.0, it->z/5000.0);
       }
 
-      mvTexture* officeTex = new mvTexture(texturePNG, "../data/office-test.png");
+      // mvTexture* officeTex = new mvTexture(texturePNG, "../data/office-test.png");
       
-      mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, shaders, officeTex);
-      ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
-      //((mvShapeObj*)suzanne)->setObjFile("../data/office-test.obj");
-      suzanne->setPosition(MVec3(0.0, 0.0, -18.0));
-      _shapeList.push_back(suzanne);
+      // mvShape* suzanne = _shapeFactory.createShape(shapeOBJ, shaders, officeTex);
+      // ((mvShapeObj*)suzanne)->setObjFile("suzanne.obj");
+      // //((mvShapeObj*)suzanne)->setObjFile("../data/office-test.obj");
+      // suzanne->setPosition(MVec3(0.0, 0.0, -18.0));
+      // _shapeList.push_back(suzanne);
 
       
       // Load all the shapes.  Initializes whatever needs to be
@@ -351,7 +351,7 @@ public:
       MVec3 dir = MVec3(cos(vangle) * sin(hangle), 
                         sin(vangle),
                         cos(vangle) * cos(hangle));
-      std::cout << "xpos: " << xpos << " ypos: " << ypos << " zpos: " << zpos << " hangle: " << hangle << " vangle: " << vangle << '\r';
+      // std::cout << "xpos: " << xpos << " ypos: " << ypos << " zpos: " << zpos << " hangle: " << hangle << " vangle: " << vangle << '\r';
 
       ViewMatrix = glm::lookAt(pos, pos + dir, up);
     }
@@ -374,6 +374,7 @@ public:
     //   std::cout << *it << std::endl;
     
     while (!_quit) {
+
       _vrMain->mainloop();
     }
   }
@@ -475,11 +476,11 @@ int main( int argc, char **argv )
 // OpenGL buffers and invoke the shader necessary. [DONE]
 //
 // 3. Write an alternate shader class that uses an earlier shader
-// syntax.  See above.
+// syntax.  See above. [DONE]
 //
 // 4. Test with FreeGLUT plugin.  Note that the key names in the
 //    events are from the GLFW plugin, and will probably be different
-//    for the freeglut plugin.
+//    for the freeglut plugin. [DONE]
 //
 // 4.5 Test in yurt!
 //

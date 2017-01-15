@@ -12,8 +12,8 @@
   <AllowMaximize>1</AllowMaximize>
   <Visible>1</Visible>
   <SharedContextGroupID>-1</SharedContextGroupID>
-  <ContextVersionMajor>3</ContextVersionMajor>
-  <ContextVersionMinor>3</ContextVersionMinor>
+  <ContextVersionMajor>1</ContextVersionMajor>
+  <ContextVersionMinor>2</ContextVersionMinor>
   <UseGPUAffinity>1</UseGPUAffinity>
   <UseDebugContext>0</UseDebugContext>
   <MSAASamples>1</MSAASamples>

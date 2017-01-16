@@ -31,7 +31,7 @@ public:
 }; 
 
 
-class VRApp : public MinVR::VREventHandler, public MinVR::VRRenderHandler {
+class mvImageApp : public MinVR::VREventHandler, public MinVR::VRRenderHandler {
 private:
   MinVR::VRMain* _vrMain;
   bool _quit;
@@ -53,7 +53,7 @@ public:
   std::list<mvShaderSet*> _shaderList;
   std::list<mvLights*> _lightList;
   
-  VRApp(int argc, char** argv, std::list<ImageToDisplay> images) :
+  mvImageApp(int argc, char** argv, std::list<ImageToDisplay> images) :
     _initialized(false), _quit(false), _images(images) {
 
     _vrMain = new MinVR::VRMain();
@@ -75,7 +75,7 @@ public:
 
   };
 
-  ~VRApp() {
+  ~mvImageApp() {
 
     for (std::list<mvLights*>::iterator it = _lightList.begin();
          it != _lightList.end(); it++) {
@@ -104,68 +104,69 @@ public:
   // issue another event with Transform in it?  This would be
   // irrelevant during cave runs, wouldn't it?
 
-  
-  virtual void onVREvent(const std::string &eventName,
-                         MinVR::VRDataIndex *eventData) {
+  virtual void onVREvent(const MinVR::VREvent &event) {
+  // virtual void onVREvent(const std::string &eventName,
+  //                        MinVR::VRDataIndex *eventData) {
     // std::cout << "event data" << std::endl << eventData->printStructure() << std::endl;
 
     // These are here to manipulate the view matrix in the event that
     // we're running this on the desktop.  When running in real VR,
     // the view matrix should be provided in the render state.
 
-    //std::cout << "event name: " << eventName << std::endl;
+    std::string eventName = event.getInternal()->getName();
+    std::cout << "event name: " << eventName << std::endl;
     
-		if (eventName == "/KbdEsc_Down") {
+		if (eventName == "KbdEsc_Down") {
 			_quit = true;
-		} else if (eventName == "/MouseBtnLeft_Down") {
+		} else if (eventName == "MouseBtnLeft_Down") {
       _ypos += _stepDist;
-    } else if (eventName == "/MouseBtnRight_Down") {
+    } else if (eventName == "MouseBtnRight_Down") {
       _ypos -= _stepDist;
-    } else if ((eventName == "/KbdLeft_Down") ||
-               (eventName == "/KbdLeft_Repeat")) {
+    } else if ((eventName == "KbdLeft_Down") ||
+               (eventName == "KbdLeft_Repeat")) {
       _horizAngle -= _stepAngle;
-    } else if ((eventName == "/KbdRight_Down") ||
-               (eventName == "/KbdRight_Repeat")) {
+    } else if ((eventName == "KbdRight_Down") ||
+               (eventName == "KbdRight_Repeat")) {
       _horizAngle += _stepAngle;
-    } else if ((eventName == "/KbdUp_Down") ||
-               (eventName == "/KbdUp_Repeat")) {
+    } else if ((eventName == "KbdUp_Down") ||
+               (eventName == "KbdUp_Repeat")) {
       _vertAngle -= _stepAngle;
-    } else if ((eventName == "/KbdDown_Down") ||
-               (eventName == "/KbdDown_Repeat")) {
+    } else if ((eventName == "KbdDown_Down") ||
+               (eventName == "KbdDown_Repeat")) {
       _vertAngle += _stepAngle;
-    } else if ((eventName == "/KbdA_Down") || (eventName == "/Kbda_Down") ||
-               (eventName == "/KbdA_Repeat")) {
+    } else if ((eventName == "KbdA_Down") || (eventName == "Kbda_Down") ||
+               (eventName == "KbdA_Repeat")) {
 
       // Just a jump to the left.
       _xpos += _stepDist * cos(_horizAngle);
       _zpos += _stepDist * sin(_horizAngle);
 
-    } else if ((eventName == "/KbdD_Down") || (eventName == "/Kbdd_Down") ||
-               (eventName == "/KbdD_Repeat")) {
+    } else if ((eventName == "KbdD_Down") || (eventName == "Kbdd_Down") ||
+               (eventName == "KbdD_Repeat")) {
       // Then a step to the right.
       _xpos -= _stepDist * cos(_horizAngle);
       _zpos -= _stepDist * sin(_horizAngle);
       // (Then pull your knees in tight.)
-    } else if ((eventName == "/KbdW_Down") || (eventName == "/Kbdw_Down") ||
-               (eventName == "/KbdW_Repeat")) {
+    } else if ((eventName == "KbdW_Down") || (eventName == "Kbdw_Down") ||
+               (eventName == "KbdW_Repeat")) {
       // Move a step forward.
       _xpos += _stepDist * sin(_horizAngle) * cos(_vertAngle);
       _ypos += _stepDist * sin(_vertAngle);
       _zpos += _stepDist * cos(_horizAngle) * cos(_vertAngle);
 
-    } else if ((eventName == "/KbdS_Down") || (eventName == "/Kbds_Down") ||
-               (eventName == "/KbdS_Repeat")) {
+    } else if ((eventName == "KbdS_Down") || (eventName == "Kbds_Down") ||
+               (eventName == "KbdS_Repeat")) {
       // Move a step backward.
       _xpos -= _stepDist * sin(_horizAngle) * cos(_vertAngle);
       _ypos -= _stepDist * sin(_vertAngle);
       _zpos -= _stepDist * cos(_horizAngle) * cos(_vertAngle);
 
-    } else if ((eventName == "/KbdZ_Down") || (eventName == "/Kbdz_Down") ||
-               (eventName == "/KbdZ_Repeat")) {
+    } else if ((eventName == "KbdZ_Down") || (eventName == "Kbdz_Down") ||
+               (eventName == "KbdZ_Repeat")) {
       _ypos += _stepDist;
 
-    } else if ((eventName == "/KbdX_Down") || (eventName == "/Kbdx_Down") ||
-               (eventName == "/KbdX_Repeat")) {
+    } else if ((eventName == "KbdX_Down") || (eventName == "Kbdx_Down") ||
+               (eventName == "KbdX_Repeat")) {
       _ypos -= _stepDist;
     }
       
@@ -175,6 +176,10 @@ public:
     if (_vertAngle > 6.283185) _vertAngle -= 6.283185;
     if (_vertAngle < 0.0) _vertAngle += 6.283185;
 
+    MinVR::VRDataIndex *eventData = event.getInternal()->getDataIndex();
+
+    std::cout << eventData->printStructure() << std::endl;
+    
     eventData->addData("/HeadLocation/PosX", _xpos);
     eventData->addData("/HeadLocation/PosY", _ypos);
     eventData->addData("/HeadLocation/PosZ", _zpos);
@@ -433,7 +438,7 @@ int main( int argc, char **argv )
 		}
 	}
   
-  VRApp app(argc, argv, images);
+  mvImageApp app(argc, argv, images);
 
   app.run();
 

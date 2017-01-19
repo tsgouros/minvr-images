@@ -64,7 +64,7 @@ GLuint mvShader::init(mvShaderType type, const char** shaderLines) {
          it != shaderErrorMessage.end(); it++) 
       _compilationLog.push_back(*it);
 
-    std::cout << "compile error: " << _compilationLog << std::endl;
+    std::cout << "compile error: " << _compilationLog << "<<" << compilationLogLength << "<<" << std::endl;
   }
 
   return outID; 

@@ -114,7 +114,7 @@ public:
     // the view matrix should be provided in the render state.
 
     std::string eventName = event.getInternal()->getName();
-    std::cout << "event name: " << eventName << std::endl;
+    //std::cout << "event name: " << eventName << std::endl;
     
 		if (eventName == "KbdEsc_Down") {
 			_quit = true;
@@ -178,7 +178,7 @@ public:
 
     MinVR::VRDataIndex *eventData = event.getInternal()->getDataIndex();
 
-    std::cout << eventData->printStructure() << std::endl;
+    //    std::cout << eventData->printStructure() << std::endl;
     
     eventData->addData("/HeadLocation/PosX", _xpos);
     eventData->addData("/HeadLocation/PosY", _ypos);
@@ -219,12 +219,17 @@ public:
       // Dark blue background
       glClearColor(0.1f, 0.0f, 0.4f, 0.0f);
 
-      // Enable depth test for opaque figures
+      //*********** Here are two alternatives, one for opaque figures, and
+      //*********** the other for transparency.
+      //   Alternative 1: Enable depth test for opaque figures
       glEnable(GL_DEPTH_TEST);
-      // Disable depth test and enable blend if there is transparency.
+
+      //   Alternative 2: Disable depth test and enable blend to accommodate
+      //   transparency.
       // glDisable(GL_DEPTH_TEST);
       // glEnable(GL_BLEND);
       // glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
       // Accept fragment if it closer to the camera than the former one
       glDepthFunc(GL_LESS); 
       // Cull triangles whose normal is not towards the camera.
@@ -266,8 +271,8 @@ public:
       // mvShape* axes = _shapeFactory.createShape(shapeAXES, axisShaders);
       // _shapeList.push_back(axes);
 
+      // Read the images from the XML report file and create shapes for them.
       int width, height;
-    
       for (std::list<ImageToDisplay>::iterator it = _images.begin();
            it != _images.end(); it++) {
         //        if (it->width < 100.0) continue;

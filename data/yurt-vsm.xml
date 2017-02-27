@@ -1,0 +1,115 @@
+<MinVR>
+  <PluginPath>../../build/plugins</PluginPath>
+  <FreeGLUTPlugin pluginType="MinVR_FreeGLUT"/>
+  <OpenGLPlugin pluginType="MinVR_OpenGL"/>
+  <ScalablePlugin pluginType="MinVR_Scalable"/>	
+
+  <Port type="string">3456</Port>
+  <ServerIP>cave001</ServerIP>
+
+  <ACaveServer hostType="VRServer">
+    <NumClients>1</NumClients>
+    <HostIP>cave001</HostIP>
+    <LogToFile>CaveServer.log</LogToFile>
+    
+    <VRPNPlugin pluginType="MinVR_VRPN"/>
+		
+    <ConvertLHtoRH>0</ConvertLHtoRH>
+    <IgnoreZeroes>0</IgnoreZeroes>
+    <WaitForNewReportInPoll>0</WaitForNewReportInPoll>
+    <TrackerUnitsToRoomUnitsScale>3.28084</TrackerUnitsToRoomUnitsScale>
+    <DeviceToRoom type="doublearray">-1,0,0,0, 0,1,0,0, 0,0,-1,0, 0,0,0,1</DeviceToRoom>
+		
+    <Optitrack1 inputdeviceType="VRVRPNTrackerDevice">
+      <VRPNDeviceName type="string">Head@tcp:172.20.160.21:3883</VRPNDeviceName>
+      <EventsToGenerate type="stringarray">Head</EventsToGenerate>
+      <Head>
+	<PropToTracker type="doublearray">1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1</PropToTracker>
+	<FinalOffset type="doublearray">1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1</FinalOffset>
+      </Head>
+    </Optitrack1>
+    <Optitrack2 inputdeviceType="VRVRPNTrackerDevice">
+      <VRPNDeviceName type="string">Wand0@tcp:172.20.160.21:3883</VRPNDeviceName>
+      <EventsToGenerate type="stringarray">Wand</EventsToGenerate>
+      <Wand>
+	<PropToTracker type="doublearray">1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1</PropToTracker>
+	<FinalOffset type="doublearray">1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1</FinalOffset>
+      </Wand>
+    </Optitrack2>
+    <Optitrack3 inputdeviceType="VRVRPNTrackerDevice">
+      <VRPNDeviceName type="string">Wand1@tcp:172.20.160.21:3883</VRPNDeviceName>
+      <EventsToGenerate type="stringarray">WirelessMouse</EventsToGenerate>
+      <WirelessMouse>
+	<PropToTracker type="doublearray">1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1</PropToTracker>
+	<FinalOffset type="doublearray">1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1</FinalOffset>
+      </WirelessMouse>
+    </Optitrack3>
+
+    
+    <WandAnalogs inputdeviceType="VRVRPNAnalogDevice">
+      <VRPNDeviceName type="string">Joystick0@172.20.160.21:3121</VRPNDeviceName>
+      <EventsToGenerate type="stringarray">Wand_Joystick_Y,Wand_Joystick_X,Wand_Trigger_Top</EventsToGenerate>
+    </WandAnalogs>
+
+
+    <Buttons inputdeviceType="VRVRPNButtonDevice">
+      <VRPNDeviceName type="string">Joystick0@172.20.160.21:3121</VRPNDeviceName>
+      <EventsToGenerate type="stringarray">Wand_Top_Trigger,Wand_Bottom_Trigger,Wand_Joystick_Press,Wand_Up,Wand_Down,Wand_Left,Wand_Right,Wand_Select,???,Mouse_Up,Mouse_Down,Mouse_Left,Mouse_Right,Mouse_Click</EventsToGenerate>
+    </Buttons>
+
+  </ACaveServer>
+	
+  <RGBBits>8</RGBBits>
+  <AlphaBits>8</AlphaBits>
+  <DepthBits>24</DepthBits>
+  <StencilBits>8</StencilBits>
+  <FullScreen>0</FullScreen>
+  <Resizable>1</Resizable>
+  <AllowMaximize>1</AllowMaximize>
+  <Visible>1</Visible>
+  <SharedContextGroupID>-1</SharedContextGroupID>
+  <ContextVersionMajor>3</ContextVersionMajor>
+  <ContextVersionMinor>0</ContextVersionMinor>
+  <UseGPUAffinity>1</UseGPUAffinity>
+  <UseDebugContext>0</UseDebugContext>
+  <MSAASamples>0</MSAASamples>
+  <QuadBuffered>1</QuadBuffered>
+	
+  <Border>0</Border>
+  <Caption>Desktop</Caption>
+  <GPUAffinity>None</GPUAffinity>
+  <StereoFormat>QuadBuffered</StereoFormat>
+  <EyeSeparation>0.2</EyeSeparation>
+  <Visible>1</Visible>
+    
+  <HeadTrackingEvent>Head_Move</HeadTrackingEvent>
+
+  <LookAtUp type="doublearray">0,1,0</LookAtUp>
+  <LookAtCenter type="doublearray">0,0,1</LookAtCenter>
+  <LookAtEye type="doublearray">0,4,0</LookAtEye>
+  <Width>1920</Width>
+  <Height>1080</Height>
+  <XPos>0</XPos>
+  <YPos>0</YPos>
+	
+  <MyGraph>
+    <RootNode displaynodeType="VRGraphicsWindowNode" windowtoolkitType="VRFreeGLUTWindowToolkit" graphicstoolkitType="VROpenGLGraphicsToolkit">
+      <LookAtNode displaynodeType="VRTrackedLookAtNode">
+	<StereoNode displaynodeType="VRStereoNode">
+	  <MyProjectionNode displaynodeType="VRScalableNode">
+	    <NearClip>0.01</NearClip>
+	    <FarClip>100.0</FarClip>
+	  </MyProjectionNode>
+	</StereoNode>
+      </LookAtNode>
+    </RootNode>
+  </MyGraph>
+	
+  <Cave13 hostType="VRClient">
+    <HostIP>cave004</HostIP>
+    <HostDisplay>:0.0</HostDisplay>
+    <ScalableWarpFile>/users/cavedemo/scalable/cave/ScalableData.pol_22</ScalableWarpFile>
+    <copiedNode linkNode="/MinVR/MyGraph/RootNode"/>
+  </Cave13>
+
+</MinVR>

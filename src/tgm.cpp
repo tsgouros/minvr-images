@@ -114,7 +114,7 @@ public:
     // the view matrix should be provided in the render state.
 
     std::string eventName = event.getInternal()->getName();
-    //std::cout << "event name: " << eventName << std::endl;
+    std::cout << "event name: " << eventName << std::endl;
     
 		if (eventName == "KbdEsc_Down") {
 			_quit = true;
@@ -178,13 +178,13 @@ public:
 
     MinVR::VRDataIndex *eventData = event.getInternal()->getDataIndex();
 
-    //    std::cout << eventData->printStructure() << std::endl;
+    //std::cout << eventData->printStructure() << std::endl;
     
-    eventData->addData("/HeadLocation/PosX", _xpos);
-    eventData->addData("/HeadLocation/PosY", _ypos);
-    eventData->addData("/HeadLocation/PosZ", _zpos);
-    eventData->addData("/HeadLocation/HorizAngle", _horizAngle);
-    eventData->addData("/HeadLocation/VertAngle", _vertAngle);
+    // eventData->addData("/HeadLocation/PosX", _xpos);
+    // eventData->addData("/HeadLocation/PosY", _ypos);
+    // eventData->addData("/HeadLocation/PosZ", _zpos);
+    // eventData->addData("/HeadLocation/HorizAngle", _horizAngle);
+    // eventData->addData("/HeadLocation/VertAngle", _vertAngle);
     
 	}
 
@@ -219,17 +219,12 @@ public:
       // Dark blue background
       glClearColor(0.1f, 0.0f, 0.4f, 0.0f);
 
-      //*********** Here are two alternatives, one for opaque figures, and
-      //*********** the other for transparency.
-      //   Alternative 1: Enable depth test for opaque figures
-      glEnable(GL_DEPTH_TEST);
-
-      //   Alternative 2: Disable depth test and enable blend to accommodate
-      //   transparency.
-      // glDisable(GL_DEPTH_TEST);
-      // glEnable(GL_BLEND);
-      // glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
+      // Enable depth test for opaque figures
+      //glEnable(GL_DEPTH_TEST);
+      // Disable depth test and enable blend if there is transparency.
+      glDisable(GL_DEPTH_TEST);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       // Accept fragment if it closer to the camera than the former one
       glDepthFunc(GL_LESS); 
       // Cull triangles whose normal is not towards the camera.
@@ -263,16 +258,16 @@ public:
     
       // Switch to axes.  These use the default shader, which you get
       // by initializing the shader object with no args.
-      mvShaderSet* axisShaders = new mvShaderSet();
-      _shaderList.push_back(axisShaders);
+      //      mvShaderSet* axisShaders = new mvShaderSet();
+      //      _shaderList.push_back(axisShaders);
     
       //////////////////////////////////////////////////////////
       // Create objects to display
       // mvShape* axes = _shapeFactory.createShape(shapeAXES, axisShaders);
       // _shapeList.push_back(axes);
 
-      // Read the images from the XML report file and create shapes for them.
       int width, height;
+    
       for (std::list<ImageToDisplay>::iterator it = _images.begin();
            it != _images.end(); it++) {
         //        if (it->width < 100.0) continue;
@@ -288,7 +283,8 @@ public:
 
         // Size the object and place it in the scene.
         _shapeList.back()->setDimensions(it->width/100.0, it->height/100.0);
-        _shapeList.back()->setPosition(it->x/100.0, it->y/100.0, it->z/5000.0);
+        _shapeList.back()->setPosition(it->x/100.0, -4 + it->y/100.0, it->z/(-5000.0));
+	//_shapeList.back()->setRotation(MQuat(0.0, 1.0, 0.0, 1.0));
       }
 
       // mvTexture* officeTex = new mvTexture(texturePNG, "../data/office-test.png");
@@ -327,14 +323,20 @@ public:
     MMat4 ProjectionMatrix;
     MMat4 ViewMatrix;
 
+    //std::cout << "rendering scene" << std::endl;
+
     // MinVR matrices are stored in row-major order so they will be
     // easy to read as text (which is dumb).  OpenGL uses column-major
     // order, so these must be transposed before sending them to
     // OpenGL.
     // std::cout << renderState->printStructure() << std::endl;
     MinVR::VRDoubleArray p = renderState->getValue("ProjectionMatrix", "/");
+    //    ProjectionMatrix = MMat4(&p[0]);
+
+    // ProjectionMatrix = MMat4(p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],
+    //                           p[8],p[9],p[10],p[11],p[12],p[13],p[14],p[15]);
     ProjectionMatrix = MMat4(p[0],p[4],p[8],p[12],p[1],p[5],p[9],p[13],
-                             p[2],p[6],p[10],p[14],p[3],p[7],p[11],p[15]);
+			     p[2],p[6],p[10],p[14],p[3],p[7],p[11],p[15]);
 
     if (renderState->exists("/IsConsole")) {
 
@@ -348,22 +350,36 @@ public:
 
       // If we're operating from the desktop, use the keyboard-controlled
       // position and orientation values to fake a view matrix.
-      double xpos = _vrMain->getConfig()->getValue("/HeadLocation/PosX");
-      double ypos = _vrMain->getConfig()->getValue("/HeadLocation/PosY");
-      double zpos = _vrMain->getConfig()->getValue("/HeadLocation/PosZ");
-      double hangle = _vrMain->getConfig()->getValue("/HeadLocation/HorizAngle");
-      double vangle = _vrMain->getConfig()->getValue("/HeadLocation/VertAngle");
+      // double xpos = _vrMain->getConfig()->getValue("/HeadLocation/PosX");
+      // double ypos = _vrMain->getConfig()->getValue("/HeadLocation/PosY");
+      // double zpos = _vrMain->getConfig()->getValue("/HeadLocation/PosZ");
+      // double hangle = _vrMain->getConfig()->getValue("/HeadLocation/HorizAngle");
+      // double vangle = _vrMain->getConfig()->getValue("/HeadLocation/VertAngle");
 
-      MVec3 pos = MVec3(xpos, ypos, zpos);
-      MVec3 up = MVec3(cos(hangle) * sin(vangle),
-                       cos(vangle),
-                       sin(hangle) * sin(vangle));
-      MVec3 dir = MVec3(cos(vangle) * sin(hangle), 
-                        sin(vangle),
-                        cos(vangle) * cos(hangle));
+      // MVec3 pos = MVec3(xpos, ypos, zpos);
+      // MVec3 up = MVec3(cos(hangle) * sin(vangle),
+      //                  cos(vangle),
+      //                  sin(hangle) * sin(vangle));
+      // MVec3 dir = MVec3(cos(vangle) * sin(hangle), 
+      //                   sin(vangle),
+      //                   cos(vangle) * cos(hangle));
       // std::cout << "xpos: " << xpos << " ypos: " << ypos << " zpos: " << zpos << " hangle: " << hangle << " vangle: " << vangle << '\r';
 
-      ViewMatrix = glm::lookAt(pos, pos + dir, up);
+      //      ViewMatrix = glm::lookAt(pos, pos + dir, up);
+
+      MinVR::VRDoubleArray v = renderState->getValue("ViewMatrix", "/");
+      // ViewMatrix = MMat4(v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7],
+      // 			 v[8],v[9],v[10],v[11],v[12],v[13],v[14],v[15]);
+      ViewMatrix = MMat4(v[0],v[4],v[8],v[12],v[1],v[5],v[9],v[13],
+      			 v[2],v[6],v[10],v[14],v[3],v[7],v[11],v[15]);
+      
+
+      // MMat4 flip = MMat4(1.0, 0.0, 0.0, 0.0,
+      // 			 0.0, -1.0, 0.0, 0.0,
+      // 			 0.0, 0.0, 1.0, 0.0,
+      // 			 0.0, 0.0, 0.0, 1.0);
+
+
     }
     
     // mvShape::printMat("view", ViewMatrix);

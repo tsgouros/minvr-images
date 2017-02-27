@@ -19,10 +19,10 @@ uniform vec3 LightColor[NUM_LIGHTS];
 
 void main(){
 
-	// Material properties
-	vec4 materialColor = texture2D( mvTextureSampler, UV); //gl_TexCoord[0].st );
-	float ambientCoefficient = 0.6;
-	vec3 materialSpecularColor = vec3(1,1,1);
+  // Material properties
+  vec4 materialColor = texture2D( mvTextureSampler, UV); //gl_TexCoord[0].st );
+  float ambientCoefficient = 0.6;
+  vec3 materialSpecularColor = vec3(1,1,1);
 
   // Normal of the computed fragment, in camera space.
   vec3 normalDir = normalize( Normal_cameraspace );
@@ -70,8 +70,8 @@ void main(){
 
   // This checks to see if the image is gray scale.  If not, change alpha.
   if (materialColor.x != materialColor.y) {
-    gl_FragColor = vec4(color.x, color.y, color.z, 1.0);
-
+    gl_FragColor = vec4(color.x, color.y, color.z, 0.0);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
   } else {
   
     gl_FragColor = vec4(color, 1.0);
